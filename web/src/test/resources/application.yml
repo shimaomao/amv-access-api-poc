@@ -1,0 +1,13 @@
+spring.application.name: 'amv-access-api'
+spring.profiles.active: test
+
+app.name: AMV Access API (test)
+app.description: AMV Access API Gateway
+
+spring.jpa.database-platform: 'org.amv.access.sqlite.SQLiteDialect'
+spring.jpa.hibernate.ddl-auto: 'create-drop'
+
+amv.issuer:
+  name: XXXX
+  public-key: A183A2C611811FCA6936B5E212A2A83DC4086090FA3871452D237F244F366D4A82214BB8B214AF82BC1BEFC1261AB66350AB5ED78D805A4AE2D84D1F548D97C5
+  private-key: 957D8D11D6081E91FEF68A05A05EC84ADC81B0089E7E81AC4430F3CE7D4CF798

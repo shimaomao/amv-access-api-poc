@@ -1,0 +1,9 @@
+spring.profiles.active: development
+spring.application.name: ${app.name} (${spring.profiles.active})
+
+spring.jpa.database-platform: 'org.amv.access.sqlite.SQLiteDialect'
+spring.jpa.hibernate.ddl-auto: 'create-drop'
+spring.jpa.show-sql: true
+
+logging.config: classpath:logback-spring.xml
+

@@ -1,0 +1,14 @@
+version: '2'
+
+services:
+
+  amvaccessapi:
+    container_name: amv-access-api1
+    #build: . # build from Dockerfile
+    image: amv/amv-access-api
+    restart: unless-stopped
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    volumes:
+      - /var/log:/var/log

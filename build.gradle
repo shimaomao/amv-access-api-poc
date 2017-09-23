@@ -1,0 +1,214 @@
+import io.franzbecker.gradle.lombok.task.DelombokTask
+import org.gradle.api.tasks.testing.logging.TestExceptionFormat
+import org.gradle.api.tasks.testing.logging.TestLogEvent
+
+buildscript {
+    ext {
+        springBootVersion = '1.5.7.RELEASE'
+    }
+    repositories {
+        jcenter()
+    }
+    dependencies {
+        classpath("org.springframework.boot:spring-boot-gradle-plugin:${springBootVersion}")
+        classpath("nu.studer:gradle-credentials-plugin:1.0.3")
+    }
+}
+
+plugins {
+    id 'nebula.project' version '3.4.0'
+    id 'nebula.info' version '3.6.0'
+    id 'nebula.release' version '6.0.0'
+    id 'findbugs'
+    id 'checkstyle'
+    id 'io.franzbecker.gradle-lombok' version '1.8'
+}
+
+apply plugin: 'idea'
+apply plugin: 'maven'
+apply plugin: 'nu.studer.credentials'
+
+description = 'AMV specific implementation of the Highmobility OEM Api'
+group = 'org.amv.access'
+
+contacts {
+    'devlopment@amv-networks.com' {
+        moniker 'AMV Networks GmbH'
+        role 'owner'
+        github 'amvnetworks'
+    }
+}
+
+subprojects {
+    apply plugin: 'java'
+    apply plugin: 'maven'
+    apply plugin: 'nebula.project'
+    apply plugin: 'nebula.info'
+    apply plugin: 'io.franzbecker.gradle-lombok'
+    apply plugin: 'checkstyle'
+    apply plugin: 'findbugs'
+
+    group = 'org.amv.access'
+
+    sourceCompatibility = 1.8
+    targetCompatibility = 1.8
+
+    // ---- prepare task graph - disable long running tasks on demand
+    gradle.taskGraph.whenReady { graph ->
+        def isMinimalBuild = project.hasProperty("minimal")
+
+        def enableAdditionalLongRunningTasks = !isMinimalBuild
+
+        if (!enableAdditionalLongRunningTasks) {
+            findbugsMain.enabled = false
+            checkstyleMain.enabled = false
+            javadoc.enabled = false
+        }
+    }
+
+    //only use AMV internal nexus repository for dependencies
+    repositories {
+        mavenLocal()
+        jcenter()
+    }
+
+    dependencies {
+        compile 'org.slf4j:slf4j-api:1.7.25'
+        compile 'com.google.guava:guava:19.0'
+        compile 'org.apache.commons:commons-lang3:3.5'
+        compile 'commons-io:commons-io:2.5'
+        compile 'commons-codec:commons-codec:1.10'
+
+        compileOnly 'org.projectlombok:lombok:1.16.16'
+
+        testCompile 'junit:junit:4.12'
+        testCompile 'org.hamcrest:hamcrest-all:1.3'
+        testCompile 'pl.pragmatists:JUnitParams:1.1.0'
+    }
+
+    lombok {
+        version = '1.16.16'
+        sha256 = 'fbf682c7ff113e5187a9c4b4cbd7a8ad782abd8ccff91b9fa7289a4a6aa8c19a'
+    }
+
+    task delombok(type: DelombokTask, dependsOn: compileJava) {
+        ext.outputDir = file("$buildDir/delombok")
+        outputs.dir(outputDir)
+        sourceSets.main.java.srcDirs.each {
+            inputs.dir(it)
+            args(it, '-d', outputDir)
+        }
+    }
+
+    task delombokHelp(type: DelombokTask) {
+        args '--help'
+    }
+
+    javadoc {
+        dependsOn delombok
+        source = delombok.outputDir
+        failOnError = false
+    }
+
+    jar.doFirst {
+        // other manifest attributes will be populated by nebula.info plugin
+        // see https://github.com/nebula-plugins/gradle-info-plugin
+        def vendor = 'AMV Networks GmbH'
+        manifest {
+            attributes(
+                    'Specification-Title': project.description,
+                    'Specification-Version': project.version,
+                    'Specification-Vendor': vendor,
+                    'Implementation-Vendor': vendor
+            )
+        }
+    }
+
+    task sourcesJar(type: Jar) {
+        from sourceSets.main.allSource
+        classifier = 'sources'
+    }
+
+    artifacts {
+        archives javadocJar, sourcesJar
+    }
+
+    task subprojectsDependencies(type: DependencyReportTask) {
+
+    }
+
+    checkstyle {
+        configFile = rootProject.file('config/checkstyle/checkstyle.xml')
+        toolVersion = '6.7'
+        ignoreFailures = true
+        showViolations = false
+        sourceSets = [sourceSets.main]
+        reportsDir = rootProject.file("$buildDir/reports/checkstyle")
+    }
+
+    findbugs {
+        effort = 'min'
+        ignoreFailures = true
+        sourceSets = [sourceSets.main]
+    }
+
+    tasks.withType(Test) {
+        testLogging {
+            // set options for log level LIFECYCLE: TestLogEvent.STARTED, TestLogEvent.PASSED, TestLogEvent.SKIPPED, TestLogEvent.FAILED
+            events TestLogEvent.PASSED, TestLogEvent.SKIPPED, TestLogEvent.FAILED
+            showExceptions true
+            exceptionFormat TestExceptionFormat.FULL
+            showCauses true
+            showStackTraces true
+
+            afterSuite { desc, result ->
+                if (!desc.parent) { // will match the outermost suite
+                    def output = "Results: ${result.resultType} (${result.testCount} tests, ${result.successfulTestCount} successes, ${result.failedTestCount} failures, ${result.skippedTestCount} skipped)"
+                    def startItem = '|  ', endItem = '  |'
+                    def repeatLength = startItem.length() + output.length() + endItem.length()
+                    println('\n' + ('-' * repeatLength) + '\n' + startItem + output + endItem + '\n' + ('-' * repeatLength))
+                }
+            }
+        }
+    }
+}
+
+project(':model') {
+    apply plugin: 'org.springframework.boot'
+
+    bootRepackage {
+        enabled = false
+    }
+}
+
+project(':access-spi') {
+    apply plugin: 'org.springframework.boot'
+
+    bootRepackage {
+        enabled = false
+    }
+}
+
+project(':access-spi-highmobility') {
+    apply plugin: 'org.springframework.boot'
+
+    bootRepackage {
+        enabled = false
+    }
+}
+
+project(':swagger') {
+    apply plugin: 'org.springframework.boot'
+
+    bootRepackage {
+        enabled = false
+    }
+}
+
+project(':web') {
+    apply plugin: 'org.springframework.boot'
+}
+
+
+
+

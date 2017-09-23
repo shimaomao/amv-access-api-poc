@@ -1,0 +1,66 @@
+
+description = 'Web'
+
+sourceSets {
+    main.java.srcDir "src/main/java"
+    test.java.srcDir "src/test/java"
+}
+
+bootRun {
+    addResources = true
+}
+
+bootRepackage {
+    executable = true
+    mainClass = 'org.amv.access.Application'
+}
+
+springBoot {
+    executable = true
+}
+
+jar {
+    baseName = project.name
+    version = project.version
+}
+
+test {
+    // * enable on demand
+    // testLogging.showStandardStreams = true
+}
+
+
+dependencies {
+    compile project(':access-spi-highmobility')
+    compile project(':swagger')
+
+    // tag::jetty[]
+    compile('org.springframework.boot:spring-boot-starter-web') {
+        exclude module: 'spring-boot-starter-tomcat'
+    }
+    compile 'org.springframework.boot:spring-boot-starter-jetty'
+    // end::jetty[]
+
+    compile 'com.fasterxml.jackson.core:jackson-core:2.8.8'
+    compile 'com.fasterxml.jackson.core:jackson-annotations:2.8.8'
+    compile 'com.fasterxml.jackson.datatype:jackson-datatype-hibernate5:2.8.8'
+    compile 'com.fasterxml.jackson.datatype:jackson-datatype-jdk8:2.8.8'
+    compile 'com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.8.8'
+
+    compile 'org.springframework.boot:spring-boot-starter-data-rest'
+    compile 'org.springframework.boot:spring-boot-starter-data-jpa'
+    compile 'org.springframework.boot:spring-boot-starter-security'
+    compile 'org.springframework.boot:spring-boot-starter-actuator'
+    compile 'org.springframework.boot:spring-boot-devtools'
+
+    compile 'io.swagger:swagger-annotations:1.5.13'
+
+    compile('com.zaxxer:HikariCP:2.6.2') {
+        exclude group: 'org.slf4j', module: 'slf4j-api'
+    }
+    compile 'org.xerial:sqlite-jdbc:3.19.3'
+
+    testCompile 'org.springframework.boot:spring-boot-starter-test'
+    // temporarily disabled to focus on sqlite
+    //testCompile 'com.h2database:h2'
+}

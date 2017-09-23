@@ -1,0 +1,43 @@
+app.version: '0.0.1-SNAPSHOT'
+app.name: AMV Access API
+app.description: AMV Access API Gateway
+
+spring.profiles.active: production
+spring.application.name: ${app.name} (${spring.profiles.active})
+
+spring.jpa.database-platform: 'org.amv.access.sqlite.SQLiteDialect'
+spring.jpa.hibernate.ddl-auto: 'update'
+spring.jpa.show-sql: false
+
+server.port: 9000
+server.use-forward-headers: true
+server.compression.enabled: true
+
+security.user.name: john_doe
+security.user.password: mysupersecretpassword
+
+management.security.enabled: true
+management.port: 9001
+management.context-path: /manage
+
+logging.config: classpath:logback-spring.xml
+
+amv.issuer:
+  name: XXXX
+  public-key: AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+  private-key: BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB
+
+amv.swagger:
+  enabled: true
+  version: '0.0.1-SNAPSHOT'
+  title: 'AMV Access API'
+  description: |
+    The AMV Access API interface definition
+    Generate Device and Access Certficates as you please
+
+  termsOfServiceUrl: 'API Terms Of Service'
+  license: 'Apache License 2.0'
+  licenseUrl: 'https://opensource.org/licenses/Apache-2.0'
+  contact-name: 'AMV Networks GmbH'
+  contact-url: 'https://www.amv-networks.com'
+  contact-email: 'support@amv-networks.com'

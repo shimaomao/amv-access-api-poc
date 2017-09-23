@@ -1,0 +1,11 @@
+[Unit]
+Description=AMV Access API
+After=syslog.target
+
+[Service]
+User=root
+ExecStart=/var/amv/amv-access-api/amv-access-api.jar
+SuccessExitStatus=143
+
+[Install]
+WantedBy=multi-user.target

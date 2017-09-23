@@ -1,0 +1,8 @@
+rootProject.name = 'amv-access-api'
+
+include 'model'
+include 'access-spi'
+include 'access-spi-highmobility'
+include 'swagger'
+include 'web'
+
