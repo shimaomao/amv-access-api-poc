@@ -8,7 +8,7 @@ amv-access-api
 
 ### Spring Boot
 ```bash
-$ ./gradlew bootRun
+$ ./gradlew web:bootRun
 ```
 ### Build & Run
 ```bash
@@ -17,7 +17,7 @@ $ ./gradlew build && java -jar build/libs/amv-access-api-<version>.jar
 ```
 
 ```bash
-$ curl localhost:9000/manage/health
+$ curl localhost:9001/manage/health
 {"status":"UP","diskSpace":{"status":"UP","total":397635555328,"free":328389529600,"threshold":10485760}}}
 ```
 
