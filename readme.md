@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.org/amvnetworks/amv-access-api-poc.svg?branch=master)](https://travis-ci.org/amvnetworks/amv-access-api-poc)
+[![License](https://img.shields.io/github/license/amvnetworks/amv-access-api-poc.svg?maxAge=2592000)](https://github.com/amvnetworks/amv-access-api-poc/blob/master/LICENSE)
 
 amv-access-api
 ========
