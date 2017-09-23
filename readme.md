@@ -4,22 +4,40 @@
 amv-access-api
 ========
 
-## Development
+amv-access-api requires Java version 1.8 or greater.
 
-### Spring Boot
+# Build
+Build a snapshot from a clean working directory
 ```bash
-$ ./gradlew web:bootRun
+$ ./gradlew releaseCheck clean build -Prelease.stage=SNAPSHOT -Prelease.scope=patch
 ```
-### Build & Run
+
+When a parameter `minimal` is provided, certain tasks will be skipped to make the build faster.
+e.g. `findbugs`, `checkstyle`, `javadoc` - tasks which results are not essential for a working build.
 ```bash
-$ ./gradlew build && java -jar build/libs/amv-access-api-<version>.jar
+./gradlew clean build -Pminimal
+```
+## Development
+### Spring Boot
+Run the application with active `development` profile
+```bash
+$ ./gradlew web:bootRun -Dspring.profiles.active=development
+```
+
+### Build & Run
+Building and running the final jar
+```bash
+$ ./gradlew clean build -Pminimal && java -jar web/build/libs/amv-access-api-web-<version>.jar
  --spring.profiles.active=production,debug
 ```
-
+Check application is up and running
 ```bash
 $ curl localhost:9001/manage/health
 {"status":"UP","diskSpace":{"status":"UP","total":397635555328,"free":328389529600,"threshold":10485760}}}
 ```
+
+### IDE
+As this project uses [Project Lombok](https://projectlombok.org/) make sure you have annotation processing enabled.
 
 ### Docker
 #### Build
@@ -36,7 +54,7 @@ $ docker-compose up
 ```
 
 
-### Deploy
+## Deploy
 ```bash
 $ cp web/build/libs/amv-access-api-<version>.jar /var/amv/amv-access-api/amv-access-api.jar
 $ cp deploy/amv-access-api.conf /var/amv/amv-access-api/amv-access-api.conf
