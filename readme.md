@@ -3,7 +3,7 @@
 
 amv-access-api
 ========
-
+This is a proof of concept application.
 amv-access-api requires Java version 1.8 or greater.
 
 # Build

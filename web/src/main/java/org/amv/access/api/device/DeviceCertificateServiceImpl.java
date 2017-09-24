@@ -1,11 +1,11 @@
 package org.amv.access.api.device;
 
-import org.amv.access.model.*;
 import org.amv.access.api.device.model.CreateDeviceCertificateRequest;
 import org.amv.access.api.device.model.RevokeDeviceCertificateRequest;
+import org.amv.access.model.*;
+import org.amv.access.spi.AmvAccessModuleSpi;
 import org.amv.highmobility.cryptotool.CryptotoolUtils;
 import org.amv.highmobility.cryptotool.CryptotoolUtils.TestUtils;
-import org.amv.access.spi.AmvAccessModuleSpi;
 import reactor.core.publisher.Mono;
 import reactor.util.function.Tuples;
 
@@ -33,12 +33,12 @@ public class DeviceCertificateServiceImpl implements DeviceCertificateService {
 
         return Mono.just(request)
                 .map(this::saveCreateDeviceCertificateRequest)
-                .map(deviceCertificateRequest ->  Tuples.of(deviceCertificateRequest, createAndSaveDevice(deviceCertificateRequest)))
+                .map(deviceCertificateRequest -> Tuples.of(deviceCertificateRequest, createAndSaveDevice(deviceCertificateRequest)))
                 .flatMap(deviceCertificateRequestAndDevice -> amvAccessModule
                         .createDeviceCertificate(
                                 deviceCertificateRequestAndDevice.getT1(),
                                 deviceCertificateRequestAndDevice.getT2()
-                                ))
+                        ))
                 .map(deviceCertificateRepository::save)
                 .single();
     }

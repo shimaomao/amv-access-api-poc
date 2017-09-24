@@ -84,6 +84,7 @@ public class AccessCertificateCtrl {
         return deferred;
     }
 
+    // TODO: this method must either only be called by authorized users or not callable via http at all
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "Success", response = CreateAccessCertificateResponse.class)
     })
