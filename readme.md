@@ -39,6 +39,9 @@ $ curl localhost:9001/manage/health
 ### IDE
 As this project uses [Project Lombok](https://projectlombok.org/) make sure you have annotation processing enabled.
 
+### Swagger
+Open `http://localhost:9000/swagger-ui.html` in your browser.
+
 ### Docker
 #### Build
 ```bash

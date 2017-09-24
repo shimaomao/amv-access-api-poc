@@ -22,13 +22,13 @@ import springfox.documentation.spring.data.rest.configuration.SpringDataRestConf
 import springfox.documentation.spring.web.plugins.Docket;
 import springfox.documentation.swagger2.annotations.EnableSwagger2;
 
+import java.util.Collections;
 import java.util.concurrent.TimeUnit;
 
 import static com.google.common.base.Predicates.and;
 import static java.util.Objects.requireNonNull;
 import static springfox.documentation.builders.RequestHandlerSelectors.basePackage;
 import static springfox.documentation.builders.RequestHandlerSelectors.withClassAnnotation;
-import static springfox.documentation.schema.AlternateTypeRules.newRule;
 
 @Configuration
 @EnableConfigurationProperties(SwaggerProperties.class)
@@ -123,7 +123,8 @@ public class SwaggerConfiguration extends WebMvcConfigurerAdapter {
                         properties.getContactUrl(),
                         properties.getContactEmail()),
                 properties.getLicense(),
-                properties.getLicenseUrl()
+                properties.getLicenseUrl(),
+                Collections.emptyList()
         );
     }
 }

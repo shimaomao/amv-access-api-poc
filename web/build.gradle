@@ -41,11 +41,11 @@ dependencies {
     compile 'org.springframework.boot:spring-boot-starter-jetty'
     // end::jetty[]
 
-    compile 'com.fasterxml.jackson.core:jackson-core:2.8.8'
-    compile 'com.fasterxml.jackson.core:jackson-annotations:2.8.8'
-    compile 'com.fasterxml.jackson.datatype:jackson-datatype-hibernate5:2.8.8'
-    compile 'com.fasterxml.jackson.datatype:jackson-datatype-jdk8:2.8.8'
-    compile 'com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.8.8'
+    compile 'com.fasterxml.jackson.core:jackson-core:2.8.10'
+    compile 'com.fasterxml.jackson.core:jackson-annotations:2.8.10'
+    compile 'com.fasterxml.jackson.datatype:jackson-datatype-hibernate5:2.8.10'
+    compile 'com.fasterxml.jackson.datatype:jackson-datatype-jdk8:2.8.10'
+    compile 'com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.8.10'
 
     compile 'org.springframework.boot:spring-boot-starter-data-rest'
     compile 'org.springframework.boot:spring-boot-starter-data-jpa'
@@ -53,12 +53,12 @@ dependencies {
     compile 'org.springframework.boot:spring-boot-starter-actuator'
     compile 'org.springframework.boot:spring-boot-devtools'
 
-    compile 'io.swagger:swagger-annotations:1.5.13'
+    compile 'io.swagger:swagger-annotations:1.5.16'
 
-    compile('com.zaxxer:HikariCP:2.6.2') {
+    compile('com.zaxxer:HikariCP:2.7.1') {
         exclude group: 'org.slf4j', module: 'slf4j-api'
     }
-    compile 'org.xerial:sqlite-jdbc:3.19.3'
+    compile 'org.xerial:sqlite-jdbc:3.20.0'
 
     testCompile 'org.springframework.boot:spring-boot-starter-test'
     // temporarily disabled to focus on sqlite

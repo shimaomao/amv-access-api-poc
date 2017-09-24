@@ -31,6 +31,14 @@ apply plugin: 'nu.studer.credentials'
 description = 'AMV specific implementation of the Highmobility OEM Api'
 group = 'org.amv.access'
 
+configurations.all {
+    resolutionStrategy {
+        // fail eagerly on version conflict (includes transitive dependencies)
+        // e.g. multiple different versions of the same dependency (group and name are equal)
+        failOnVersionConflict()
+    }
+}
+
 contacts {
     'devlopment@amv-networks.com' {
         moniker 'AMV Networks GmbH'
