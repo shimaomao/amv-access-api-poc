@@ -79,7 +79,7 @@ public class HighmobilityModule implements AmvAccessModuleSpi {
 
         String signedDeviceAccessCertificateBase64 = Mono.just(deviceAccessCertificate)
                 .map(Cryptotool.AccessCertificate::getAccessCertificate)
-                .flatMap(cryptotool::generateSignature)
+                .flatMapMany(cryptotool::generateSignature)
                 .map(Cryptotool.Signature::getSignature)
                 .map(signedVehicleCertificate -> Base64.getEncoder()
                         .encodeToString(signedVehicleCertificate
@@ -97,7 +97,7 @@ public class HighmobilityModule implements AmvAccessModuleSpi {
 
         String signedVehicleAccessCertificateBase64 = Mono.just(vehicleAccessCertificate)
                 .map(Cryptotool.AccessCertificate::getAccessCertificate)
-                .flatMap(cryptotool::generateSignature)
+                .flatMapMany(cryptotool::generateSignature)
                 .map(Cryptotool.Signature::getSignature)
                 .map(signedVehicleCertificate -> Base64.getEncoder()
                         .encodeToString(signedVehicleCertificate

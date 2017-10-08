@@ -34,7 +34,7 @@ public class DeviceCertificateServiceImpl implements DeviceCertificateService {
         return Mono.just(request)
                 .map(this::saveCreateDeviceCertificateRequest)
                 .map(deviceCertificateRequest -> Tuples.of(deviceCertificateRequest, createAndSaveDevice(deviceCertificateRequest)))
-                .flatMap(deviceCertificateRequestAndDevice -> amvAccessModule
+                .flatMapMany(deviceCertificateRequestAndDevice -> amvAccessModule
                         .createDeviceCertificate(
                                 deviceCertificateRequestAndDevice.getT1(),
                                 deviceCertificateRequestAndDevice.getT2()

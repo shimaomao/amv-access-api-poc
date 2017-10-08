@@ -46,7 +46,7 @@ public class AccessCertificateServiceImpl implements AccessCertificateService {
                 .findByDeviceSerialNumberAndVehicleSerialNumber(
                         request.getAccessGainingSerialNumber(),
                         request.getAccessProvidingSerialNumber()))
-                .flatMap(Flux::fromIterable);
+                .flatMapMany(Flux::fromIterable);
     }
 
     @Override
@@ -75,7 +75,7 @@ public class AccessCertificateServiceImpl implements AccessCertificateService {
                         saveAccessCertificateRequest(request).block(),
                         deviceAndVehicle.getT1(),
                         deviceAndVehicle.getT2()))
-                .flatMap(deviceAndVehicleAndCertificate ->
+                .flatMapMany(deviceAndVehicleAndCertificate ->
                         amvAccessModule.createAccessCertificate(
                                 deviceAndVehicleAndCertificate.getT1(),
                                 deviceAndVehicleAndCertificate.getT2(),

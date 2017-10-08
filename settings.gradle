@@ -5,4 +5,6 @@ include 'access-spi'
 include 'access-spi-highmobility'
 include 'swagger'
 include 'web'
+include 'client'
+include 'client-model'
 

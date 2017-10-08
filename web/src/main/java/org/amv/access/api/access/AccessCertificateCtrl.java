@@ -77,7 +77,7 @@ public class AccessCertificateCtrl {
                         .accessCertificate(accessCertificateDto)
                         .build())
                 .map(ResponseEntity::ok)
-                .otherwiseIfEmpty(Mono.fromCallable(() -> ResponseEntity.notFound().build()))
+                .switchIfEmpty(Mono.fromCallable(() -> ResponseEntity.notFound().build()))
                 .subscribeOn(Schedulers.parallel())
                 .subscribe(onNext, onError);
 
@@ -118,7 +118,7 @@ public class AccessCertificateCtrl {
                         .accessCertificate(accessCertificateDto)
                         .build())
                 .map(ResponseEntity::ok)
-                .otherwiseIfEmpty(Mono.fromCallable(() -> ResponseEntity
+                .switchIfEmpty(Mono.fromCallable(() -> ResponseEntity
                         .status(HttpStatus.INTERNAL_SERVER_ERROR)
                         .build()))
                 .subscribeOn(Schedulers.parallel())
@@ -153,9 +153,10 @@ public class AccessCertificateCtrl {
 
         accessCertificateService.revokeAccessCertificate(request)
                 .map(foo -> ResponseEntity.noContent().<Void>build())
-                .otherwiseIfEmpty(Mono.fromCallable(() -> ResponseEntity
+                .onErrorResume(e -> Mono.fromCallable(() -> ResponseEntity
                         .status(HttpStatus.INTERNAL_SERVER_ERROR)
                         .build()))
+                .switchIfEmpty(Mono.fromCallable(() -> ResponseEntity.notFound().build()))
                 .subscribeOn(Schedulers.parallel())
                 .subscribe(onNext, onError);
 

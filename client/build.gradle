@@ -1,0 +1,34 @@
+description = 'a simple client for the amv access rest interface'
+
+buildscript {
+    ext {
+        feignVersion = '9.5.1'
+        springBootVersion = '2.0.0.M4'
+    }
+}
+
+sourceCompatibility = 1.6
+targetCompatibility = 1.6
+
+repositories {
+    maven { url 'https://repo.spring.io/milestone' }
+    maven { url 'https://repo.spring.io/libs-milestone' }
+    jcenter()
+}
+
+dependencies {
+    compile project(':client-model')
+
+    compile "io.github.openfeign:feign-core:${feignVersion}"
+    compile "io.github.openfeign:feign-okhttp:${feignVersion}"
+    compile "io.github.openfeign:feign-hystrix:${feignVersion}"
+    compile "io.github.openfeign:feign-slf4j:${feignVersion}"
+    compile "io.github.openfeign:feign-jackson:${feignVersion}"
+
+    testCompile 'com.marvinformatics.feign:feign-mock:0.6'
+
+    testCompile "org.springframework.boot:spring-boot-starter-test:${springBootVersion}"
+    testCompile "org.springframework.boot:spring-boot-starter-webflux:${springBootVersion}"
+
+}
+
