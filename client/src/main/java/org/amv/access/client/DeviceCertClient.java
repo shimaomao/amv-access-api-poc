@@ -5,7 +5,7 @@ import feign.Headers;
 import feign.Param;
 import feign.RequestLine;
 import org.amv.access.client.model.CreateDeviceCertificateRequestDto;
-import org.amv.access.client.model.DeviceCertificateDto;
+import org.amv.access.client.model.CreateDeviceCertificateResponseDto;
 
 import static com.google.common.net.HttpHeaders.AUTHORIZATION;
 import static com.google.common.net.HttpHeaders.CONTENT_TYPE;
@@ -23,7 +23,7 @@ public interface DeviceCertClient extends AmvAccessClient {
             AUTHORIZATION + ": " + "{apiKey}"
     })
     @RequestLine("POST /api/v1/device_certificates")
-    HystrixCommand<DeviceCertificateDto> createDeviceCertificate(
+    HystrixCommand<CreateDeviceCertificateResponseDto> createDeviceCertificate(
             @Param("apiKey") String apiKey,
             CreateDeviceCertificateRequestDto createDeviceCertificateRequest);
 }

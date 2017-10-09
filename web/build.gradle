@@ -12,7 +12,7 @@ bootRun {
 
 bootRepackage {
     executable = true
-    mainClass = 'org.amv.access.Application'
+    mainClass = 'org.amv.access.AmvAccessApplication'
 }
 
 springBoot {
@@ -31,6 +31,7 @@ test {
 
 
 dependencies {
+    compile project(':client-model')
     compile project(':access-spi-highmobility')
     compile project(':swagger')
 
@@ -52,8 +53,6 @@ dependencies {
     compile 'org.springframework.boot:spring-boot-starter-security'
     compile 'org.springframework.boot:spring-boot-starter-actuator'
     compile 'org.springframework.boot:spring-boot-devtools'
-
-    compile 'io.swagger:swagger-annotations:1.5.16'
 
     compile('com.zaxxer:HikariCP:2.7.1') {
         exclude group: 'org.slf4j', module: 'slf4j-api'

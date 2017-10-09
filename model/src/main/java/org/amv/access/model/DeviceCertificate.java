@@ -18,8 +18,7 @@ import java.util.Date;
 @Table(
         name = "device_certificate",
         uniqueConstraints = {
-                @UniqueConstraint(columnNames = {"device_serial_number"}),
-                @UniqueConstraint(columnNames = {"app_id"})
+                @UniqueConstraint(columnNames = {"device_serial_number"})
         }
 )
 @EntityListeners(AuditingEntityListener.class)

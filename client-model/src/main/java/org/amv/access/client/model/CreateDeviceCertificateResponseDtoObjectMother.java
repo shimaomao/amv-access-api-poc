@@ -4,14 +4,14 @@ import com.google.common.annotations.VisibleForTesting;
 import org.apache.commons.lang3.RandomStringUtils;
 
 @VisibleForTesting
-public final class DeviceCertificateDtoObjectMother {
+public final class CreateDeviceCertificateResponseDtoObjectMother {
 
-    private DeviceCertificateDtoObjectMother() {
+    private CreateDeviceCertificateResponseDtoObjectMother() {
         throw new UnsupportedOperationException();
     }
 
-    public static DeviceCertificateDto random() {
-        return DeviceCertificateDto.builder()
+    public static CreateDeviceCertificateResponseDto random() {
+        return CreateDeviceCertificateResponseDto.builder()
                 .deviceCertificate(RandomStringUtils.randomAlphanumeric(10))
                 .issuerPublicKey(RandomStringUtils.randomAlphanumeric(10))
                 .build();

@@ -1,5 +1,6 @@
 package org.amv.access.demo;
 
+import org.amv.access.model.ApplicationRepository;
 import org.amv.highmobility.cryptotool.Cryptotool;
 import org.amv.access.model.UserRepository;
 import org.amv.access.model.VehicleRepository;
@@ -15,11 +16,13 @@ public class DemoConfig {
     @Bean
     public DemoService demoService(Cryptotool cryptotool,
                                    PasswordEncoder passwordEncoder,
+                                   ApplicationRepository applicationRepository,
                                    UserRepository userRepository,
                                    VehicleRepository vehicleRepository) {
         return new DemoService(
                 cryptotool,
                 passwordEncoder,
+                applicationRepository,
                 userRepository,
                 vehicleRepository);
     }
@@ -31,6 +34,7 @@ public class DemoConfig {
             @Transactional
             public void run(String... args) throws Exception {
                 demoService.getOrCreateDemoUser();
+                demoService.getOrCreateDemoApplication();
                 demoService.createDemoData();
             }
         };

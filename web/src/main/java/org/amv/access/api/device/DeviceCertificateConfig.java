@@ -1,5 +1,6 @@
 package org.amv.access.api.device;
 
+import org.amv.access.model.ApplicationRepository;
 import org.amv.access.model.DeviceCertificateRepository;
 import org.amv.access.model.DeviceCertificateRequestRepository;
 import org.amv.access.model.DeviceRepository;
@@ -11,16 +12,13 @@ import org.springframework.context.annotation.Configuration;
 public class DeviceCertificateConfig {
 
     @Bean
-    public CreateDeviceCertificateRequestValidator createDeviceCertificateRequestValidator() {
-        return new CreateDeviceCertificateRequestValidator();
-    }
-
-    @Bean
     public DeviceCertificateService deviceCertificateService(AmvAccessModuleSpi amvAccessModule,
+                                                             ApplicationRepository applicationRepository,
                                                              DeviceRepository deviceRepository,
                                                              DeviceCertificateRepository deviceCertificateRepository,
                                                              DeviceCertificateRequestRepository deviceCertificateRequestRepository) {
         return new DeviceCertificateServiceImpl(amvAccessModule,
+                applicationRepository,
                 deviceRepository,
                 deviceCertificateRepository,
                 deviceCertificateRequestRepository);

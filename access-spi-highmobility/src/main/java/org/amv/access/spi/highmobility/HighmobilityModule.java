@@ -2,9 +2,9 @@ package org.amv.access.spi.highmobility;
 
 import com.google.common.base.Charsets;
 import org.amv.access.model.*;
+import org.amv.access.spi.AmvAccessModuleSpi;
 import org.amv.highmobility.cryptotool.Cryptotool;
 import org.amv.highmobility.cryptotool.CryptotoolWithIssuer;
-import org.amv.access.spi.AmvAccessModuleSpi;
 import reactor.core.publisher.Mono;
 
 import java.time.LocalDateTime;
@@ -22,9 +22,9 @@ public class HighmobilityModule implements AmvAccessModuleSpi {
     }
 
     @Override
-    public Mono<DeviceCertificate> createDeviceCertificate(DeviceCertificateRequest request, Device deviceEntity) {
+    public Mono<DeviceCertificate> createDeviceCertificate(Application application, Device deviceEntity) {
         Cryptotool.DeviceCertificate deviceCertificate = cryptotool.createDeviceCertificate(
-                deviceEntity.getAppId(),
+                application.getAppId(),
                 deviceEntity.getSerialNumber()
         ).block();
 

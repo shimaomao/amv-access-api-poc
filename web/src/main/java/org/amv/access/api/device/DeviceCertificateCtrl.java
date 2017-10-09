@@ -3,14 +3,18 @@ package org.amv.access.api.device;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
 import lombok.extern.slf4j.Slf4j;
+import org.amv.access.api.auth.ApplicationAuthentication;
 import org.amv.access.api.device.model.CreateDeviceCertificateRequest;
-import org.amv.access.api.device.model.CreateDeviceCertificateResponse;
-import org.amv.access.api.device.model.DeviceCertificateDto;
-import org.amv.access.api.device.model.RevokeDeviceCertificateRequest;
+import org.amv.access.client.model.CreateDeviceCertificateRequestDto;
+import org.amv.access.client.model.CreateDeviceCertificateResponseDto;
+import org.apache.commons.lang3.RandomStringUtils;
+import org.eclipse.jetty.http.HttpStatus;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.WebDataBinder;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.context.request.async.DeferredResult;
 import reactor.core.scheduler.Schedulers;
 
@@ -21,35 +25,28 @@ import static java.util.Objects.requireNonNull;
 
 @Slf4j
 @RestController
-@RequestMapping("/device_certificates")
+@RequestMapping("/api/v1/device_certificates")
 public class DeviceCertificateCtrl {
-    private final CreateDeviceCertificateRequestValidator createDeviceCertificateRequestValidator;
     private final DeviceCertificateService deviceCertificateService;
 
     @Autowired
-    public DeviceCertificateCtrl(
-            CreateDeviceCertificateRequestValidator createDeviceCertificateRequestValidator,
-            DeviceCertificateService deviceCertificateService) {
-        this.createDeviceCertificateRequestValidator = requireNonNull(createDeviceCertificateRequestValidator);
+    public DeviceCertificateCtrl(DeviceCertificateService deviceCertificateService) {
         this.deviceCertificateService = requireNonNull(deviceCertificateService);
     }
 
-    @InitBinder
-    public void setupBinder(WebDataBinder binder) {
-        binder.addValidators(createDeviceCertificateRequestValidator);
-    }
-
     @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "Success", response = CreateDeviceCertificateResponse.class)
+            @ApiResponse(code = HttpStatus.CREATED_201, message = "Created", response = CreateDeviceCertificateResponseDto.class)
     })
     @PostMapping
-    public DeferredResult<ResponseEntity<CreateDeviceCertificateResponse>> createDeviceCertificate(
-            @Valid @RequestBody CreateDeviceCertificateRequest request) {
-        requireNonNull(request);
+    public DeferredResult<ResponseEntity<CreateDeviceCertificateResponseDto>> createDeviceCertificate(
+            ApplicationAuthentication auth,
+            @RequestBody @Valid CreateDeviceCertificateRequestDto requestBody) {
+        requireNonNull(auth);
+        requireNonNull(requestBody);
 
-        DeferredResult<ResponseEntity<CreateDeviceCertificateResponse>> deferred = new DeferredResult<>();
+        DeferredResult<ResponseEntity<CreateDeviceCertificateResponseDto>> deferred = new DeferredResult<>();
 
-        Consumer<ResponseEntity<CreateDeviceCertificateResponse>> onNext = result -> {
+        Consumer<ResponseEntity<CreateDeviceCertificateResponseDto>> onNext = result -> {
             boolean canBeSent = !deferred.isSetOrExpired();
             if (!canBeSent) {
                 log.error("Deferred result is already set or expired: {}", result);
@@ -63,27 +60,25 @@ public class DeviceCertificateCtrl {
             deferred.setErrorResult(e);
         };
 
-        deviceCertificateService
-                .createDeviceCertificate(request)
-                .map(deviceCertificateEntity -> DeviceCertificateDto.builder()
-                        .id(deviceCertificateEntity.getId())
-                        .certificate(deviceCertificateEntity.getSignedCertificateBase64())
-                        .appId(deviceCertificateEntity.getAppId())
-                        .issuerName(deviceCertificateEntity.getIssuerName())
+        CreateDeviceCertificateRequest createDeviceCertificateRequest = CreateDeviceCertificateRequest.builder()
+                .appId(auth.getAppId())
+                .publicKey(requestBody.getDevicePublicKey())
+                .name(RandomStringUtils.randomAlphabetic(16))
+                .build();
+
+        deviceCertificateService.createDeviceCertificate(createDeviceCertificateRequest)
+                .map(deviceCertificateEntity -> CreateDeviceCertificateResponseDto.builder()
+                        .deviceCertificate(deviceCertificateEntity.getSignedCertificateBase64())
                         .issuerPublicKey(deviceCertificateEntity.getIssuerPublicKeyBase64())
-                        .deviceName(deviceCertificateEntity.getDeviceName())
-                        .deviceSerialNumber(deviceCertificateEntity.getDeviceSerialNumber())
                         .build())
-                .map(deviceCertificateDto -> CreateDeviceCertificateResponse.builder()
-                        .deviceCertificate(deviceCertificateDto)
-                        .build())
-                .map(ResponseEntity::ok)
+                .map(body -> ResponseEntity.status(HttpStatus.CREATED_201).body(body))
                 .subscribeOn(Schedulers.parallel())
                 .subscribe(onNext, onError);
 
         return deferred;
     }
 
+    /*
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "Success", response = CreateDeviceCertificateResponse.class)
     })
@@ -114,6 +109,6 @@ public class DeviceCertificateCtrl {
                 .subscribe(onNext, onError);
 
         return deferred;
-    }
+    }*/
 
 }

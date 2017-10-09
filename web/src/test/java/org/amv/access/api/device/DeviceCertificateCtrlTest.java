@@ -1,31 +1,36 @@
 package org.amv.access.api.device;
 
-import org.amv.access.Application;
-import org.amv.access.api.device.model.CreateDeviceCertificateRequest;
-import org.amv.access.api.device.model.CreateDeviceCertificateResponse;
-import org.amv.access.api.device.model.DeviceCertificateDto;
+import org.amv.access.AmvAccessApplication;
+import org.amv.access.client.model.CreateDeviceCertificateRequestDto;
+import org.amv.access.client.model.CreateDeviceCertificateResponseDto;
 import org.amv.access.config.TestDbConfig;
+import org.amv.access.model.Application;
+import org.amv.access.model.ApplicationRepository;
 import org.amv.highmobility.cryptotool.Cryptotool;
 import org.amv.highmobility.cryptotool.CryptotoolUtils;
-import org.amv.highmobility.cryptotool.CryptotoolUtils.TestUtils;
+import org.apache.commons.lang3.RandomStringUtils;
+import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.client.TestRestTemplate;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.test.context.junit4.SpringRunner;
 
 import static org.apache.commons.codec.binary.Base64.isBase64;
-import static org.hamcrest.Matchers.*;
+import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.notNullValue;
 import static org.junit.Assert.assertThat;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest(
         webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT,
-        classes = {Application.class, TestDbConfig.class}
+        classes = {AmvAccessApplication.class, TestDbConfig.class}
 )
 public class DeviceCertificateCtrlTest {
 
@@ -33,34 +38,86 @@ public class DeviceCertificateCtrlTest {
     private Cryptotool cryptotool;
 
     @Autowired
+    private ApplicationRepository applicationRepository;
+
+    @Autowired
     private TestRestTemplate restTemplate;
 
+    private Application application;
+
+    @Before
+    public void setUp() {
+        this.application = applicationRepository.save(Application.builder()
+                .name("Test Application")
+                .appId(CryptotoolUtils.TestUtils.generateRandomAppId())
+                .apiKey(RandomStringUtils.randomAlphanumeric(8))
+                .enabled(true)
+                .build());
+    }
+
     @Test
-    public void itShouldCreateDeviceCertificate() throws Exception {
+    public void itShouldFailCreatingDeviceCertificateIfAuthHeaderIsMissing() throws Exception {
         Cryptotool.Keys keys = cryptotool.generateKeys().block();
         String publicKeyBase64 = CryptotoolUtils.encodeHexAsBase64(keys.getPublicKey());
 
-        CreateDeviceCertificateRequest request = CreateDeviceCertificateRequest.builder()
-                .appId(TestUtils.generateRandomAppId())
-                .publicKey(publicKeyBase64)
+        CreateDeviceCertificateRequestDto body = CreateDeviceCertificateRequestDto.builder()
+                .devicePublicKey(publicKeyBase64)
                 .build();
 
-        ResponseEntity<CreateDeviceCertificateResponse> responseEntity = restTemplate
-                .postForEntity("/device_certificates", request,
-                        CreateDeviceCertificateResponse.class);
+        ResponseEntity<?> responseEntity = restTemplate
+                .postForEntity("/api/v1/device_certificates", body,
+                        CreateDeviceCertificateResponseDto.class);
 
-        assertThat(responseEntity.getStatusCode(), is(HttpStatus.OK));
+        assertThat(responseEntity.getStatusCode(), is(HttpStatus.BAD_REQUEST));
+    }
 
-        CreateDeviceCertificateResponse response = responseEntity.getBody();
+    @Test
+    public void itShouldFailCreatingDeviceCertificateIfApplicationDoesNotExist() throws Exception {
+        Cryptotool.Keys keys = cryptotool.generateKeys().block();
+        String publicKeyBase64 = CryptotoolUtils.encodeHexAsBase64(keys.getPublicKey());
+
+        CreateDeviceCertificateRequestDto body = CreateDeviceCertificateRequestDto.builder()
+                .devicePublicKey(publicKeyBase64)
+                .build();
+
+        String nonExistingApiKey = application.getApiKey() + "123";
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.add(HttpHeaders.AUTHORIZATION, nonExistingApiKey);
+        HttpEntity<CreateDeviceCertificateRequestDto> entity = new HttpEntity<>(body, headers);
+
+        ResponseEntity<?> responseEntity = restTemplate
+                .postForEntity("/api/v1/device_certificates", entity,
+                        CreateDeviceCertificateResponseDto.class);
+
+        assertThat(responseEntity.getStatusCode(), is(HttpStatus.NOT_FOUND));
+    }
+
+    @Test
+    public void itShouldCreateDeviceCertificateSuccessfully() throws Exception {
+        Cryptotool.Keys keys = cryptotool.generateKeys().block();
+        String publicKeyBase64 = CryptotoolUtils.encodeHexAsBase64(keys.getPublicKey());
+
+        CreateDeviceCertificateRequestDto body = CreateDeviceCertificateRequestDto.builder()
+                .devicePublicKey(publicKeyBase64)
+                .build();
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.add(HttpHeaders.AUTHORIZATION, application.getApiKey());
+        HttpEntity<CreateDeviceCertificateRequestDto> entity = new HttpEntity<>(body, headers);
+
+        ResponseEntity<CreateDeviceCertificateResponseDto> responseEntity = restTemplate
+                .postForEntity("/api/v1/device_certificates", entity,
+                        CreateDeviceCertificateResponseDto.class);
+
+        assertThat(responseEntity.getStatusCode(), is(HttpStatus.CREATED));
+
+        CreateDeviceCertificateResponseDto response = responseEntity.getBody();
         assertThat(response, is(notNullValue()));
 
-        DeviceCertificateDto deviceCertificate = response.getDeviceCertificate();
-
-        assertThat(deviceCertificate.getAppId(), is(equalTo(request.getAppId())));
-        assertThat(deviceCertificate.getDeviceName(), is(equalTo(request.getName())));
-
-        assertThat(deviceCertificate.getCertificate(), is(notNullValue()));
-        assertThat(isBase64(deviceCertificate.getCertificate()), is(true));
+        String deviceCertificate = response.getDeviceCertificate();
+        assertThat(deviceCertificate, is(notNullValue()));
+        assertThat(isBase64(deviceCertificate), is(true));
     }
 
     @Test

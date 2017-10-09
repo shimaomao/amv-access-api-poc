@@ -21,7 +21,7 @@ import static java.util.Objects.requireNonNull;
 
 @Slf4j
 @RestController
-@RequestMapping("/access_certificates")
+@RequestMapping("/api/v1/access_certificates")
 public class AccessCertificateCtrl {
 
     private final CreateAccessCertificateRequestValidator createAccessCertificateRequestValidator;

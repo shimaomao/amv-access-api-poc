@@ -9,8 +9,8 @@ import feign.mock.HttpMethod;
 import feign.mock.MockClient;
 import feign.mock.MockTarget;
 import org.amv.access.client.model.CreateDeviceCertificateRequestDto;
-import org.amv.access.client.model.DeviceCertificateDto;
-import org.amv.access.client.model.DeviceCertificateDtoObjectMother;
+import org.amv.access.client.model.CreateDeviceCertificateResponseDto;
+import org.amv.access.client.model.CreateDeviceCertificateResponseDtoObjectMother;
 import org.apache.commons.lang.RandomStringUtils;
 import org.junit.Test;
 import org.springframework.http.HttpStatus;
@@ -28,7 +28,7 @@ public class DeviceCertClientTest {
 
     @Test
     public void createDeviceCertificate() throws JsonProcessingException {
-        DeviceCertificateDto deviceCertificate = DeviceCertificateDtoObjectMother.random();
+        CreateDeviceCertificateResponseDto deviceCertificate = CreateDeviceCertificateResponseDtoObjectMother.random();
         String deviceCertificateAsJson = Clients.defaultObjectMapper.writeValueAsString(deviceCertificate);
 
         MockClient mockClient = new MockClient()
@@ -48,10 +48,10 @@ public class DeviceCertClientTest {
         CreateDeviceCertificateRequestDto request = CreateDeviceCertificateRequestDto.builder()
                 .build();
 
-        HystrixCommand<DeviceCertificateDto> deviceCertificateRequest = sut
+        HystrixCommand<CreateDeviceCertificateResponseDto> deviceCertificateRequest = sut
                 .createDeviceCertificate(RANDOM_API_KEY, request);
 
-        DeviceCertificateDto deviceCertificateResponse = deviceCertificateRequest.execute();
+        CreateDeviceCertificateResponseDto deviceCertificateResponse = deviceCertificateRequest.execute();
 
         assertThat(deviceCertificateResponse, is(notNullValue()));
         assertThat(deviceCertificateResponse.getDeviceCertificate(), is(deviceCertificate.getDeviceCertificate()));

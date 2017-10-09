@@ -1,6 +1,6 @@
 package org.amv.access.model;
 
-import org.amv.access.Application;
+import org.amv.access.AmvAccessApplication;
 import org.amv.access.config.TestDbConfig;
 import org.amv.access.demo.DemoService;
 import org.amv.access.demo.DemoUser;
@@ -20,7 +20,7 @@ import static org.junit.Assert.assertEquals;
 @RunWith(SpringRunner.class)
 @SpringBootTest(
         webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT,
-        classes = {Application.class, TestDbConfig.class}
+        classes = {AmvAccessApplication.class, TestDbConfig.class}
 )
 public class UserRepositoryRestTest {
     @Autowired

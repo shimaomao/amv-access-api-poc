@@ -4,12 +4,10 @@ import com.google.common.base.Supplier;
 import com.google.common.base.Suppliers;
 import com.google.common.collect.Lists;
 import lombok.extern.slf4j.Slf4j;
-import org.amv.access.Application;
-import org.amv.access.model.User;
-import org.amv.access.model.UserRepository;
-import org.amv.access.model.Vehicle;
-import org.amv.access.model.VehicleRepository;
+import org.amv.access.AmvAccessApplication;
+import org.amv.access.model.*;
 import org.amv.highmobility.cryptotool.Cryptotool;
+import org.amv.highmobility.cryptotool.CryptotoolUtils;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -20,9 +18,12 @@ import static java.util.Objects.requireNonNull;
 
 @Slf4j
 public class DemoService {
+    private static final String DEMO_USER_NAME = "demo";
+    private static final String DEMO_APP_NAME = "demo";
 
     private final Cryptotool cryptotool;
     private final PasswordEncoder passwordEncoder;
+    private final ApplicationRepository applicationRepository;
     private final UserRepository userRepository;
     private final VehicleRepository vehicleRepository;
 
@@ -31,16 +32,18 @@ public class DemoService {
 
     public DemoService(Cryptotool cryptotool,
                        PasswordEncoder passwordEncoder,
+                       ApplicationRepository applicationRepository,
                        UserRepository userRepository,
                        VehicleRepository vehicleRepository) {
         this.cryptotool = cryptotool;
         this.passwordEncoder = requireNonNull(passwordEncoder);
+        this.applicationRepository = requireNonNull(applicationRepository);
         this.userRepository = requireNonNull(userRepository);
         this.vehicleRepository = vehicleRepository;
     }
 
     public DemoUser getOrCreateDemoUser() {
-        final User user = userRepository.findByName("demo", Application.standardPageRequest)
+        final User user = userRepository.findByName(DEMO_USER_NAME, AmvAccessApplication.standardPageRequest)
                 .getContent()
                 .stream()
                 .findFirst()
@@ -49,6 +52,16 @@ public class DemoService {
         return demoUserBuilderSupplier.get()
                 .origin(user)
                 .build();
+    }
+
+    public Application getOrCreateDemoApplication() {
+        Application application = applicationRepository.findByName(DEMO_APP_NAME, AmvAccessApplication.standardPageRequest)
+                .getContent()
+                .stream()
+                .findFirst()
+                .orElseGet(this::createDemoApplication);
+
+        return applicationRepository.save(application);
     }
 
     public void createDemoData() {
@@ -87,12 +100,21 @@ public class DemoService {
     }
 
     private DemoUser.DemoUserBuilder createDemoUserBuilder() {
-        final String username = "demo";
+        final String username = DEMO_USER_NAME;
         final String password = "demo";
         return DemoUser.builder()
                 .name(username)
                 .password(password)
                 .encryptedPassword(passwordEncoder.encode(password));
+    }
+
+    private Application createDemoApplication() {
+        return Application.builder()
+                .name(DEMO_APP_NAME)
+                .appId(CryptotoolUtils.TestUtils.generateRandomAppId())
+                .apiKey(RandomStringUtils.randomAlphanumeric(8))
+                .enabled(true)
+                .build();
     }
 
 }

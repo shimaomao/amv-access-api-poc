@@ -8,12 +8,12 @@ public interface AmvAccessModuleSpi {
     /**
      * Create a device certificate to be stored on the users device.
      *
-     * @param deviceCertificateRequest the incoming request entity
+     * @param application the application requesting a certificate
      * @param device the device the created certificate is for
      * @return a device certificate for the device
      */
     Mono<DeviceCertificate> createDeviceCertificate(
-            DeviceCertificateRequest deviceCertificateRequest,
+            Application application,
             Device device
     );
 

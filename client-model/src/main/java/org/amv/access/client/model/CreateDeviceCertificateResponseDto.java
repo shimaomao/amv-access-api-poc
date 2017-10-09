@@ -11,7 +11,7 @@ import lombok.experimental.Tolerate;
 @Data
 @Setter(AccessLevel.PROTECTED)
 @Builder(builderClassName = "Builder")
-public class DeviceCertificateDto {
+public class CreateDeviceCertificateResponseDto {
 
     @JsonProperty("device_certificate")
     @ApiModelProperty(notes = "The generated device certificate for this device", dataType = "String (encoded in base64)")
@@ -22,7 +22,7 @@ public class DeviceCertificateDto {
     private String issuerPublicKey;
 
     @Tolerate
-    protected DeviceCertificateDto() {
+    protected CreateDeviceCertificateResponseDto() {
 
     }
 }

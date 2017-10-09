@@ -1,6 +1,6 @@
 package org.amv.access.api.access;
 
-import org.amv.access.Application;
+import org.amv.access.AmvAccessApplication;
 import org.amv.access.api.access.model.*;
 import org.amv.access.config.TestDbConfig;
 import org.amv.highmobility.cryptotool.Cryptotool;
@@ -29,7 +29,7 @@ import static org.junit.Assert.assertThat;
 @RunWith(SpringRunner.class)
 @SpringBootTest(
         webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT,
-        classes = {Application.class, TestDbConfig.class}
+        classes = {AmvAccessApplication.class, TestDbConfig.class}
 )
 public class AccessCertificateCtrlTest {
     @Autowired
@@ -55,7 +55,7 @@ public class AccessCertificateCtrlTest {
                 .build();
 
         ResponseEntity<GetAccessCertificateResponse> responseEntity = restTemplate
-                .getForEntity("/access_certificates?" +
+                .getForEntity("/api/v1/access_certificates?" +
                                 "accessGainingSerialNumber={accessGainingSerialNumber}&" +
                                 "accessProvidingSerialNumber={accessProvidingSerialNumber}", GetAccessCertificateResponse.class,
                         request.getAccessGainingSerialNumber(),
@@ -76,7 +76,7 @@ public class AccessCertificateCtrlTest {
                 .build();
 
         ResponseEntity<CreateAccessCertificateResponse> responseEntity = restTemplate
-                .postForEntity("/access_certificates", request,
+                .postForEntity("/api/v1/access_certificates", request,
                         CreateAccessCertificateResponse.class);
 
         assertThat(responseEntity.getStatusCode(), is(HttpStatus.OK));
@@ -105,7 +105,7 @@ public class AccessCertificateCtrlTest {
                 .build();
 
         ResponseEntity<CreateAccessCertificateResponse> createAccessCertificateResponse = restTemplate
-                .postForEntity("/access_certificates", createAccessCertificateRequest,
+                .postForEntity("/api/v1/access_certificates", createAccessCertificateRequest,
                         CreateAccessCertificateResponse.class);
 
         assertThat(createAccessCertificateResponse.getStatusCode(), is(HttpStatus.OK));
@@ -116,7 +116,7 @@ public class AccessCertificateCtrlTest {
                 .build();
 
         ResponseEntity<GetAccessCertificateResponse> getAccessCertificateResponse = restTemplate
-                .getForEntity("/access_certificates?" +
+                .getForEntity("/api/v1/access_certificates?" +
                         "accessGainingSerialNumber={accessGainingSerialNumber}&" +
                         "accessProvidingSerialNumber={accessProvidingSerialNumber}", GetAccessCertificateResponse.class,
                         getAccessCertificateRequest.getAccessGainingSerialNumber(),

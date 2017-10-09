@@ -1,4 +1,4 @@
-package org.amv.access.api.device.model;
+package org.amv.access.api.device.deprecated;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import io.swagger.annotations.ApiModel;
@@ -6,6 +6,7 @@ import io.swagger.annotations.ApiModelProperty;
 import lombok.Builder;
 import lombok.Data;
 
+@Deprecated
 @Data
 @Builder(builderClassName = "Builder")
 @ApiModel(description = "A resource representing a device certificate.")
@@ -20,7 +21,7 @@ public class DeviceCertificateDto {
     private String certificate;
 
     @JsonProperty(value = "app_id")
-    @ApiModelProperty(notes = " the ID of the Application whose issuer signed the certificate", required = true)
+    @ApiModelProperty(notes = " the ID of the AmvAccessApplication whose issuer signed the certificate", required = true)
     private String appId;
 
     @JsonProperty(value = "issuer_name")
