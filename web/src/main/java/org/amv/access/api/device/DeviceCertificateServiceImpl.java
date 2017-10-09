@@ -11,6 +11,8 @@ import org.amv.highmobility.cryptotool.CryptotoolUtils.TestUtils;
 import org.springframework.transaction.annotation.Transactional;
 import reactor.core.publisher.Mono;
 
+import java.util.Optional;
+
 import static java.util.Objects.requireNonNull;
 
 @Slf4j
@@ -79,15 +81,37 @@ public class DeviceCertificateServiceImpl implements DeviceCertificateService {
         requireNonNull(deviceCertificateRequestEntity.getPublicKey());
 
         String devicePublicKey = CryptotoolUtils.decodeBase64AsHex(deviceCertificateRequestEntity.getPublicKey());
-        String deviceSerialNumberMock = TestUtils.generateRandomSerial();
+        String deviceSerialNumber = generateNewDeviceSerial();
 
         Device device = Device.builder()
                 .appId(application.getAppId())
                 .name(deviceCertificateRequestEntity.getName())
-                .serialNumber(deviceSerialNumberMock)
+                .serialNumber(deviceSerialNumber)
                 .publicKey(devicePublicKey)
                 .build();
 
         return deviceRepository.save(device);
+    }
+
+    private String generateNewDeviceSerial() {
+        int numberOfTries = 25;
+
+        for (int i = 0; i < numberOfTries; i++) {
+            String deviceSerialNumber = TestUtils.generateRandomSerial();
+
+            Optional<Device> bySerialNumber = deviceRepository.findBySerialNumber(deviceSerialNumber);
+            boolean deviceWithSerialNumberAlreadyExists = bySerialNumber.isPresent();
+            if (deviceWithSerialNumberAlreadyExists) {
+                log.warn("Could not obtain new device serial number on {}. try...", i + 1);
+            } else {
+                if (log.isDebugEnabled()) {
+                    log.debug("Obtained new device serial number: {}", deviceSerialNumber);
+                }
+                return deviceSerialNumber;
+            }
+        }
+
+        String errorMessage = String.format("Could not obtain a device serial after %d retries", numberOfTries);
+        throw new IllegalStateException(errorMessage);
     }
 }
