@@ -55,6 +55,5 @@ public class DeviceCertClientTest {
 
         assertThat(deviceCertificateResponse, is(notNullValue()));
         assertThat(deviceCertificateResponse.getDeviceCertificate(), is(deviceCertificate.getDeviceCertificate()));
-        assertThat(deviceCertificateResponse.getIssuerPublicKey(), is(deviceCertificate.getIssuerPublicKey()));
     }
 }

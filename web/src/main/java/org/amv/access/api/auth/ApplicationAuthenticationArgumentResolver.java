@@ -3,8 +3,11 @@ package org.amv.access.api.auth;
 import com.google.common.base.CharMatcher;
 import com.google.common.net.HttpHeaders;
 import lombok.extern.slf4j.Slf4j;
+import org.amv.access.auth.ApplicationAuthentication;
+import org.amv.access.auth.ApplicationAuthenticationImpl;
 import org.amv.access.exception.BadRequestException;
 import org.amv.access.exception.NotFoundException;
+import org.amv.access.exception.UnprocessableEntityException;
 import org.amv.access.model.Application;
 import org.springframework.core.MethodParameter;
 import org.springframework.web.bind.support.WebDataBinderFactory;
@@ -54,7 +57,7 @@ public class ApplicationAuthenticationArgumentResolver implements HandlerMethodA
 
         if (!application.isEnabled()) {
             log.warn("");
-            throw new BadRequestException("Application with given apiKey is disabled");
+            throw new UnprocessableEntityException("Application with given apiKey is disabled");
         }
 
         return ApplicationAuthenticationImpl.builder()

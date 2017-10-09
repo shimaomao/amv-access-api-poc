@@ -3,25 +3,26 @@ package org.amv.access.api.access;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
 import lombok.extern.slf4j.Slf4j;
-import org.amv.access.api.access.model.*;
+import org.amv.access.api.ErrorResponseDto;
+import org.amv.access.api.access.model.GetAccessCertificateRequest;
+import org.amv.access.api.access.model.RevokeAccessCertificateRequest;
+import org.amv.access.auth.NonceAuthentication;
+import org.amv.access.client.model.AccessCertificateDto;
+import org.amv.access.client.model.GetAccessCertificatesResponseDto;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.WebDataBinder;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.context.request.async.DeferredResult;
 import reactor.core.publisher.Mono;
-import reactor.core.scheduler.Schedulers;
 
-import javax.validation.Valid;
-import java.util.Optional;
-import java.util.function.Consumer;
+import java.util.UUID;
 
 import static java.util.Objects.requireNonNull;
+import static org.eclipse.jetty.http.HttpStatus.*;
 
 @Slf4j
 @RestController
-@RequestMapping("/api/v1/access_certificates")
+@RequestMapping("/api/v1/device/{deviceSerialNumber}/access_certificates")
 public class AccessCertificateCtrl {
 
     private final CreateAccessCertificateRequestValidator createAccessCertificateRequestValidator;
@@ -41,49 +42,36 @@ public class AccessCertificateCtrl {
     }
 
     @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "Success", response = GetAccessCertificateResponse.class)
+            @ApiResponse(code = OK_200, message = "Return list of Access Certificates", response = GetAccessCertificatesResponseDto.class),
+            @ApiResponse(code = UNAUTHORIZED_401, message = "If signature is invalid", response = ErrorResponseDto.class),
+            @ApiResponse(code = NOT_FOUND_404, message = "If a device with given serial number is not found", response = ErrorResponseDto.class),
+            @ApiResponse(code = UNPROCESSABLE_ENTITY_422, message = "if required params are missing or invalid", response = ErrorResponseDto.class)
     })
     @GetMapping
-    public DeferredResult<ResponseEntity<GetAccessCertificateResponse>> getAccessCertificates(
-            GetAccessCertificateRequest request) {
+    public ResponseEntity<GetAccessCertificatesResponseDto> getAccessCertificates(
+            NonceAuthentication nonceAuthentication,
+            @PathVariable("deviceSerialNumber") String deviceSerialNumber) {
 
-        DeferredResult<ResponseEntity<GetAccessCertificateResponse>> deferred = new DeferredResult<>();
+        GetAccessCertificateRequest request = GetAccessCertificateRequest.builder()
+                .deviceSerialNumber(deviceSerialNumber)
+                .build();
 
-        Consumer<ResponseEntity<GetAccessCertificateResponse>> onNext = result -> {
-            boolean canBeSent = !deferred.isSetOrExpired();
-            if (!canBeSent) {
-                log.error("Deferred result is already set or expired: {}", result);
-            } else {
-                deferred.setResult(result);
-            }
-        };
-
-        Consumer<Throwable> onError = e -> {
-            log.error("", e);
-            deferred.setErrorResult(e);
-        };
-
-        // TODO: do not just take first one -> return a resources representing a list of certs
-        accessCertificateService.getAccessCertificates(request)
+        ResponseEntity<GetAccessCertificatesResponseDto> response = accessCertificateService.getAccessCertificates(nonceAuthentication, request)
                 .map(accessCertificate -> AccessCertificateDto.builder()
-                        .vehicleAccessCertificate(accessCertificate.getSignedVehicleCertificateBase64())
-                        .deviceAccessCertificate(accessCertificate.getSignedDeviceCertificateBase64())
+                        .accessCertificate(accessCertificate.getSignedDeviceCertificateBase64())
                         .build())
                 .collectList()
-                .map(list -> list.stream().findFirst())
-                .filter(Optional::isPresent)
-                .map(Optional::get)
-                .map(accessCertificateDto -> GetAccessCertificateResponse.builder()
-                        .accessCertificate(accessCertificateDto)
+                .map(accessCertificateDto -> GetAccessCertificatesResponseDto.builder()
+                        .accessCertificates(accessCertificateDto)
                         .build())
                 .map(ResponseEntity::ok)
                 .switchIfEmpty(Mono.fromCallable(() -> ResponseEntity.notFound().build()))
-                .subscribeOn(Schedulers.parallel())
-                .subscribe(onNext, onError);
+                .block();
 
-        return deferred;
+        return response;
     }
 
+    /*
     // TODO: this method must either only be called by authorized users or not callable via http at all
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "Success", response = CreateAccessCertificateResponse.class)
@@ -125,42 +113,33 @@ public class AccessCertificateCtrl {
                 .subscribe(onNext, onError);
 
         return deferred;
-    }
+    }*/
 
     @ApiResponses(value = {
-            @ApiResponse(code = 204, message = "No Content", response = Void.class)
+            @ApiResponse(code = NO_CONTENT_204, message = "The resource was deleted successfully."),
+            @ApiResponse(code = BAD_REQUEST_400, message = "If required params are missing or invalid.", response = ErrorResponseDto.class),
+            @ApiResponse(code = NOT_FOUND_404, message = "If a device with given serial number or access certificate is not found.", response = ErrorResponseDto.class)
     })
-    @DeleteMapping
-    public DeferredResult<ResponseEntity<Void>> revokeAccessCertificate(
-            @RequestBody RevokeAccessCertificateRequest request) {
-        requireNonNull(request);
+    @DeleteMapping("/{accessCertificateId}")
+    public ResponseEntity<Void> revokeAccessCertificate(
+            NonceAuthentication nonceAuthentication,
+            @PathVariable("deviceSerialNumber") String deviceSerialNumber,
+            @PathVariable("accessCertificateId") UUID accessCertificateId) {
+        requireNonNull(deviceSerialNumber);
+        requireNonNull(accessCertificateId);
 
-        DeferredResult<ResponseEntity<Void>> deferred = new DeferredResult<>();
+        RevokeAccessCertificateRequest revokeAccessCertificateRequest = RevokeAccessCertificateRequest.builder()
+                .deviceSerialNumber(deviceSerialNumber)
+                .accessCertificateId(accessCertificateId)
+                .build();
 
-        Consumer<ResponseEntity<Void>> onNext = response -> {
-            boolean canBeSent = !deferred.isSetOrExpired();
-            if (!canBeSent) {
-                log.error("Deferred result is already set or expired.");
-            } else {
-                deferred.setResult(response);
-            }
-        };
-
-        Consumer<Throwable> onError = e -> {
-            log.error("", e);
-            deferred.setErrorResult(e);
-        };
-
-        accessCertificateService.revokeAccessCertificate(request)
+        ResponseEntity<Void> response = accessCertificateService
+                .revokeAccessCertificate(nonceAuthentication, revokeAccessCertificateRequest)
                 .map(foo -> ResponseEntity.noContent().<Void>build())
-                .onErrorResume(e -> Mono.fromCallable(() -> ResponseEntity
-                        .status(HttpStatus.INTERNAL_SERVER_ERROR)
-                        .build()))
-                .switchIfEmpty(Mono.fromCallable(() -> ResponseEntity.notFound().build()))
-                .subscribeOn(Schedulers.parallel())
-                .subscribe(onNext, onError);
+                .defaultIfEmpty(ResponseEntity.noContent().build())
+                .block();
 
-        return deferred;
+        return response;
     }
 
 }

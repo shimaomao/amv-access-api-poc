@@ -1,29 +1,34 @@
 package org.amv.access.api.access;
 
 import org.amv.access.AmvAccessApplication;
-import org.amv.access.api.access.model.*;
+import org.amv.access.api.MoreHttpHeaders;
+import org.amv.access.client.model.CreateDeviceCertificateRequestDto;
+import org.amv.access.client.model.GetAccessCertificatesResponseDto;
 import org.amv.access.config.TestDbConfig;
+import org.amv.access.model.*;
+import org.amv.access.test.DeviceWithKeys;
 import org.amv.highmobility.cryptotool.Cryptotool;
 import org.amv.highmobility.cryptotool.CryptotoolUtils;
-import org.amv.access.model.Device;
-import org.amv.access.model.DeviceRepository;
-import org.amv.access.model.Vehicle;
-import org.amv.access.model.VehicleRepository;
+import org.apache.commons.codec.binary.Hex;
 import org.apache.commons.lang3.RandomStringUtils;
+import org.apache.commons.lang3.RandomUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.client.TestRestTemplate;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
+import org.springframework.http.*;
 import org.springframework.test.context.junit4.SpringRunner;
+import reactor.core.publisher.Mono;
 
-import static org.apache.commons.codec.binary.Base64.isBase64;
+import java.security.SecureRandom;
+import java.util.Optional;
+
+import static com.google.common.base.Preconditions.checkArgument;
 import static org.hamcrest.Matchers.is;
-import static org.hamcrest.Matchers.notNullValue;
 import static org.junit.Assert.assertThat;
 
 @RunWith(SpringRunner.class)
@@ -42,28 +47,130 @@ public class AccessCertificateCtrlTest {
     private DeviceRepository deviceRepository;
 
     @Autowired
+    private ApplicationRepository applicationRepository;
+
+    @Autowired
     private TestRestTemplate restTemplate;
 
-    @Test
-    public void itShouldFetchAllAccessCertificates() throws Exception {
-        Vehicle vehicle = createDummyVehicle();
-        Device device = createDummyDevice();
+    private Application application;
+    private DeviceWithKeys deviceWithKeys;
 
-        GetAccessCertificateRequest request = GetAccessCertificateRequest.builder()
-                .accessGainingSerialNumber(device.getSerialNumber())
-                .accessProvidingSerialNumber(vehicle.getSerialNumber())
+    @Before
+    public void setUp() {
+        this.application = applicationRepository.save(Application.builder()
+                .name("Test Application")
+                .appId(CryptotoolUtils.TestUtils.generateRandomAppId())
+                .apiKey(RandomStringUtils.randomAlphanumeric(8))
+                .enabled(true)
+                .build());
+
+        Cryptotool.Keys keys = cryptotool.generateKeys().block();
+
+        Device device = createAndSaveDevice(application, keys);
+
+        this.deviceWithKeys = DeviceWithKeys.builder()
+                .device(device)
+                .keys(keys)
                 .build();
-
-        ResponseEntity<GetAccessCertificateResponse> responseEntity = restTemplate
-                .getForEntity("/api/v1/access_certificates?" +
-                                "accessGainingSerialNumber={accessGainingSerialNumber}&" +
-                                "accessProvidingSerialNumber={accessProvidingSerialNumber}", GetAccessCertificateResponse.class,
-                        request.getAccessGainingSerialNumber(),
-                        request.getAccessProvidingSerialNumber());
-
-        assertThat(responseEntity.getStatusCode(), is(HttpStatus.NOT_FOUND));
     }
 
+    @Test
+    public void itShouldFailGetAccessCertificateIfNonceHeaderIsMissing() throws Exception {
+        Device device = deviceWithKeys.getDevice();
+
+        HttpHeaders headers = new HttpHeaders();
+
+        HttpEntity<?> entity = new HttpEntity<>(headers);
+
+        ResponseEntity<?> responseEntity = restTemplate
+                .exchange("/api/v1/device/{deviceSerialNumber}/access_certificates",
+                        HttpMethod.GET, entity, GetAccessCertificatesResponseDto.class,
+                        device.getSerialNumber());
+
+        assertThat(responseEntity.getStatusCode(), is(HttpStatus.BAD_REQUEST));
+    }
+
+    @Test
+    public void itShouldFailGetAccessCertificateIfSignatureHeaderIsMissing() throws Exception {
+        Device device = deviceWithKeys.getDevice();
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.add(MoreHttpHeaders.AMV_NONCE, "42");
+
+        HttpEntity<?> entity = new HttpEntity<>(headers);
+
+        ResponseEntity<?> responseEntity = restTemplate
+                .exchange("/api/v1/device/{deviceSerialNumber}/access_certificates",
+                        HttpMethod.GET, entity, GetAccessCertificatesResponseDto.class,
+                        device.getSerialNumber());
+
+        assertThat(responseEntity.getStatusCode(), is(HttpStatus.BAD_REQUEST));
+    }
+
+
+    @Test
+    public void itShouldFailGetAccessCertificateIfNonceSignatureHeaderIsInvalid() throws Exception {
+        Device device = deviceWithKeys.getDevice();
+
+        String nonce = generateNonceWithRandomLength();
+        String signedNonce = signNonce(deviceWithKeys.getKeys(), generateNonceWithRandomLength());
+
+        Cryptotool.Validity signedNonceValidity = Optional.of(cryptotool.verifySignature(nonce, signedNonce, device.getPublicKey()))
+                .map(Mono::block)
+                .orElse(Cryptotool.Validity.VALID);
+
+        assertThat("Sanity check", signedNonceValidity, is(Cryptotool.Validity.INVALID));
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.add(MoreHttpHeaders.AMV_NONCE, nonce);
+        headers.add(MoreHttpHeaders.AMV_SIGNATURE, signedNonce);
+
+        HttpEntity<?> entity = new HttpEntity<>(headers);
+
+        ResponseEntity<?> responseEntity = restTemplate
+                .exchange("/api/v1/device/{deviceSerialNumber}/access_certificates",
+                        HttpMethod.GET, entity, GetAccessCertificatesResponseDto.class,
+                        device.getSerialNumber());
+
+        assertThat(responseEntity.getStatusCode(), is(HttpStatus.UNAUTHORIZED));
+    }
+
+    @Test
+    public void itShouldGetAccessCertificatesSuccessfully() throws Exception {
+        Device device = deviceWithKeys.getDevice();
+
+        String nonce = generateNonceWithRandomLength();
+        String signedNonce = signNonce(deviceWithKeys.getKeys(), nonce);
+
+        Cryptotool.Validity signedNonceValidity = Optional.of(cryptotool.verifySignature(nonce, signedNonce, device.getPublicKey()))
+                .map(Mono::block)
+                .orElse(Cryptotool.Validity.INVALID);
+
+        assertThat("Sanity check", signedNonceValidity, is(Cryptotool.Validity.VALID));
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.add(MoreHttpHeaders.AMV_NONCE, nonce);
+        headers.add(MoreHttpHeaders.AMV_SIGNATURE, signedNonce);
+
+        HttpEntity<CreateDeviceCertificateRequestDto> entity = new HttpEntity<>(headers);
+
+        ResponseEntity<GetAccessCertificatesResponseDto> responseEntity = restTemplate
+                .exchange("/api/v1/device/{deviceSerialNumber}/access_certificates",
+                        HttpMethod.GET, entity, GetAccessCertificatesResponseDto.class,
+                        device.getSerialNumber());
+
+        assertThat(responseEntity.getStatusCode(), is(HttpStatus.OK));
+        // TODO: test for present access certificates
+    }
+
+
+    @Test
+    @Ignore("not implemented yet")
+    public void itShouldRevokeAccessCertificate() throws Exception {
+        // TODO: implement me
+    }
+
+    /*
     @Test
     public void itShouldCreateAccessCertificate() throws Exception {
         Vehicle vehicle = createDummyVehicle();
@@ -129,7 +236,7 @@ public class AccessCertificateCtrlTest {
         assertThat(body.getAccessCertificate(), is(notNullValue()));
         assertThat(body.getAccessCertificate().getDeviceAccessCertificate(), is(notNullValue()));
         assertThat(body.getAccessCertificate().getVehicleAccessCertificate(), is(notNullValue()));
-    }
+    }*/
 
     private Device createDummyDevice() {
         Cryptotool.Keys keys = cryptotool.generateKeys().block();
@@ -155,10 +262,32 @@ public class AccessCertificateCtrlTest {
         return vehicleRepository.save(vehicle);
     }
 
-    @Test
-    @Ignore("not implemented yet")
-    public void itShouldRevokeAccessCertificate() throws Exception {
-        // TODO: implement me
+    private String generateNonceWithRandomLength() {
+        return generateNonce(RandomUtils.nextInt(8, 32));
     }
 
+    private String generateNonce(int numberOfBytes) {
+        checkArgument(numberOfBytes > 0);
+        SecureRandom random = new SecureRandom();
+        byte nonceBytes[] = new byte[numberOfBytes];
+        random.nextBytes(nonceBytes);
+
+        return Hex.encodeHexString(nonceBytes);
+    }
+
+    private String signNonce(Cryptotool.Keys keys, String nonce) {
+        return Optional.of(cryptotool.generateSignature(nonce, keys.getPrivateKey()))
+                .map(Mono::block)
+                .map(Cryptotool.Signature::getSignature)
+                .orElseThrow(IllegalStateException::new);
+    }
+
+    private Device createAndSaveDevice(Application application, Cryptotool.Keys keys) {
+        return deviceRepository.save(Device.builder()
+                .appId(application.getAppId())
+                .name(StringUtils.prependIfMissing("test-", RandomStringUtils.randomAlphanumeric(10)))
+                .serialNumber(CryptotoolUtils.TestUtils.generateRandomSerial())
+                .publicKey(keys.getPublicKey())
+                .build());
+    }
 }

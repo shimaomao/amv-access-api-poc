@@ -1,4 +1,4 @@
-package org.amv.access.api.auth;
+package org.amv.access.auth;
 
 import lombok.Builder;
 import lombok.NonNull;

@@ -15,15 +15,27 @@ import lombok.experimental.Tolerate;
 public class AccessCertificateDto {
 
     @JsonProperty("id")
-    @ApiModelProperty(notes = "Recommended to use an ID that is not incremental and not easy to guess", dataType = "String")
+    @ApiModelProperty(
+            value = "Recommended to use an ID that is not incremental and not easy to guess",
+            dataType = "String",
+            required = true
+    )
     private String id;
 
     @JsonProperty("access_certificate")
-    @ApiModelProperty(notes = "the full access certificate for the vehicle in binary format", dataType = "String (encoded in base64)")
+    @ApiModelProperty(
+            value = "the full access certificate for the vehicle in binary format",
+            dataType = "String (encoded in base64)",
+            required = true
+    )
     private String accessCertificate;
 
     @JsonProperty("name")
-    @ApiModelProperty(notes = "You may return car model or license plate number", dataType = "String")
+    @ApiModelProperty(
+            value = "You may return car model or license plate number",
+            dataType = "String",
+            required = false
+    )
     private String name;
 
     @Tolerate

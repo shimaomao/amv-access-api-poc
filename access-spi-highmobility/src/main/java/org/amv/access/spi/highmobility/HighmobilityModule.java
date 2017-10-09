@@ -1,6 +1,7 @@
 package org.amv.access.spi.highmobility;
 
 import com.google.common.base.Charsets;
+import org.amv.access.auth.NonceAuthentication;
 import org.amv.access.model.*;
 import org.amv.access.spi.AmvAccessModuleSpi;
 import org.amv.highmobility.cryptotool.Cryptotool;
@@ -10,6 +11,7 @@ import reactor.core.publisher.Mono;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.Base64;
+import java.util.UUID;
 
 import static java.util.Objects.requireNonNull;
 
@@ -22,7 +24,21 @@ public class HighmobilityModule implements AmvAccessModuleSpi {
     }
 
     @Override
+    public Mono<Boolean> isValidNonceAuth(NonceAuthentication nonceAuthentication, Device deviceEntity) {
+        requireNonNull(nonceAuthentication);
+        requireNonNull(deviceEntity);
+
+        return cryptotool.verifySignature(nonceAuthentication.getNonce(),
+                nonceAuthentication.getSignedNonce(),
+                deviceEntity.getPublicKey())
+                .map(v -> v == Cryptotool.Validity.VALID);
+    }
+
+    @Override
     public Mono<DeviceCertificate> createDeviceCertificate(Application application, Device deviceEntity) {
+        requireNonNull(application);
+        requireNonNull(deviceEntity);
+
         Cryptotool.DeviceCertificate deviceCertificate = cryptotool.createDeviceCertificate(
                 application.getAppId(),
                 deviceEntity.getSerialNumber()
@@ -58,7 +74,13 @@ public class HighmobilityModule implements AmvAccessModuleSpi {
     }
 
     @Override
-    public Mono<AccessCertificate> createAccessCertificate(AccessCertificateRequest accessCertificateRequest, Device device, Vehicle vehicle) {
+    public Mono<AccessCertificate> createAccessCertificate(AccessCertificateRequest accessCertificateRequest,
+                                                           Device device,
+                                                           Vehicle vehicle) {
+        requireNonNull(accessCertificateRequest);
+        requireNonNull(device);
+        requireNonNull(vehicle);
+
         LocalDateTime validFrom = LocalDateTime.ofInstant(accessCertificateRequest
                         .getValidFrom()
                         .toInstant(),
@@ -106,6 +128,7 @@ public class HighmobilityModule implements AmvAccessModuleSpi {
                 .block();
 
         AccessCertificate accessCertificateEntity = AccessCertificate.builder()
+                .uuid(UUID.randomUUID().toString())
                 .appId(accessCertificateRequest.getAppId())
                 .vehicleSerialNumber(vehicle.getSerialNumber())
                 .deviceSerialNumber(device.getSerialNumber())

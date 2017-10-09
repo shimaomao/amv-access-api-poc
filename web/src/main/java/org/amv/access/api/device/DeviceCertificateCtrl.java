@@ -3,10 +3,12 @@ package org.amv.access.api.device;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
 import lombok.extern.slf4j.Slf4j;
-import org.amv.access.api.auth.ApplicationAuthentication;
+import org.amv.access.api.ErrorResponseDto;
+import org.amv.access.auth.ApplicationAuthentication;
 import org.amv.access.api.device.model.CreateDeviceCertificateRequest;
 import org.amv.access.client.model.CreateDeviceCertificateRequestDto;
 import org.amv.access.client.model.CreateDeviceCertificateResponseDto;
+import org.amv.access.client.model.DeviceCertificateDto;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.eclipse.jetty.http.HttpStatus;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -15,13 +17,9 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.context.request.async.DeferredResult;
-import reactor.core.scheduler.Schedulers;
-
-import javax.validation.Valid;
-import java.util.function.Consumer;
 
 import static java.util.Objects.requireNonNull;
+import static org.eclipse.jetty.http.HttpStatus.*;
 
 @Slf4j
 @RestController
@@ -35,30 +33,17 @@ public class DeviceCertificateCtrl {
     }
 
     @ApiResponses(value = {
-            @ApiResponse(code = HttpStatus.CREATED_201, message = "Created", response = CreateDeviceCertificateResponseDto.class)
+            @ApiResponse(code = CREATED_201, message = "Device Certificate object", response = CreateDeviceCertificateResponseDto.class),
+            @ApiResponse(code = BAD_REQUEST_400, message = "If required params are missing or invalid", response = ErrorResponseDto.class),
+            @ApiResponse(code = UNAUTHORIZED_401, message = "If api_key is invalid", response = ErrorResponseDto.class),
+            @ApiResponse(code = UNPROCESSABLE_ENTITY_422, message = "If given input semantically erroneous", response = ErrorResponseDto.class)
     })
     @PostMapping
-    public DeferredResult<ResponseEntity<CreateDeviceCertificateResponseDto>> createDeviceCertificate(
+    public ResponseEntity<CreateDeviceCertificateResponseDto> createDeviceCertificate(
             ApplicationAuthentication auth,
-            @RequestBody @Valid CreateDeviceCertificateRequestDto requestBody) {
+            @RequestBody CreateDeviceCertificateRequestDto requestBody) {
         requireNonNull(auth);
         requireNonNull(requestBody);
-
-        DeferredResult<ResponseEntity<CreateDeviceCertificateResponseDto>> deferred = new DeferredResult<>();
-
-        Consumer<ResponseEntity<CreateDeviceCertificateResponseDto>> onNext = result -> {
-            boolean canBeSent = !deferred.isSetOrExpired();
-            if (!canBeSent) {
-                log.error("Deferred result is already set or expired: {}", result);
-            } else {
-                deferred.setResult(result);
-            }
-        };
-
-        Consumer<Throwable> onError = e -> {
-            log.error("", e);
-            deferred.setErrorResult(e);
-        };
 
         CreateDeviceCertificateRequest createDeviceCertificateRequest = CreateDeviceCertificateRequest.builder()
                 .appId(auth.getAppId())
@@ -66,16 +51,19 @@ public class DeviceCertificateCtrl {
                 .name(RandomStringUtils.randomAlphabetic(16))
                 .build();
 
-        deviceCertificateService.createDeviceCertificate(createDeviceCertificateRequest)
-                .map(deviceCertificateEntity -> CreateDeviceCertificateResponseDto.builder()
+        ResponseEntity<CreateDeviceCertificateResponseDto> response = deviceCertificateService
+                .createDeviceCertificate(createDeviceCertificateRequest)
+                .map(deviceCertificateEntity -> DeviceCertificateDto.builder()
                         .deviceCertificate(deviceCertificateEntity.getSignedCertificateBase64())
                         .issuerPublicKey(deviceCertificateEntity.getIssuerPublicKeyBase64())
                         .build())
+                .map(deviceCertificateDto -> CreateDeviceCertificateResponseDto.builder()
+                        .deviceCertificate(deviceCertificateDto)
+                        .build())
                 .map(body -> ResponseEntity.status(HttpStatus.CREATED_201).body(body))
-                .subscribeOn(Schedulers.parallel())
-                .subscribe(onNext, onError);
+                .block();
 
-        return deferred;
+        return response;
     }
 
     /*

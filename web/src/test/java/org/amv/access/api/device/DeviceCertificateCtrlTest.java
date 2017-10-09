@@ -3,6 +3,7 @@ package org.amv.access.api.device;
 import org.amv.access.AmvAccessApplication;
 import org.amv.access.client.model.CreateDeviceCertificateRequestDto;
 import org.amv.access.client.model.CreateDeviceCertificateResponseDto;
+import org.amv.access.client.model.DeviceCertificateDto;
 import org.amv.access.config.TestDbConfig;
 import org.amv.access.model.Application;
 import org.amv.access.model.ApplicationRepository;
@@ -115,7 +116,10 @@ public class DeviceCertificateCtrlTest {
         CreateDeviceCertificateResponseDto response = responseEntity.getBody();
         assertThat(response, is(notNullValue()));
 
-        String deviceCertificate = response.getDeviceCertificate();
+        DeviceCertificateDto responseDeviceCertificate = response.getDeviceCertificate();
+        assertThat(responseDeviceCertificate, is(notNullValue()));
+
+        String deviceCertificate = responseDeviceCertificate.getDeviceCertificate();
         assertThat(deviceCertificate, is(notNullValue()));
         assertThat(isBase64(deviceCertificate), is(true));
     }

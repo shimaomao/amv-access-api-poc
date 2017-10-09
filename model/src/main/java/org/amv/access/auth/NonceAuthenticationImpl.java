@@ -1,18 +1,14 @@
-package org.amv.access.api.auth;
+package org.amv.access.auth;
 
 import lombok.Builder;
+import lombok.NonNull;
 import lombok.Value;
-import org.amv.access.model.Device;
 
 @Value
 @Builder
 public class NonceAuthenticationImpl implements NonceAuthentication {
-
+    @NonNull
     private String nonce;
+    @NonNull
     private String signedNonce;
-
-    @Override
-    public boolean isValid(Device device) {
-        return false;
-    }
 }

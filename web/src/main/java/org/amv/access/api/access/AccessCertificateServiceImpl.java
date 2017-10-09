@@ -1,19 +1,25 @@
 package org.amv.access.api.access;
 
-import org.amv.access.model.*;
 import org.amv.access.api.access.model.CreateAccessCertificateRequest;
 import org.amv.access.api.access.model.GetAccessCertificateRequest;
 import org.amv.access.api.access.model.RevokeAccessCertificateRequest;
+import org.amv.access.auth.NonceAuthentication;
+import org.amv.access.exception.BadRequestException;
+import org.amv.access.exception.NotFoundException;
+import org.amv.access.exception.UnauthorizedException;
+import org.amv.access.model.*;
 import org.amv.access.spi.AmvAccessModuleSpi;
+import org.springframework.transaction.annotation.Transactional;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.util.function.Tuples;
 
-import javax.validation.ValidationException;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.Date;
+import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 
 import static java.util.Objects.requireNonNull;
 
@@ -32,45 +38,52 @@ public class AccessCertificateServiceImpl implements AccessCertificateService {
             AccessCertificateRepository accessCertificateRepository,
             AccessCertificateRequestRepository accessCertificateRequestRepository) {
         this.amvAccessModule = requireNonNull(amvAccessModule);
-        this.vehicleRepository = vehicleRepository;
+        this.vehicleRepository = requireNonNull(vehicleRepository);
         this.deviceRepository = requireNonNull(deviceRepository);
         this.accessCertificateRepository = requireNonNull(accessCertificateRepository);
         this.accessCertificateRequestRepository = requireNonNull(accessCertificateRequestRepository);
     }
 
     @Override
-    public Flux<AccessCertificate> getAccessCertificates(GetAccessCertificateRequest request) {
+    @Transactional
+    public Flux<AccessCertificate> getAccessCertificates(NonceAuthentication nonceAuthentication,
+                                                         GetAccessCertificateRequest request) {
         requireNonNull(request, "`request` must not be null");
 
-        return Mono.fromCallable(() -> accessCertificateRepository
-                .findByDeviceSerialNumberAndVehicleSerialNumber(
-                        request.getAccessGainingSerialNumber(),
-                        request.getAccessProvidingSerialNumber()))
-                .flatMapMany(Flux::fromIterable);
+        Device device = deviceRepository.findBySerialNumber(request.getDeviceSerialNumber())
+                .orElseThrow(() -> new NotFoundException("Device not found"));
+
+        verifyNonceAuthOrThrow(nonceAuthentication, device);
+
+        List<AccessCertificate> accessCertificates = accessCertificateRepository
+                .findByDeviceSerialNumber(device.getSerialNumber());
+
+        return Flux.fromIterable(accessCertificates);
     }
 
     @Override
+    @Transactional
     public Mono<AccessCertificate> createAccessCertificate(CreateAccessCertificateRequest request) {
         requireNonNull(request, "`request` must not be null");
 
         Mono<Vehicle> vehicleMono = Mono.just(request.getVehicleSerialNumber())
                 .map(vehicleRepository::findBySerialNumber)
                 .map(vehicleOptional -> vehicleOptional
-                        .orElseThrow(() -> new ValidationException("Vehicle not found"))
+                        .orElseThrow(() -> new NotFoundException("Vehicle not found"))
                 );
 
         Mono<Device> deviceMono = Mono.just(request.getDeviceSerialNumber())
                 .map(deviceRepository::findBySerialNumber)
                 .map(vehicleOptional -> vehicleOptional
-                        .orElseThrow(() -> new ValidationException("Device not found"))
+                        .orElseThrow(() -> new NotFoundException("Device not found"))
                 ).doOnNext(device -> {
                     boolean hasSameAppId = Objects.equals(device.getAppId(), request.getAppId());
                     if (!hasSameAppId) {
-                        throw new ValidationException("Mismatching `appId`");
+                        throw new BadRequestException("Mismatching `appId`");
                     }
                 });
 
-        return Mono.when(deviceMono, vehicleMono)
+        AccessCertificate accessCertificate = Mono.when(deviceMono, vehicleMono)
                 .map(deviceAndVehicle -> Tuples.of(
                         saveAccessCertificateRequest(request).block(),
                         deviceAndVehicle.getT1(),
@@ -82,12 +95,46 @@ public class AccessCertificateServiceImpl implements AccessCertificateService {
                                 deviceAndVehicleAndCertificate.getT3()
                         ))
                 .single()
-                .map(accessCertificateRepository::save);
+                .block();
+
+        AccessCertificate savedEntity = accessCertificateRepository.save(accessCertificate);
+
+        return Mono.just(savedEntity);
     }
 
     @Override
-    public Mono<Void> revokeAccessCertificate(RevokeAccessCertificateRequest request) {
-        throw new UnsupportedOperationException();
+    @Transactional
+    public Mono<Void> revokeAccessCertificate(NonceAuthentication nonceAuthentication,
+                                              RevokeAccessCertificateRequest request) {
+        requireNonNull(request);
+
+        Device device = deviceRepository.findBySerialNumber(request.getDeviceSerialNumber())
+                .orElseThrow(() -> new NotFoundException("Device not found"));
+
+        verifyNonceAuthOrThrow(nonceAuthentication, device);
+
+        AccessCertificate accessCertificate = accessCertificateRepository
+                .findByUuid(request.getAccessCertificateId().toString())
+                .orElseThrow(() -> new NotFoundException("Access Certificate not found"));
+
+        if (!accessCertificate.getDeviceSerialNumber().equals(device.getSerialNumber())) {
+            // do not expose information about existing access certs - hence: NotFoundException
+            throw new NotFoundException("Access Certificate not found");
+        }
+
+        accessCertificateRepository.delete(accessCertificate);
+
+        return Mono.empty();
+    }
+
+    private void verifyNonceAuthOrThrow(NonceAuthentication nonceAuthentication, Device device) {
+        boolean isValidNonce = Optional.of(amvAccessModule.isValidNonceAuth(nonceAuthentication, device))
+                .map(Mono::block)
+                .orElse(false);
+        
+        if (!isValidNonce) {
+            throw new UnauthorizedException("Signature is invalid");
+        }
     }
 
     private Mono<AccessCertificateRequest> saveAccessCertificateRequest(CreateAccessCertificateRequest request) {
@@ -101,7 +148,9 @@ public class AccessCertificateServiceImpl implements AccessCertificateService {
                 .validUntil(localDateTimeToDate(request.getValidityEnd()))
                 .build();
 
-        return Mono.fromCallable(() -> accessCertificateRequestRepository.save(accessCertificateRequestEntity));
+        AccessCertificateRequest savedEntity = accessCertificateRequestRepository.save(accessCertificateRequestEntity);
+
+        return Mono.just(savedEntity);
     }
 
     private Date localDateTimeToDate(LocalDateTime localDateTime) {

@@ -1,6 +1,7 @@
 package org.amv.access.api;
 
 import lombok.extern.slf4j.Slf4j;
+import org.amv.access.api.ErrorResponseDto.ErrorInfoDto;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -14,12 +15,24 @@ import java.lang.reflect.UndeclaredThrowableException;
 @RestControllerAdvice
 public class AmvAccessRestExceptionHandlerAdvice extends ResponseEntityExceptionHandler {
 
+
     @Override
     protected ResponseEntity<Object> handleExceptionInternal(Exception ex, Object body,
                                                              HttpHeaders headers, HttpStatus status, WebRequest request) {
+        log.error("", ex);
+
         Exception e = unwrapUndeclaredThrowableExceptionIfNecessary(ex);
 
-        return super.handleExceptionInternal(e, body, headers, status, request);
+        ErrorInfoDto errorInfoDto = ErrorInfoDto.builder()
+                .title(e.getClass().getSimpleName())
+                .detail(e.getMessage())
+                .build();
+
+        ErrorResponseDto errorResponseDto = ErrorResponseDto.builder()
+                .addError(errorInfoDto)
+                .build();
+
+        return new ResponseEntity<>(errorResponseDto, headers, status);
     }
 
     /**

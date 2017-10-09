@@ -14,9 +14,12 @@ import lombok.experimental.Tolerate;
 public class CreateDeviceCertificateRequestDto {
 
     @JsonProperty("device_public_key")
-    @ApiModelProperty(notes = "Base64 encoded string of the 64-byte public key of the key-pair that has been generated on the device",
+    @ApiModelProperty(
+            value = "The public key of the device that was generated with HMKit. The size should be 128 characters",
+            notes = "Base64 encoded string of the 64-byte public key of the key-pair that has been generated on the device",
             dataType = "String (base64 encoded)",
-            required = true)
+            required = true
+    )
     private String devicePublicKey;
 
     @Tolerate
