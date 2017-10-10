@@ -4,6 +4,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.amv.access.api.auth.ApplicationAuthenticationArgumentResolver;
 import org.amv.access.api.auth.ApplicationAuthenticationArgumentResolver.ApiKeyResolver;
 import org.amv.access.api.auth.NonceAuthenticationArgumentResolver;
+import org.amv.access.exception.NotFoundException;
 import org.amv.access.exception.UnprocessableEntityException;
 import org.amv.access.model.ApplicationEntity;
 import org.amv.access.model.ApplicationRepository;
@@ -15,7 +16,6 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurerAdapter
 import reactor.core.publisher.Mono;
 
 import java.util.List;
-import java.util.Optional;
 
 import static java.util.Objects.requireNonNull;
 
@@ -40,13 +40,14 @@ public class ApiConfig extends WebMvcConfigurerAdapter {
     public ApiKeyResolver apiKeyResolver() {
         return apiKey -> {
             try {
-                Optional<ApplicationEntity> application = applicationRepository.findOneByApiKey(apiKey);
+                ApplicationEntity application = applicationRepository.findOneByApiKey(apiKey)
+                        .orElseThrow(() -> new NotFoundException("ApplicationEntity not found"));
 
-                if (application.isPresent() && !application.get().isEnabled()) {
-                    return Mono.error(new UnprocessableEntityException("ApplicationEntity with given apiKey is disabled"));
+                if (!application.isEnabled()) {
+                    throw new UnprocessableEntityException("ApplicationEntity with given apiKey is disabled");
                 }
 
-                return Mono.justOrEmpty(application);
+                return Mono.just(application);
             } catch (Exception e) {
                 return Mono.error(e);
             }

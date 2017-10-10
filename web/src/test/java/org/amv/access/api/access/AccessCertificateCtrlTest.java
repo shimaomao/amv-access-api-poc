@@ -222,16 +222,16 @@ public class AccessCertificateCtrlTest {
                 .accessProvidingSerialNumber(vehicle.getSerialNumber())
                 .build();
 
-        ResponseEntity<GetAccessCertificateResponse> getAccessCertificateResponse = restTemplate
+        ResponseEntity<GetAccessCertificatesResponseDto> getAccessCertificateResponse = restTemplate
                 .getForEntity("/api/v1/access_certificates?" +
                         "accessGainingSerialNumber={accessGainingSerialNumber}&" +
-                        "accessProvidingSerialNumber={accessProvidingSerialNumber}", GetAccessCertificateResponse.class,
+                        "accessProvidingSerialNumber={accessProvidingSerialNumber}", GetAccessCertificatesResponseDto.class,
                         getAccessCertificateRequest.getAccessGainingSerialNumber(),
                         getAccessCertificateRequest.getAccessProvidingSerialNumber());
 
         assertThat(getAccessCertificateResponse.getStatusCode(), is(HttpStatus.OK));
 
-        GetAccessCertificateResponse body = getAccessCertificateResponse.getBody();
+        GetAccessCertificatesResponseDto body = getAccessCertificateResponse.getBody();
         assertThat(body, is(notNullValue()));
         assertThat(body.getAccessCertificate(), is(notNullValue()));
         assertThat(body.getAccessCertificate().getDeviceAccessCertificate(), is(notNullValue()));

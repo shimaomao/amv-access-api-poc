@@ -56,7 +56,8 @@ public class AccessCertificateCtrl {
                 .deviceSerialNumber(deviceSerialNumber)
                 .build();
 
-        ResponseEntity<GetAccessCertificatesResponseDto> response = accessCertificateService.getAccessCertificates(nonceAuthentication, request)
+        ResponseEntity<GetAccessCertificatesResponseDto> response = accessCertificateService
+                .getAccessCertificates(nonceAuthentication, request)
                 .map(accessCertificate -> AccessCertificateDto.builder()
                         .accessCertificate(accessCertificate.getSignedDeviceAccessCertificateBase64())
                         .build())

@@ -69,17 +69,17 @@ public class AccessCertificateServiceImpl implements AccessCertificateService {
                 .map(AccessCertificateEntity::getApplicationId)
                 .distinct()
                 .map(id -> Optional.ofNullable(applicationRepository.findOne(id)))
-                .map(v -> v.orElseThrow(() -> new NotFoundException("Application not found")))
+                .map(v -> v.orElseThrow(() -> new NotFoundException("ApplicationEntity not found")))
                 .collect(Collectors.toMap(ApplicationEntity::getId, Function.identity()));
 
         Map<Long, VehicleEntity> vehicles = accessCertificates.stream()
                 .map(AccessCertificateEntity::getVehicleId)
                 .distinct()
                 .map(id -> Optional.ofNullable(vehicleRepository.findOne(id)))
-                .map(v -> v.orElseThrow(() -> new NotFoundException("Vehicle not found")))
+                .map(v -> v.orElseThrow(() -> new NotFoundException("VehicleEntity not found")))
                 .collect(Collectors.toMap(VehicleEntity::getId, Function.identity()));
 
-        accessCertificates.stream()
+        return Flux.fromIterable(accessCertificates)
                 .map(accessCertificate -> {
                     ApplicationEntity application = applications.get(accessCertificate.getApplicationId());
                     VehicleEntity vehicle = vehicles.get(accessCertificate.getId());
@@ -92,10 +92,6 @@ public class AccessCertificateServiceImpl implements AccessCertificateService {
                             .signedVehicleAccessCertificateBase64(accessCertificate.getSignedDeviceAccessCertificateBase64())
                             .build();
                 });
-
-        return Flux.fromIterable(accessCertificates)
-                .map(a -> AccessCertificateImpl.builder()
-                        .build());
     }
 
     @Override
@@ -104,13 +100,13 @@ public class AccessCertificateServiceImpl implements AccessCertificateService {
         requireNonNull(request, "`request` must not be null");
 
         ApplicationEntity application = applicationRepository.findOneByAppId(request.getAppId())
-                .orElseThrow(() -> new NotFoundException("ApplicationEntity with given appId not found"));
+                .orElseThrow(() -> new NotFoundException("ApplicationEntity not found"));
 
         VehicleEntity vehicle = vehicleRepository.findOneBySerialNumber(request.getVehicleSerialNumber())
                 .orElseThrow(() -> new NotFoundException("VehicleEntity not found"));
 
         DeviceEntity device = deviceRepository.findBySerialNumber(request.getDeviceSerialNumber())
-                .orElseThrow(() -> new NotFoundException("Device not found"));
+                .orElseThrow(() -> new NotFoundException("DeviceEntity not found"));
 
         boolean hasSameAppId = Objects.equals(device.getAppId(), request.getAppId());
         if (!hasSameAppId) {
@@ -129,7 +125,7 @@ public class AccessCertificateServiceImpl implements AccessCertificateService {
 
         AccessCertificate accessCertificate = Optional.of(amvAccessModule.createAccessCertificate(r))
                 .map(Mono::block)
-                .orElseThrow(() -> new IllegalStateException("Could not create access certifcate for " + request));
+                .orElseThrow(() -> new IllegalStateException("Could not create access certificate for " + request));
 
         AccessCertificateEntity accessCertificateEntity = AccessCertificateEntity.builder()
                 .applicationId(application.getId())
@@ -157,7 +153,7 @@ public class AccessCertificateServiceImpl implements AccessCertificateService {
 
         AccessCertificateEntity accessCertificate = accessCertificateRepository
                 .findByUuid(request.getAccessCertificateId().toString())
-                .orElseThrow(() -> new NotFoundException("Access Certificate not found"));
+                .orElseThrow(() -> new NotFoundException("AccessCertificateEntity not found"));
 
         if (accessCertificate.getDeviceId() != device.getId()) {
             // do not expose information about existing access certs - hence: NotFoundException

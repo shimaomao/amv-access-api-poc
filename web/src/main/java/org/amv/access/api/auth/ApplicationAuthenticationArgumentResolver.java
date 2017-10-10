@@ -17,7 +17,6 @@ import reactor.core.publisher.Mono;
 
 import java.util.Arrays;
 import java.util.Optional;
-import java.util.function.Function;
 import java.util.stream.Stream;
 
 import static java.util.Objects.requireNonNull;
@@ -25,8 +24,9 @@ import static java.util.Objects.requireNonNull;
 @Slf4j
 public class ApplicationAuthenticationArgumentResolver implements HandlerMethodArgumentResolver {
 
-    public interface ApiKeyResolver extends Function<String, Mono<Application>> {
-
+    @FunctionalInterface
+    public interface ApiKeyResolver {
+        Mono<Application> findByApiKey(String apiKey);
     }
 
     private ApiKeyResolver apiKeyResolver;
@@ -49,7 +49,7 @@ public class ApplicationAuthenticationArgumentResolver implements HandlerMethodA
                 .filter(this::isValidApiKey)
                 .orElseThrow(() -> new BadRequestException("Authorization header not present or invalid"));
 
-        Application application = Optional.of(apiKeyResolver.apply(apiKey))
+        Application application = Optional.of(apiKeyResolver.findByApiKey(apiKey))
                 .map(Mono::block)
                 .orElseThrow(() -> new NotFoundException("ApplicationEntity not found"));
 
