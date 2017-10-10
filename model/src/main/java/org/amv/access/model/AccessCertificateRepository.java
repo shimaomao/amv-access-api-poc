@@ -7,14 +7,13 @@ import java.util.List;
 import java.util.Optional;
 
 @RepositoryRestResource(collectionResourceRel = "access_certificate", path = "access_certificate")
-public interface AccessCertificateRepository extends JpaRepository<AccessCertificate, Long> {
+public interface AccessCertificateRepository extends JpaRepository<AccessCertificateEntity, Long> {
 
-    List<AccessCertificate> findByDeviceSerialNumberAndVehicleSerialNumber(String deviceSerialNumber,
-                                                                           String vehicleSerialNumber);
+    List<AccessCertificateEntity> findByDeviceIdAndVehicleId(long deviceId, long vehicleId);
 
-    List<AccessCertificate> findByDeviceSerialNumber(String deviceSerialNumber);
+    List<AccessCertificateEntity> findByDeviceId(long deviceId);
 
-    List<AccessCertificate> findByVehicleSerialNumber(String vehicleSerialNumber);
+    List<AccessCertificateEntity> findByVehicleId(long vehicleId);
 
-    Optional<AccessCertificate> findByUuid(String uuid);
+    Optional<AccessCertificateEntity> findByUuid(String uuid);
 }

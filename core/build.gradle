@@ -1,0 +1,6 @@
+description = 'core interfaces and basic classes used in amv access platform'
+
+dependencies {
+
+}
+

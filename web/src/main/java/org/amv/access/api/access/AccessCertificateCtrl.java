@@ -58,7 +58,7 @@ public class AccessCertificateCtrl {
 
         ResponseEntity<GetAccessCertificatesResponseDto> response = accessCertificateService.getAccessCertificates(nonceAuthentication, request)
                 .map(accessCertificate -> AccessCertificateDto.builder()
-                        .accessCertificate(accessCertificate.getSignedDeviceCertificateBase64())
+                        .accessCertificate(accessCertificate.getSignedDeviceAccessCertificateBase64())
                         .build())
                 .collectList()
                 .map(accessCertificateDto -> GetAccessCertificatesResponseDto.builder()

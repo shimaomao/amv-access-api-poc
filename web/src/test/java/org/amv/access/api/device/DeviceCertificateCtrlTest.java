@@ -5,7 +5,7 @@ import org.amv.access.client.model.CreateDeviceCertificateRequestDto;
 import org.amv.access.client.model.CreateDeviceCertificateResponseDto;
 import org.amv.access.client.model.DeviceCertificateDto;
 import org.amv.access.config.TestDbConfig;
-import org.amv.access.model.Application;
+import org.amv.access.model.ApplicationEntity;
 import org.amv.access.model.ApplicationRepository;
 import org.amv.highmobility.cryptotool.Cryptotool;
 import org.amv.highmobility.cryptotool.CryptotoolUtils;
@@ -44,12 +44,12 @@ public class DeviceCertificateCtrlTest {
     @Autowired
     private TestRestTemplate restTemplate;
 
-    private Application application;
+    private ApplicationEntity application;
 
     @Before
     public void setUp() {
-        this.application = applicationRepository.save(Application.builder()
-                .name("Test Application")
+        this.application = applicationRepository.save(ApplicationEntity.builder()
+                .name("Test ApplicationEntity")
                 .appId(CryptotoolUtils.TestUtils.generateRandomAppId())
                 .apiKey(RandomStringUtils.randomAlphanumeric(8))
                 .enabled(true)

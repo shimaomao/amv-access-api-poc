@@ -10,11 +10,11 @@ import org.springframework.data.rest.core.annotation.RepositoryRestResource;
 import java.util.Optional;
 
 @RepositoryRestResource(excerptProjection = UserProjection.class, collectionResourceRel = "application", path = "application")
-public interface ApplicationRepository extends JpaRepository<Application, Long> {
+public interface ApplicationRepository extends JpaRepository<ApplicationEntity, Long> {
 
-    Optional<Application> findOneByAppId(@Param("appId") String appId);
+    Optional<ApplicationEntity> findOneByAppId(@Param("appId") String appId);
 
-    Optional<Application> findOneByApiKey(@Param("apiKey") String apiKey);
+    Optional<ApplicationEntity> findOneByApiKey(@Param("apiKey") String apiKey);
 
-    Page<Application> findByName(@Param("name") String name, Pageable page);
+    Page<ApplicationEntity> findByName(@Param("name") String name, Pageable page);
 }

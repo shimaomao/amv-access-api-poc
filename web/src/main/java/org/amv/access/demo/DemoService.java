@@ -54,8 +54,8 @@ public class DemoService {
                 .build();
     }
 
-    public Application getOrCreateDemoApplication() {
-        Application application = applicationRepository.findByName(DEMO_APP_NAME, AmvAccessApplication.standardPageRequest)
+    public ApplicationEntity getOrCreateDemoApplication() {
+        ApplicationEntity application = applicationRepository.findByName(DEMO_APP_NAME, AmvAccessApplication.standardPageRequest)
                 .getContent()
                 .stream()
                 .findFirst()
@@ -72,7 +72,7 @@ public class DemoService {
 
         Cryptotool.Keys keys = cryptotool.generateKeys().block();
 
-        Vehicle vehicle = Vehicle.builder()
+        VehicleEntity vehicle = VehicleEntity.builder()
                 .id(10L)
                 .serialNumber(RandomStringUtils.randomNumeric(18))
                 .publicKey(keys.getPublicKey())
@@ -108,8 +108,8 @@ public class DemoService {
                 .encryptedPassword(passwordEncoder.encode(password));
     }
 
-    private Application createDemoApplication() {
-        return Application.builder()
+    private ApplicationEntity createDemoApplication() {
+        return ApplicationEntity.builder()
                 .name(DEMO_APP_NAME)
                 .appId(CryptotoolUtils.TestUtils.generateRandomAppId())
                 .apiKey(RandomStringUtils.randomAlphanumeric(8))

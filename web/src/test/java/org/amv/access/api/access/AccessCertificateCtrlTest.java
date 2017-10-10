@@ -52,13 +52,13 @@ public class AccessCertificateCtrlTest {
     @Autowired
     private TestRestTemplate restTemplate;
 
-    private Application application;
+    private ApplicationEntity application;
     private DeviceWithKeys deviceWithKeys;
 
     @Before
     public void setUp() {
-        this.application = applicationRepository.save(Application.builder()
-                .name("Test Application")
+        this.application = applicationRepository.save(ApplicationEntity.builder()
+                .name("Test ApplicationEntity")
                 .appId(CryptotoolUtils.TestUtils.generateRandomAppId())
                 .apiKey(RandomStringUtils.randomAlphanumeric(8))
                 .enabled(true)
@@ -66,7 +66,7 @@ public class AccessCertificateCtrlTest {
 
         Cryptotool.Keys keys = cryptotool.generateKeys().block();
 
-        Device device = createAndSaveDevice(application, keys);
+        DeviceEntity device = createAndSaveDevice(application, keys);
 
         this.deviceWithKeys = DeviceWithKeys.builder()
                 .device(device)
@@ -76,7 +76,7 @@ public class AccessCertificateCtrlTest {
 
     @Test
     public void itShouldFailGetAccessCertificateIfNonceHeaderIsMissing() throws Exception {
-        Device device = deviceWithKeys.getDevice();
+        DeviceEntity device = deviceWithKeys.getDevice();
 
         HttpHeaders headers = new HttpHeaders();
 
@@ -92,7 +92,7 @@ public class AccessCertificateCtrlTest {
 
     @Test
     public void itShouldFailGetAccessCertificateIfSignatureHeaderIsMissing() throws Exception {
-        Device device = deviceWithKeys.getDevice();
+        DeviceEntity device = deviceWithKeys.getDevice();
 
         HttpHeaders headers = new HttpHeaders();
         headers.add(MoreHttpHeaders.AMV_NONCE, "42");
@@ -110,7 +110,7 @@ public class AccessCertificateCtrlTest {
 
     @Test
     public void itShouldFailGetAccessCertificateIfNonceSignatureHeaderIsInvalid() throws Exception {
-        Device device = deviceWithKeys.getDevice();
+        DeviceEntity device = deviceWithKeys.getDevice();
 
         String nonce = generateNonceWithRandomLength();
         String signedNonce = signNonce(deviceWithKeys.getKeys(), generateNonceWithRandomLength());
@@ -137,7 +137,7 @@ public class AccessCertificateCtrlTest {
 
     @Test
     public void itShouldGetAccessCertificatesSuccessfully() throws Exception {
-        Device device = deviceWithKeys.getDevice();
+        DeviceEntity device = deviceWithKeys.getDevice();
 
         String nonce = generateNonceWithRandomLength();
         String signedNonce = signNonce(deviceWithKeys.getKeys(), nonce);
@@ -173,8 +173,8 @@ public class AccessCertificateCtrlTest {
     /*
     @Test
     public void itShouldCreateAccessCertificate() throws Exception {
-        Vehicle vehicle = createDummyVehicle();
-        Device device = createDummyDevice();
+        VehicleEntity vehicle = createDummyVehicle();
+        DeviceEntity device = createDummyDevice();
 
         CreateAccessCertificateRequest request = CreateAccessCertificateRequest.builder()
                 .appId(device.getAppId())
@@ -202,8 +202,8 @@ public class AccessCertificateCtrlTest {
 
     @Test
     public void itShouldCreateAndThenFetchAllAccessCertificates() throws Exception {
-        Vehicle vehicle = createDummyVehicle();
-        Device device = createDummyDevice();
+        VehicleEntity vehicle = createDummyVehicle();
+        DeviceEntity device = createDummyDevice();
 
         CreateAccessCertificateRequest createAccessCertificateRequest = CreateAccessCertificateRequest.builder()
                 .appId(device.getAppId())
@@ -238,10 +238,10 @@ public class AccessCertificateCtrlTest {
         assertThat(body.getAccessCertificate().getVehicleAccessCertificate(), is(notNullValue()));
     }*/
 
-    private Device createDummyDevice() {
+    private DeviceEntity createDummyDevice() {
         Cryptotool.Keys keys = cryptotool.generateKeys().block();
 
-        Device device = Device.builder()
+        DeviceEntity device = DeviceEntity.builder()
                 .appId(CryptotoolUtils.TestUtils.generateRandomAppId())
                 .name(StringUtils.prependIfMissing("test-", RandomStringUtils.randomAlphanumeric(10)))
                 .serialNumber(CryptotoolUtils.TestUtils.generateRandomSerial())
@@ -251,10 +251,10 @@ public class AccessCertificateCtrlTest {
         return deviceRepository.save(device);
     }
 
-    private Vehicle createDummyVehicle() {
+    private VehicleEntity createDummyVehicle() {
         Cryptotool.Keys keys = cryptotool.generateKeys().block();
 
-        Vehicle vehicle = Vehicle.builder()
+        VehicleEntity vehicle = VehicleEntity.builder()
                 .serialNumber(CryptotoolUtils.TestUtils.generateRandomSerial())
                 .publicKey(keys.getPublicKey())
                 .build();
@@ -282,8 +282,8 @@ public class AccessCertificateCtrlTest {
                 .orElseThrow(IllegalStateException::new);
     }
 
-    private Device createAndSaveDevice(Application application, Cryptotool.Keys keys) {
-        return deviceRepository.save(Device.builder()
+    private DeviceEntity createAndSaveDevice(ApplicationEntity application, Cryptotool.Keys keys) {
+        return deviceRepository.save(DeviceEntity.builder()
                 .appId(application.getAppId())
                 .name(StringUtils.prependIfMissing("test-", RandomStringUtils.randomAlphanumeric(10)))
                 .serialNumber(CryptotoolUtils.TestUtils.generateRandomSerial())

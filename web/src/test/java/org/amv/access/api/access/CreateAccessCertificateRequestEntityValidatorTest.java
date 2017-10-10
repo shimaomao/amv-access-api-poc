@@ -5,12 +5,12 @@ import org.junit.Before;
 import org.junit.Test;
 import org.springframework.validation.BeanPropertyBindingResult;
 
-import static org.amv.highmobility.cryptotool.CryptotoolUtils.TestUtils.generateRandomAppId;
-import static org.amv.highmobility.cryptotool.CryptotoolUtils.TestUtils.generateRandomSerial;
+import static org.amv.access.util.SecureRandomUtils.generateRandomAppId;
+import static org.amv.access.util.SecureRandomUtils.generateRandomSerial;
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertThat;
 
-public class CreateAccessCertificateRequestValidatorTest {
+public class CreateAccessCertificateRequestEntityValidatorTest {
 
     private CreateAccessCertificateRequestValidator sut;
 

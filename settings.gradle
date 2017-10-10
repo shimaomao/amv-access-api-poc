@@ -7,4 +7,5 @@ include 'swagger'
 include 'web'
 include 'client'
 include 'client-model'
+include 'core'
 

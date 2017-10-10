@@ -6,7 +6,7 @@ import org.springframework.data.rest.core.annotation.RepositoryRestResource;
 import java.util.Optional;
 
 @RepositoryRestResource(collectionResourceRel = "device", path = "device")
-public interface DeviceRepository extends JpaRepository<Device, Long> {
+public interface DeviceRepository extends JpaRepository<DeviceEntity, Long> {
 
-    Optional<Device> findBySerialNumber(String serialNumber);
+    Optional<DeviceEntity> findBySerialNumber(String serialNumber);
 }

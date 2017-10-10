@@ -4,8 +4,8 @@ import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
 import lombok.extern.slf4j.Slf4j;
 import org.amv.access.api.ErrorResponseDto;
-import org.amv.access.auth.ApplicationAuthentication;
 import org.amv.access.api.device.model.CreateDeviceCertificateRequest;
+import org.amv.access.auth.ApplicationAuthentication;
 import org.amv.access.client.model.CreateDeviceCertificateRequestDto;
 import org.amv.access.client.model.CreateDeviceCertificateResponseDto;
 import org.amv.access.client.model.DeviceCertificateDto;
@@ -33,7 +33,7 @@ public class DeviceCertificateCtrl {
     }
 
     @ApiResponses(value = {
-            @ApiResponse(code = CREATED_201, message = "Device Certificate object", response = CreateDeviceCertificateResponseDto.class),
+            @ApiResponse(code = CREATED_201, message = "DeviceEntity Certificate object", response = CreateDeviceCertificateResponseDto.class),
             @ApiResponse(code = BAD_REQUEST_400, message = "If required params are missing or invalid", response = ErrorResponseDto.class),
             @ApiResponse(code = UNAUTHORIZED_401, message = "If api_key is invalid", response = ErrorResponseDto.class),
             @ApiResponse(code = UNPROCESSABLE_ENTITY_422, message = "If given input semantically erroneous", response = ErrorResponseDto.class)
@@ -46,7 +46,7 @@ public class DeviceCertificateCtrl {
         requireNonNull(requestBody);
 
         CreateDeviceCertificateRequest createDeviceCertificateRequest = CreateDeviceCertificateRequest.builder()
-                .appId(auth.getAppId())
+                .appId(auth.getApplication().getAppId())
                 .publicKey(requestBody.getDevicePublicKey())
                 .name(RandomStringUtils.randomAlphabetic(16))
                 .build();
@@ -55,7 +55,7 @@ public class DeviceCertificateCtrl {
                 .createDeviceCertificate(createDeviceCertificateRequest)
                 .map(deviceCertificateEntity -> DeviceCertificateDto.builder()
                         .deviceCertificate(deviceCertificateEntity.getSignedCertificateBase64())
-                        .issuerPublicKey(deviceCertificateEntity.getIssuerPublicKeyBase64())
+                        .issuerPublicKey(deviceCertificateEntity.getIssuer().getPublicKeyBase64())
                         .build())
                 .map(deviceCertificateDto -> CreateDeviceCertificateResponseDto.builder()
                         .deviceCertificate(deviceCertificateDto)

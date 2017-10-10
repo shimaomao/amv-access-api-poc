@@ -5,10 +5,9 @@ import com.google.common.net.HttpHeaders;
 import lombok.extern.slf4j.Slf4j;
 import org.amv.access.auth.ApplicationAuthentication;
 import org.amv.access.auth.ApplicationAuthenticationImpl;
+import org.amv.access.core.Application;
 import org.amv.access.exception.BadRequestException;
 import org.amv.access.exception.NotFoundException;
-import org.amv.access.exception.UnprocessableEntityException;
-import org.amv.access.model.Application;
 import org.springframework.core.MethodParameter;
 import org.springframework.web.bind.support.WebDataBinderFactory;
 import org.springframework.web.context.request.NativeWebRequest;
@@ -51,14 +50,8 @@ public class ApplicationAuthenticationArgumentResolver implements HandlerMethodA
                 .orElseThrow(() -> new BadRequestException("Authorization header not present or invalid"));
 
         Application application = Optional.of(apiKeyResolver.apply(apiKey))
-                .map(m -> m.onErrorResume(e -> Mono.empty()))
                 .map(Mono::block)
-                .orElseThrow(() -> new NotFoundException("Application not found"));
-
-        if (!application.isEnabled()) {
-            log.warn("");
-            throw new UnprocessableEntityException("Application with given apiKey is disabled");
-        }
+                .orElseThrow(() -> new NotFoundException("ApplicationEntity not found"));
 
         return ApplicationAuthenticationImpl.builder()
                 .application(application)

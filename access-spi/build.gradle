@@ -1,7 +1,7 @@
 description = 'AMV Access Service Provider Interface'
 
 dependencies {
-    compile project(':model')
+    compile project(':core')
 
     compile group: 'io.projectreactor', name: 'reactor-core', version: '3.0.7.RELEASE'
 }

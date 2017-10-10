@@ -8,6 +8,7 @@ import lombok.Builder.Default;
 import lombok.Data;
 import lombok.Setter;
 import lombok.experimental.Tolerate;
+import org.amv.access.core.Application;
 
 import javax.persistence.*;
 
@@ -23,7 +24,7 @@ import javax.persistence.*;
                 @UniqueConstraint(columnNames = {"api_key"})
         }
 )
-public class Application {
+public class ApplicationEntity implements Application {
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
     @Column(name = "id", columnDefinition = "bigint")
@@ -45,12 +46,12 @@ public class Application {
     private boolean enabled = true;
 
     @Tolerate
-    protected Application() {
+    protected ApplicationEntity() {
 
     }
 
     @Override
     public String toString() {
-        return String.format("User[id=%d, name='%s']", id, name);
+        return String.format("ApplicationEntity[id=%d, name='%s']", id, name);
     }
 }

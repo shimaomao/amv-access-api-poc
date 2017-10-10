@@ -1,9 +1,9 @@
 package org.amv.access.auth;
 
-import org.amv.access.model.Application;
+import org.amv.access.model.ApplicationEntity;
 
 public interface ApplicationAuthentication {
     String getAppId();
 
-    Application getApplication();
+    ApplicationEntity getApplication();
 }

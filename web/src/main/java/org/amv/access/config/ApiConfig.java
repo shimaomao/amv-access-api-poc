@@ -4,7 +4,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.amv.access.api.auth.ApplicationAuthenticationArgumentResolver;
 import org.amv.access.api.auth.ApplicationAuthenticationArgumentResolver.ApiKeyResolver;
 import org.amv.access.api.auth.NonceAuthenticationArgumentResolver;
-import org.amv.access.model.Application;
+import org.amv.access.exception.UnprocessableEntityException;
+import org.amv.access.model.ApplicationEntity;
 import org.amv.access.model.ApplicationRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
@@ -39,7 +40,12 @@ public class ApiConfig extends WebMvcConfigurerAdapter {
     public ApiKeyResolver apiKeyResolver() {
         return apiKey -> {
             try {
-                Optional<Application> application = applicationRepository.findOneByApiKey(apiKey);
+                Optional<ApplicationEntity> application = applicationRepository.findOneByApiKey(apiKey);
+
+                if (application.isPresent() && !application.get().isEnabled()) {
+                    return Mono.error(new UnprocessableEntityException("ApplicationEntity with given apiKey is disabled"));
+                }
+
                 return Mono.justOrEmpty(application);
             } catch (Exception e) {
                 return Mono.error(e);

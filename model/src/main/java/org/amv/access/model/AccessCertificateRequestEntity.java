@@ -18,7 +18,7 @@ import java.util.Date;
 @Entity
 @Table(name = "access_certificate_request")
 @EntityListeners(AuditingEntityListener.class)
-public class AccessCertificateRequest {
+public class AccessCertificateRequestEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
     @Column(name = "id", columnDefinition = "bigint")
@@ -47,7 +47,7 @@ public class AccessCertificateRequest {
     private String vehicleSerialNumber;
 
     @Tolerate
-    protected AccessCertificateRequest() {
+    protected AccessCertificateRequestEntity() {
 
     }
 }

@@ -31,8 +31,9 @@ test {
 
 
 dependencies {
-    compile project(':client-model')
     compile project(':access-spi-highmobility')
+    compile project(':model')
+    compile project(':client-model')
     compile project(':swagger')
 
     // tag::jetty[]

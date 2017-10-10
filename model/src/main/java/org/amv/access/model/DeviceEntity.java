@@ -5,6 +5,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.Setter;
 import lombok.experimental.Tolerate;
+import org.amv.access.core.Device;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
@@ -22,7 +23,7 @@ import java.util.Date;
         }
 )
 @EntityListeners(AuditingEntityListener.class)
-public class Device {
+public class DeviceEntity implements Device {
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
     @Column(name = "id", columnDefinition = "bigint")
@@ -46,7 +47,12 @@ public class Device {
     private String publicKey;
 
     @Tolerate
-    protected Device() {
+    protected DeviceEntity() {
 
+    }
+
+    @Override
+    public String toString() {
+        return String.format("DeviceEntity[id=%d, name='%s', serialNumber='%s']", id, name, serialNumber);
     }
 }
