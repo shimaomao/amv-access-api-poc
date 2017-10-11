@@ -5,13 +5,14 @@ import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.Builder;
 import lombok.Data;
+import lombok.experimental.Tolerate;
 
 import java.time.LocalDateTime;
 
 @Data
 @Builder(builderClassName = "Builder")
 @ApiModel(description = "A resource representing the request for creating an access certificate.")
-public class CreateAccessCertificateRequest {
+public class CreateAccessCertificateRequestDto {
 
     @JsonProperty(value = "app_id")
     private String appId;
@@ -31,4 +32,9 @@ public class CreateAccessCertificateRequest {
     @JsonProperty(value = "validity_end")
     @ApiModelProperty(notes = "DateTime of when the certificate validity expires")
     private LocalDateTime validityEnd;
+
+    @Tolerate
+    protected CreateAccessCertificateRequestDto() {
+
+    }
 }

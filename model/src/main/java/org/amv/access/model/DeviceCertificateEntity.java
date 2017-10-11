@@ -40,11 +40,11 @@ public class DeviceCertificateEntity {
     @Temporal(TemporalType.TIMESTAMP)
     private Date created;
 
-    @Column(name = "application_id")
-    private long applicationId;
-
     @Column(name = "issuer_id")
     private long issuerId;
+
+    @Column(name = "application_id")
+    private long applicationId;
 
     @Column(name = "device_id")
     private long deviceId;

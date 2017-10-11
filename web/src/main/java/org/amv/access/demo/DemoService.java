@@ -3,6 +3,8 @@ package org.amv.access.demo;
 import com.google.common.base.Supplier;
 import com.google.common.base.Suppliers;
 import com.google.common.collect.Lists;
+import lombok.Builder;
+import lombok.Value;
 import lombok.extern.slf4j.Slf4j;
 import org.amv.access.AmvAccessApplication;
 import org.amv.access.model.*;
@@ -113,23 +115,7 @@ public class DemoService {
                 .build();
     }
 
-
-    private DeviceEntity createDemoDevice(ApplicationEntity applicationEntity) {
-        Cryptotool.Keys keys = cryptotool.generateKeys().block();
-
-        String publicKeyBase64 = MoreBase64.toBase64(keys.getPublicKey())
-                .orElseThrow(IllegalStateException::new);
-        DeviceEntity device = DeviceEntity.builder()
-                .applicationId(applicationEntity.getId())
-                .name(StringUtils.prependIfMissing("test-", RandomStringUtils.randomAlphanumeric(10)))
-                .serialNumber(SecureRandomUtils.generateRandomSerial())
-                .publicKeyBase64(publicKeyBase64)
-                .build();
-
-        return deviceRepository.save(device);
-    }
-
-    private VehicleEntity createDemoVehicle() {
+    public VehicleEntity createDemoVehicle() {
         Cryptotool.Keys keys = cryptotool.generateKeys().block();
 
         String publicKeyBase64 = MoreBase64.toBase64(keys.getPublicKey())
@@ -141,5 +127,38 @@ public class DemoService {
                 .build();
 
         return vehicleRepository.save(vehicle);
+    }
+
+
+    public DeviceEntity createDemoDevice(ApplicationEntity applicationEntity) {
+        DeviceWithKeys demoDeviceWithKeys = createDemoDeviceWithKeys(applicationEntity);
+
+        return demoDeviceWithKeys.getDevice();
+    }
+
+    public DeviceWithKeys createDemoDeviceWithKeys(ApplicationEntity applicationEntity) {
+        Cryptotool.Keys keys = cryptotool.generateKeys().block();
+
+        String publicKeyBase64 = MoreBase64.toBase64(keys.getPublicKey())
+                .orElseThrow(IllegalStateException::new);
+
+        DeviceEntity device = DeviceEntity.builder()
+                .applicationId(applicationEntity.getId())
+                .name(StringUtils.prependIfMissing("demo-", RandomStringUtils.randomAlphanumeric(10)))
+                .serialNumber(SecureRandomUtils.generateRandomSerial())
+                .publicKeyBase64(publicKeyBase64)
+                .build();
+
+        return DeviceWithKeys.builder()
+                .device(deviceRepository.save(device))
+                .keys(keys)
+                .build();
+    }
+
+    @Value
+    @Builder
+    public static class DeviceWithKeys {
+        private DeviceEntity device;
+        private Cryptotool.Keys keys;
     }
 }

@@ -4,14 +4,19 @@ import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
 import lombok.extern.slf4j.Slf4j;
 import org.amv.access.api.ErrorResponseDto;
-import org.amv.access.api.access.model.GetAccessCertificateRequest;
-import org.amv.access.api.access.model.RevokeAccessCertificateRequest;
+import org.amv.access.api.access.AccessCertificateService.GetAccessCertificateRequest;
+import org.amv.access.api.access.AccessCertificateService.RevokeAccessCertificateRequest;
+import org.amv.access.api.access.model.CreateAccessCertificateRequestDto;
+import org.amv.access.api.access.model.CreateAccessCertificateResponseDto;
+import org.amv.access.api.access.model.DeviceAndVehicleAccessCertificateDto;
 import org.amv.access.auth.NonceAuthentication;
 import org.amv.access.client.model.AccessCertificateDto;
 import org.amv.access.client.model.GetAccessCertificatesResponseDto;
+import org.amv.access.exception.BadRequestException;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.WebDataBinder;
+import org.springframework.validation.BindException;
 import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Mono;
 
@@ -34,11 +39,6 @@ public class AccessCertificateCtrl {
             AccessCertificateService accessCertificateService) {
         this.createAccessCertificateRequestValidator = requireNonNull(createAccessCertificateRequestValidator);
         this.accessCertificateService = requireNonNull(accessCertificateService);
-    }
-
-    @InitBinder("createAccessCertificateRequest")
-    public void setupBinder(WebDataBinder binder) {
-        binder.addValidators(createAccessCertificateRequestValidator);
     }
 
     @ApiResponses(value = {
@@ -72,50 +72,6 @@ public class AccessCertificateCtrl {
         return response;
     }
 
-    /*
-    // TODO: this method must either only be called by authorized users or not callable via http at all
-    @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "Success", response = CreateAccessCertificateResponse.class)
-    })
-    @PostMapping
-    public DeferredResult<ResponseEntity<CreateAccessCertificateResponse>> createAccessCertificate(
-            @Valid @RequestBody CreateAccessCertificateRequest createAccessCertificateRequest) {
-        requireNonNull(createAccessCertificateRequest);
-
-        DeferredResult<ResponseEntity<CreateAccessCertificateResponse>> deferred = new DeferredResult<>();
-
-        Consumer<ResponseEntity<CreateAccessCertificateResponse>> onNext = result -> {
-            boolean canBeSent = !deferred.isSetOrExpired();
-            if (!canBeSent) {
-                log.error("Deferred result is already set or expired: {}", result);
-            } else {
-                deferred.setResult(result);
-            }
-        };
-
-        Consumer<Throwable> onError = e -> {
-            log.error("", e);
-            deferred.setErrorResult(e);
-        };
-
-        accessCertificateService.createAccessCertificate(createAccessCertificateRequest)
-                .map(accessCertificate -> AccessCertificateDto.builder()
-                        .vehicleAccessCertificate(accessCertificate.getSignedVehicleCertificateBase64())
-                        .deviceAccessCertificate(accessCertificate.getSignedDeviceCertificateBase64())
-                        .build())
-                .map(accessCertificateDto -> CreateAccessCertificateResponse.builder()
-                        .accessCertificate(accessCertificateDto)
-                        .build())
-                .map(ResponseEntity::ok)
-                .switchIfEmpty(Mono.fromCallable(() -> ResponseEntity
-                        .status(HttpStatus.INTERNAL_SERVER_ERROR)
-                        .build()))
-                .subscribeOn(Schedulers.parallel())
-                .subscribe(onNext, onError);
-
-        return deferred;
-    }*/
-
     @ApiResponses(value = {
             @ApiResponse(code = NO_CONTENT_204, message = "The resource was deleted successfully."),
             @ApiResponse(code = BAD_REQUEST_400, message = "If required params are missing or invalid.", response = ErrorResponseDto.class),
@@ -143,4 +99,47 @@ public class AccessCertificateCtrl {
         return response;
     }
 
+
+    // TODO: this method must either only be called by authorized users or not callable via http at all
+    // TODO: it currently just exists for testing purposes
+    @ApiResponses(value = {
+            @ApiResponse(code = 200, message = "Success", response = CreateAccessCertificateResponseDto.class)
+    })
+    @PostMapping
+    public ResponseEntity<CreateAccessCertificateResponseDto> createAccessCertificate(
+            @PathVariable("deviceSerialNumber") String deviceSerialNumber,
+            @RequestBody CreateAccessCertificateRequestDto createAccessCertificateRequest) {
+        requireNonNull(deviceSerialNumber);
+        requireNonNull(createAccessCertificateRequest);
+
+        if (!deviceSerialNumber.equals(createAccessCertificateRequest.getDeviceSerialNumber())) {
+            throw new BadRequestException("Device Serial Numbers do not match");
+        }
+
+        BindException errors = new BindException(createAccessCertificateRequest, "createAccessCertificateRequest");
+        createAccessCertificateRequestValidator.validate(createAccessCertificateRequest, errors);
+        if (errors.hasErrors()) {
+            throw new BadRequestException(errors.getMessage());
+        }
+
+        ResponseEntity<CreateAccessCertificateResponseDto> response = accessCertificateService
+                .createAccessCertificate(createAccessCertificateRequest)
+                .map(accessCertificate -> CreateAccessCertificateResponseDto.builder()
+                        .accessCertificate(DeviceAndVehicleAccessCertificateDto.builder()
+                                .deviceAccessCertificate(AccessCertificateDto.builder()
+                                        .accessCertificate(accessCertificate.getSignedDeviceAccessCertificateBase64())
+                                        .build())
+                                .vehicleAccessCertificate(AccessCertificateDto.builder()
+                                        .accessCertificate(accessCertificate.getSignedVehicleAccessCertificateBase64())
+                                        .build())
+                                .build())
+                        .build())
+                .map(ResponseEntity::ok)
+                .switchIfEmpty(Mono.fromCallable(() -> ResponseEntity
+                        .status(HttpStatus.INTERNAL_SERVER_ERROR)
+                        .build()))
+                .block();
+
+        return response;
+    }
 }

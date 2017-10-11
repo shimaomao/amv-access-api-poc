@@ -2,11 +2,15 @@ package org.amv.access.api.access;
 
 import org.amv.access.AmvAccessApplication;
 import org.amv.access.api.MoreHttpHeaders;
+import org.amv.access.api.access.model.CreateAccessCertificateRequestDto;
+import org.amv.access.api.access.model.CreateAccessCertificateResponseDto;
+import org.amv.access.api.access.model.DeviceAndVehicleAccessCertificateDto;
+import org.amv.access.client.model.AccessCertificateDto;
 import org.amv.access.client.model.CreateDeviceCertificateRequestDto;
 import org.amv.access.client.model.GetAccessCertificatesResponseDto;
 import org.amv.access.config.TestDbConfig;
+import org.amv.access.demo.DemoService;
 import org.amv.access.model.*;
-import org.amv.access.test.DeviceWithKeys;
 import org.amv.access.util.MoreBase64;
 import org.amv.access.util.SecureRandomUtils;
 import org.amv.highmobility.cryptotool.Cryptotool;
@@ -27,10 +31,12 @@ import org.springframework.test.context.junit4.SpringRunner;
 import reactor.core.publisher.Mono;
 
 import java.security.SecureRandom;
+import java.util.List;
 import java.util.Optional;
 
 import static com.google.common.base.Preconditions.checkArgument;
-import static org.hamcrest.Matchers.is;
+import static org.apache.commons.codec.binary.Base64.isBase64;
+import static org.hamcrest.Matchers.*;
 import static org.junit.Assert.assertThat;
 
 @RunWith(SpringRunner.class)
@@ -41,6 +47,9 @@ import static org.junit.Assert.assertThat;
 public class AccessCertificateCtrlTest {
     @Autowired
     private Cryptotool cryptotool;
+
+    @Autowired
+    private DemoService demoService;
 
     @Autowired
     private VehicleRepository vehicleRepository;
@@ -55,7 +64,8 @@ public class AccessCertificateCtrlTest {
     private TestRestTemplate restTemplate;
 
     private ApplicationEntity application;
-    private DeviceWithKeys deviceWithKeys;
+
+    private DemoService.DeviceWithKeys deviceWithKeys;
 
     @Before
     public void setUp() {
@@ -66,14 +76,7 @@ public class AccessCertificateCtrlTest {
                 .enabled(true)
                 .build());
 
-        Cryptotool.Keys keys = cryptotool.generateKeys().block();
-
-        DeviceEntity device = createAndSaveDevice(application, keys);
-
-        this.deviceWithKeys = DeviceWithKeys.builder()
-                .device(device)
-                .keys(keys)
-                .build();
+        this.deviceWithKeys = demoService.createDemoDeviceWithKeys(application);
     }
 
     @Test
@@ -176,73 +179,88 @@ public class AccessCertificateCtrlTest {
         // TODO: implement me
     }
 
-    /*
+
     @Test
     public void itShouldCreateAccessCertificate() throws Exception {
-        VehicleEntity vehicle = createDummyVehicle();
-        DeviceEntity device = createDummyDevice();
+        VehicleEntity vehicle = demoService.createDemoVehicle();
+        DeviceEntity device = demoService.createDemoDevice(application);
 
-        CreateAccessCertificateRequest request = CreateAccessCertificateRequest.builder()
-                .appId(device.getAppId())
+        CreateAccessCertificateRequestDto request = CreateAccessCertificateRequestDto.builder()
+                .appId(application.getAppId())
                 .deviceSerialNumber(device.getSerialNumber())
                 .vehicleSerialNumber(vehicle.getSerialNumber())
                 .build();
 
-        ResponseEntity<CreateAccessCertificateResponse> responseEntity = restTemplate
-                .postForEntity("/api/v1/access_certificates", request,
-                        CreateAccessCertificateResponse.class);
+        ResponseEntity<CreateAccessCertificateResponseDto> responseEntity = restTemplate
+                .postForEntity("/api/v1/device/{deviceSerialNumber}/access_certificates", request,
+                        CreateAccessCertificateResponseDto.class,
+                        device.getSerialNumber());
 
         assertThat(responseEntity.getStatusCode(), is(HttpStatus.OK));
 
-        CreateAccessCertificateResponse response = responseEntity.getBody();
+        CreateAccessCertificateResponseDto response = responseEntity.getBody();
         assertThat(response, is(notNullValue()));
 
-        AccessCertificateDto accessCertificate = response.getAccessCertificate();
+        DeviceAndVehicleAccessCertificateDto accessCertificate = response.getAccessCertificate();
 
         assertThat(accessCertificate.getDeviceAccessCertificate(), is(notNullValue()));
-        assertThat(isBase64(accessCertificate.getDeviceAccessCertificate()), is(true));
+        assertThat(isBase64(accessCertificate.getDeviceAccessCertificate().getAccessCertificate()), is(true));
 
         assertThat(accessCertificate.getVehicleAccessCertificate(), is(notNullValue()));
-        assertThat(isBase64(accessCertificate.getVehicleAccessCertificate()), is(true));
+        assertThat(isBase64(accessCertificate.getVehicleAccessCertificate().getAccessCertificate()), is(true));
     }
 
     @Test
     public void itShouldCreateAndThenFetchAllAccessCertificates() throws Exception {
-        VehicleEntity vehicle = createDummyVehicle();
-        DeviceEntity device = createDummyDevice();
+        VehicleEntity vehicle = demoService.createDemoVehicle();
+        DeviceEntity device = deviceWithKeys.getDevice();
 
-        CreateAccessCertificateRequest createAccessCertificateRequest = CreateAccessCertificateRequest.builder()
-                .appId(device.getAppId())
+        CreateAccessCertificateRequestDto createAccessCertificateRequest = CreateAccessCertificateRequestDto.builder()
+                .appId(application.getAppId())
                 .deviceSerialNumber(device.getSerialNumber())
                 .vehicleSerialNumber(vehicle.getSerialNumber())
                 .build();
 
-        ResponseEntity<CreateAccessCertificateResponse> createAccessCertificateResponse = restTemplate
-                .postForEntity("/api/v1/access_certificates", createAccessCertificateRequest,
-                        CreateAccessCertificateResponse.class);
+        ResponseEntity<CreateAccessCertificateResponseDto> createAccessCertificateResponse = restTemplate
+                .postForEntity("/api/v1/device/{deviceSerialNumber}/access_certificates",
+                        createAccessCertificateRequest,
+                        CreateAccessCertificateResponseDto.class,
+                        device.getSerialNumber());
 
         assertThat(createAccessCertificateResponse.getStatusCode(), is(HttpStatus.OK));
 
-        GetAccessCertificateRequest getAccessCertificateRequest = GetAccessCertificateRequest.builder()
-                .accessGainingSerialNumber(device.getSerialNumber())
-                .accessProvidingSerialNumber(vehicle.getSerialNumber())
-                .build();
+        String nonce = generateNonceWithRandomLength();
+        String signedNonce = signNonce(deviceWithKeys.getKeys(), nonce);
+
+        String devicePublicKey = MoreBase64.fromBase64(device.getPublicKeyBase64())
+                .orElseThrow(IllegalStateException::new);
+        Cryptotool.Validity signedNonceValidity = Optional.of(cryptotool.verifySignature(nonce, signedNonce, devicePublicKey))
+                .map(Mono::block)
+                .orElse(Cryptotool.Validity.INVALID);
+
+        assertThat("Sanity check", signedNonceValidity, is(Cryptotool.Validity.VALID));
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.add(MoreHttpHeaders.AMV_NONCE, nonce);
+        headers.add(MoreHttpHeaders.AMV_SIGNATURE, signedNonce);
+
+        HttpEntity<CreateDeviceCertificateRequestDto> entity = new HttpEntity<>(headers);
 
         ResponseEntity<GetAccessCertificatesResponseDto> getAccessCertificateResponse = restTemplate
-                .getForEntity("/api/v1/access_certificates?" +
-                        "accessGainingSerialNumber={accessGainingSerialNumber}&" +
-                        "accessProvidingSerialNumber={accessProvidingSerialNumber}", GetAccessCertificatesResponseDto.class,
-                        getAccessCertificateRequest.getAccessGainingSerialNumber(),
-                        getAccessCertificateRequest.getAccessProvidingSerialNumber());
+                .exchange("/api/v1/device/{deviceSerialNumber}/access_certificates",
+                        HttpMethod.GET, entity, GetAccessCertificatesResponseDto.class,
+                        device.getSerialNumber());
+
 
         assertThat(getAccessCertificateResponse.getStatusCode(), is(HttpStatus.OK));
 
         GetAccessCertificatesResponseDto body = getAccessCertificateResponse.getBody();
         assertThat(body, is(notNullValue()));
-        assertThat(body.getAccessCertificate(), is(notNullValue()));
-        assertThat(body.getAccessCertificate().getDeviceAccessCertificate(), is(notNullValue()));
-        assertThat(body.getAccessCertificate().getVehicleAccessCertificate(), is(notNullValue()));
-    }*/
+
+        List<AccessCertificateDto> accessCertificates = body.getAccessCertificates();
+        assertThat(accessCertificates, is(notNullValue()));
+        assertThat(accessCertificates, hasSize(1));
+    }
 
 
     private String generateNonceWithRandomLength() {

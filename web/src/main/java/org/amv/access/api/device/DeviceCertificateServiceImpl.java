@@ -1,7 +1,6 @@
 package org.amv.access.api.device;
 
 import lombok.extern.slf4j.Slf4j;
-import org.amv.access.api.device.model.CreateDeviceCertificateRequest;
 import org.amv.access.auth.ApplicationAuthentication;
 import org.amv.access.core.DeviceCertificate;
 import org.amv.access.core.Issuer;

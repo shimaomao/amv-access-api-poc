@@ -14,7 +14,6 @@ import org.amv.highmobility.cryptotool.CryptotoolWithIssuer.CertificateIssuer;
 import reactor.core.publisher.Mono;
 
 import java.time.LocalDateTime;
-import java.util.UUID;
 
 import static java.util.Objects.requireNonNull;
 import static org.amv.access.util.MoreBase64.fromBase64OrThrow;
@@ -77,6 +76,7 @@ public class HighmobilityModule implements AmvAccessModuleSpi {
     @Override
     public Mono<AccessCertificate> createAccessCertificate(CreateAccessCertificateRequest accessCertificateRequest) {
         requireNonNull(accessCertificateRequest);
+
         Application application = accessCertificateRequest.getApplication();
         Device device = requireNonNull(accessCertificateRequest.getDevice());
         Vehicle vehicle = requireNonNull(accessCertificateRequest.getVehicle());
@@ -92,8 +92,7 @@ public class HighmobilityModule implements AmvAccessModuleSpi {
                 vehiclePublicKey,
                 device.getSerialNumber(),
                 validFrom,
-                validUntil)
-                .block();
+                validUntil).block();
 
         Cryptotool.AccessCertificate vehicleAccessCertificate = cryptotool.createAccessCertificate(
                 device.getSerialNumber(),
@@ -117,6 +116,7 @@ public class HighmobilityModule implements AmvAccessModuleSpi {
                 .block();
 
         AccessCertificate accessCertificateEntity = AccessCertificateImpl.builder()
+                .issuer(this.issuer)
                 .application(application)
                 .vehicle(vehicle)
                 .device(device)

@@ -1,7 +1,7 @@
 package org.amv.access.api.access;
 
 import lombok.extern.slf4j.Slf4j;
-import org.amv.access.api.access.model.CreateAccessCertificateRequest;
+import org.amv.access.api.access.model.CreateAccessCertificateRequestDto;
 import org.springframework.validation.Errors;
 import org.springframework.validation.ValidationUtils;
 import org.springframework.validation.Validator;
@@ -14,7 +14,7 @@ public class CreateAccessCertificateRequestValidator implements Validator {
 
     @Override
     public boolean supports(Class<?> clazz) {
-        return CreateAccessCertificateRequest.class.isAssignableFrom(clazz);
+        return CreateAccessCertificateRequestDto.class.isAssignableFrom(clazz);
     }
 
     @Override
@@ -27,7 +27,7 @@ public class CreateAccessCertificateRequestValidator implements Validator {
         ValidationUtils.rejectIfEmptyOrWhitespace(errors, "deviceSerialNumber", "deviceSerialNumber.empty");
         ValidationUtils.rejectIfEmptyOrWhitespace(errors, "vehicleSerialNumber", "vehicleSerialNumber.empty");
 
-        CreateAccessCertificateRequest request = (CreateAccessCertificateRequest) target;
+        CreateAccessCertificateRequestDto request = (CreateAccessCertificateRequestDto) target;
         boolean isDeviceSerialNumberLengthValid = request != null &&
                 request.getDeviceSerialNumber() != null &&
                 request.getDeviceSerialNumber().length() == SERIAL_NUMBER_LENGTH;
@@ -55,7 +55,7 @@ public class CreateAccessCertificateRequestValidator implements Validator {
             request.setValidityStart(validFrom);
             request.setValidityEnd(validUntil);
 
-            log.warn("Fill missing validity dates of CreateAccessCertificateRequest with: from {}, to {}", validFrom, validUntil);
+            log.warn("Fill missing validity dates of CreateAccessCertificateRequestDto with: from {}, to {}", validFrom, validUntil);
         }
     }
 }

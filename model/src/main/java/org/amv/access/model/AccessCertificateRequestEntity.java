@@ -30,12 +30,10 @@ public class AccessCertificateRequestEntity {
     private Date created;
 
     @Column(name = "valid_from", updatable = false)
-    @Temporal(TemporalType.TIMESTAMP)
-    private Date validFrom;
+    private LocalDateTime validFrom;
 
     @Column(name = "valid_until", updatable = false)
-    @Temporal(TemporalType.TIMESTAMP)
-    private Date validUntil;
+    private LocalDateTime validUntil;
 
     @Column(name = "app_id", updatable = false)
     private String appId;

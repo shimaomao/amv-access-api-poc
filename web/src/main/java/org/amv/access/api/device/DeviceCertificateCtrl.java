@@ -4,7 +4,7 @@ import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
 import lombok.extern.slf4j.Slf4j;
 import org.amv.access.api.ErrorResponseDto;
-import org.amv.access.api.device.model.CreateDeviceCertificateRequest;
+import org.amv.access.api.device.DeviceCertificateService.CreateDeviceCertificateRequest;
 import org.amv.access.auth.ApplicationAuthentication;
 import org.amv.access.client.model.CreateDeviceCertificateRequestDto;
 import org.amv.access.client.model.CreateDeviceCertificateResponseDto;

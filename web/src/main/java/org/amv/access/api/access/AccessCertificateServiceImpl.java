@@ -1,10 +1,10 @@
 package org.amv.access.api.access;
 
-import org.amv.access.api.access.model.CreateAccessCertificateRequest;
-import org.amv.access.api.access.model.GetAccessCertificateRequest;
-import org.amv.access.api.access.model.RevokeAccessCertificateRequest;
+import lombok.extern.slf4j.Slf4j;
+import org.amv.access.api.access.model.CreateAccessCertificateRequestDto;
 import org.amv.access.auth.NonceAuthentication;
 import org.amv.access.core.AccessCertificate;
+import org.amv.access.core.Issuer;
 import org.amv.access.core.impl.AccessCertificateImpl;
 import org.amv.access.exception.BadRequestException;
 import org.amv.access.exception.NotFoundException;
@@ -16,17 +16,20 @@ import org.springframework.transaction.annotation.Transactional;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
-import java.time.LocalDateTime;
-import java.time.ZoneId;
-import java.util.*;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.UUID;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import static java.util.Objects.requireNonNull;
 
+@Slf4j
 public class AccessCertificateServiceImpl implements AccessCertificateService {
 
     private final AmvAccessModuleSpi amvAccessModule;
+    private final IssuerRepository issuerRepository;
     private final ApplicationRepository applicationRepository;
     private final VehicleRepository vehicleRepository;
     private final DeviceRepository deviceRepository;
@@ -35,12 +38,14 @@ public class AccessCertificateServiceImpl implements AccessCertificateService {
 
     public AccessCertificateServiceImpl(
             AmvAccessModuleSpi amvAccessModule,
+            IssuerRepository issuerRepository,
             ApplicationRepository applicationRepository,
             VehicleRepository vehicleRepository,
             DeviceRepository deviceRepository,
             AccessCertificateRepository accessCertificateRepository,
             AccessCertificateRequestRepository accessCertificateRequestRepository) {
         this.amvAccessModule = requireNonNull(amvAccessModule);
+        this.issuerRepository = requireNonNull(issuerRepository);
         this.applicationRepository = requireNonNull(applicationRepository);
         this.vehicleRepository = requireNonNull(vehicleRepository);
         this.deviceRepository = requireNonNull(deviceRepository);
@@ -69,6 +74,13 @@ public class AccessCertificateServiceImpl implements AccessCertificateService {
                 .map(v -> v.orElseThrow(() -> new NotFoundException("ApplicationEntity not found")))
                 .collect(Collectors.toMap(ApplicationEntity::getId, Function.identity()));
 
+        Map<Long, IssuerEntity> issuers = accessCertificates.stream()
+                .map(AccessCertificateEntity::getIssuerId)
+                .distinct()
+                .map(id -> Optional.ofNullable(issuerRepository.findOne(id)))
+                .map(v -> v.orElseThrow(() -> new NotFoundException("IssuerEntiy not found")))
+                .collect(Collectors.toMap(IssuerEntity::getId, Function.identity()));
+
         Map<Long, VehicleEntity> vehicles = accessCertificates.stream()
                 .map(AccessCertificateEntity::getVehicleId)
                 .distinct()
@@ -78,34 +90,38 @@ public class AccessCertificateServiceImpl implements AccessCertificateService {
 
         return Flux.fromIterable(accessCertificates)
                 .map(accessCertificate -> {
+                    IssuerEntity issuer = issuers.get(accessCertificate.getIssuerId());
                     ApplicationEntity application = applications.get(accessCertificate.getApplicationId());
-                    VehicleEntity vehicle = vehicles.get(accessCertificate.getId());
+                    VehicleEntity vehicle = vehicles.get(accessCertificate.getVehicleId());
 
                     return AccessCertificateImpl.builder()
+                            .issuer(issuer)
                             .application(application)
                             .device(device)
                             .vehicle(vehicle)
-                            .signedDeviceAccessCertificateBase64(accessCertificate.getSignedVehicleAccessCertificateBase64())
-                            .signedVehicleAccessCertificateBase64(accessCertificate.getSignedDeviceAccessCertificateBase64())
+                            .validFrom(accessCertificate.getValidFrom())
+                            .validUntil(accessCertificate.getValidUntil())
+                            .signedDeviceAccessCertificateBase64(accessCertificate.getSignedDeviceAccessCertificateBase64())
+                            .signedVehicleAccessCertificateBase64(accessCertificate.getSignedVehicleAccessCertificateBase64())
                             .build();
                 });
     }
 
     @Override
     @Transactional
-    public Mono<AccessCertificate> createAccessCertificate(CreateAccessCertificateRequest request) {
+    public Mono<AccessCertificate> createAccessCertificate(CreateAccessCertificateRequestDto request) {
         requireNonNull(request, "`request` must not be null");
 
-        ApplicationEntity application = applicationRepository.findOneByAppId(request.getAppId())
+        ApplicationEntity applicationEntity = applicationRepository.findOneByAppId(request.getAppId())
                 .orElseThrow(() -> new NotFoundException("ApplicationEntity not found"));
 
-        VehicleEntity vehicle = vehicleRepository.findOneBySerialNumber(request.getVehicleSerialNumber())
+        VehicleEntity vehicleEntity = vehicleRepository.findOneBySerialNumber(request.getVehicleSerialNumber())
                 .orElseThrow(() -> new NotFoundException("VehicleEntity not found"));
 
-        DeviceEntity device = deviceRepository.findBySerialNumber(request.getDeviceSerialNumber())
+        DeviceEntity deviceEntity = deviceRepository.findBySerialNumber(request.getDeviceSerialNumber())
                 .orElseThrow(() -> new NotFoundException("DeviceEntity not found"));
 
-        boolean hasSameAppId = device.getApplicationId() == application.getId();
+        boolean hasSameAppId = deviceEntity.getApplicationId() == applicationEntity.getId();
         if (!hasSameAppId) {
             throw new BadRequestException("Mismatching `appId`");
         }
@@ -113,9 +129,9 @@ public class AccessCertificateServiceImpl implements AccessCertificateService {
         saveAccessCertificateRequest(request).block();
 
         CreateAccessCertificateRequestImpl r = CreateAccessCertificateRequestImpl.builder()
-                .application(application)
-                .device(device)
-                .vehicle(vehicle)
+                .application(applicationEntity)
+                .device(deviceEntity)
+                .vehicle(vehicleEntity)
                 .validFrom(request.getValidityStart())
                 .validUntil(request.getValidityEnd())
                 .build();
@@ -124,11 +140,18 @@ public class AccessCertificateServiceImpl implements AccessCertificateService {
                 .map(Mono::block)
                 .orElseThrow(() -> new IllegalStateException("Could not create access certificate for " + request));
 
+
+        Issuer issuer = accessCertificate.getIssuer();
+        IssuerEntity issuerEntity = findIssuerOrCreateIfNecessary(issuer);
+
         AccessCertificateEntity accessCertificateEntity = AccessCertificateEntity.builder()
                 .uuid(UUID.randomUUID().toString())
-                .applicationId(application.getId())
-                .vehicleId(vehicle.getId())
-                .deviceId(device.getId())
+                .issuerId(issuerEntity.getId())
+                .applicationId(applicationEntity.getId())
+                .vehicleId(vehicleEntity.getId())
+                .deviceId(deviceEntity.getId())
+                .validFrom(r.getValidFrom())
+                .validUntil(r.getValidUntil())
                 .signedVehicleAccessCertificateBase64(accessCertificate.getSignedDeviceAccessCertificateBase64())
                 .signedDeviceAccessCertificateBase64(accessCertificate.getSignedDeviceAccessCertificateBase64())
                 .build();
@@ -173,15 +196,15 @@ public class AccessCertificateServiceImpl implements AccessCertificateService {
         }
     }
 
-    private Mono<AccessCertificateRequestEntity> saveAccessCertificateRequest(CreateAccessCertificateRequest request) {
+    private Mono<AccessCertificateRequestEntity> saveAccessCertificateRequest(CreateAccessCertificateRequestDto request) {
         requireNonNull(request, "`request` must not be null");
 
         AccessCertificateRequestEntity accessCertificateRequestEntityEntity = AccessCertificateRequestEntity.builder()
                 .appId(request.getAppId())
                 .deviceSerialNumber(request.getDeviceSerialNumber())
                 .vehicleSerialNumber(request.getVehicleSerialNumber())
-                .validFrom(localDateTimeToDate(request.getValidityStart()))
-                .validUntil(localDateTimeToDate(request.getValidityEnd()))
+                .validFrom(request.getValidityStart())
+                .validUntil(request.getValidityEnd())
                 .build();
 
         AccessCertificateRequestEntity savedEntity = accessCertificateRequestRepository.save(accessCertificateRequestEntityEntity);
@@ -189,7 +212,21 @@ public class AccessCertificateServiceImpl implements AccessCertificateService {
         return Mono.just(savedEntity);
     }
 
-    private Date localDateTimeToDate(LocalDateTime localDateTime) {
-        return Date.from(localDateTime.atZone(ZoneId.systemDefault()).toInstant());
+
+    // TODO: currently an issuer must be created on demand - should be created on application start
+    private IssuerEntity findIssuerOrCreateIfNecessary(Issuer issuer) {
+        requireNonNull(issuer);
+
+        try {
+            return issuerRepository
+                    .findByNameAndPublicKeyBase64(issuer.getName(), issuer.getPublicKeyBase64())
+                    .orElseThrow(() -> new IllegalStateException("Could not find issuer"));
+        } catch (IllegalStateException e) {
+            log.warn("Issuer '{}' will be created as it does not yet exist.", issuer.getName());
+            return issuerRepository.save(IssuerEntity.builder()
+                    .name(issuer.getName())
+                    .publicKeyBase64(issuer.getPublicKeyBase64())
+                    .build());
+        }
     }
 }

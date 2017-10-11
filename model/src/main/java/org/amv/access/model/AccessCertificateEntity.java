@@ -37,6 +37,9 @@ public class AccessCertificateEntity {
     @Temporal(TemporalType.TIMESTAMP)
     private Date created;
 
+    @Column(name = "issuer_id")
+    private long issuerId;
+
     @Column(name = "application_id")
     private long applicationId;
 
