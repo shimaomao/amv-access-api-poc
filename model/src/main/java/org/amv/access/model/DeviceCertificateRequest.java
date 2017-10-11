@@ -34,8 +34,8 @@ public class DeviceCertificateRequest {
     @Column(name = "app_id")
     private String appId;
 
-    @Column(name = "public_key")
-    private String publicKey;
+    @Column(name = "public_key_base64")
+    private String publicKeyBase64;
 
     @Tolerate
     protected DeviceCertificateRequest() {

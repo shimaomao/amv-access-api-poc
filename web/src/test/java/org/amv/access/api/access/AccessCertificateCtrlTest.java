@@ -7,6 +7,8 @@ import org.amv.access.client.model.GetAccessCertificatesResponseDto;
 import org.amv.access.config.TestDbConfig;
 import org.amv.access.model.*;
 import org.amv.access.test.DeviceWithKeys;
+import org.amv.access.util.MoreBase64;
+import org.amv.access.util.SecureRandomUtils;
 import org.amv.highmobility.cryptotool.Cryptotool;
 import org.amv.highmobility.cryptotool.CryptotoolUtils;
 import org.apache.commons.codec.binary.Hex;
@@ -115,7 +117,9 @@ public class AccessCertificateCtrlTest {
         String nonce = generateNonceWithRandomLength();
         String signedNonce = signNonce(deviceWithKeys.getKeys(), generateNonceWithRandomLength());
 
-        Cryptotool.Validity signedNonceValidity = Optional.of(cryptotool.verifySignature(nonce, signedNonce, device.getPublicKey()))
+        String devicePublicKey = MoreBase64.fromBase64(device.getPublicKeyBase64())
+                .orElseThrow(IllegalStateException::new);
+        Cryptotool.Validity signedNonceValidity = Optional.of(cryptotool.verifySignature(nonce, signedNonce, devicePublicKey))
                 .map(Mono::block)
                 .orElse(Cryptotool.Validity.VALID);
 
@@ -142,7 +146,9 @@ public class AccessCertificateCtrlTest {
         String nonce = generateNonceWithRandomLength();
         String signedNonce = signNonce(deviceWithKeys.getKeys(), nonce);
 
-        Cryptotool.Validity signedNonceValidity = Optional.of(cryptotool.verifySignature(nonce, signedNonce, device.getPublicKey()))
+        String devicePublicKey = MoreBase64.fromBase64(device.getPublicKeyBase64())
+                .orElseThrow(IllegalStateException::new);
+        Cryptotool.Validity signedNonceValidity = Optional.of(cryptotool.verifySignature(nonce, signedNonce, devicePublicKey))
                 .map(Mono::block)
                 .orElse(Cryptotool.Validity.INVALID);
 
@@ -238,29 +244,6 @@ public class AccessCertificateCtrlTest {
         assertThat(body.getAccessCertificate().getVehicleAccessCertificate(), is(notNullValue()));
     }*/
 
-    private DeviceEntity createDummyDevice() {
-        Cryptotool.Keys keys = cryptotool.generateKeys().block();
-
-        DeviceEntity device = DeviceEntity.builder()
-                .appId(CryptotoolUtils.TestUtils.generateRandomAppId())
-                .name(StringUtils.prependIfMissing("test-", RandomStringUtils.randomAlphanumeric(10)))
-                .serialNumber(CryptotoolUtils.TestUtils.generateRandomSerial())
-                .publicKey(keys.getPublicKey())
-                .build();
-
-        return deviceRepository.save(device);
-    }
-
-    private VehicleEntity createDummyVehicle() {
-        Cryptotool.Keys keys = cryptotool.generateKeys().block();
-
-        VehicleEntity vehicle = VehicleEntity.builder()
-                .serialNumber(CryptotoolUtils.TestUtils.generateRandomSerial())
-                .publicKey(keys.getPublicKey())
-                .build();
-
-        return vehicleRepository.save(vehicle);
-    }
 
     private String generateNonceWithRandomLength() {
         return generateNonce(RandomUtils.nextInt(8, 32));
@@ -283,11 +266,14 @@ public class AccessCertificateCtrlTest {
     }
 
     private DeviceEntity createAndSaveDevice(ApplicationEntity application, Cryptotool.Keys keys) {
+        String devicePublicKeyBase64 = MoreBase64.toBase64(keys.getPublicKey())
+                .orElseThrow(IllegalStateException::new);
+
         return deviceRepository.save(DeviceEntity.builder()
-                .appId(application.getAppId())
+                .applicationId(application.getId())
                 .name(StringUtils.prependIfMissing("test-", RandomStringUtils.randomAlphanumeric(10)))
-                .serialNumber(CryptotoolUtils.TestUtils.generateRandomSerial())
-                .publicKey(keys.getPublicKey())
+                .serialNumber(SecureRandomUtils.generateRandomSerial())
+                .publicKeyBase64(devicePublicKeyBase64)
                 .build());
     }
 }

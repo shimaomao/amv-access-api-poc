@@ -16,7 +16,7 @@ public class CreateDeviceCertificateResponseDto {
     @JsonProperty("device_certificate")
     @ApiModelProperty(
             value = "The generated device certificate for this device",
-            dataType = "String (encoded in base64)",
+            dataType = "DeviceCertificateDto",
             required = true
     )
     private DeviceCertificateDto deviceCertificate;

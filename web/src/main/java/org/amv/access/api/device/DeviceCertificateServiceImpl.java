@@ -2,6 +2,7 @@ package org.amv.access.api.device;
 
 import lombok.extern.slf4j.Slf4j;
 import org.amv.access.api.device.model.CreateDeviceCertificateRequest;
+import org.amv.access.auth.ApplicationAuthentication;
 import org.amv.access.core.DeviceCertificate;
 import org.amv.access.core.Issuer;
 import org.amv.access.exception.BadRequestException;
@@ -10,11 +11,11 @@ import org.amv.access.model.*;
 import org.amv.access.spi.AmvAccessModuleSpi;
 import org.amv.access.spi.model.CreateDeviceCertificateRequestImpl;
 import org.amv.access.util.SecureRandomUtils;
-import org.amv.highmobility.cryptotool.CryptotoolUtils;
 import org.springframework.transaction.annotation.Transactional;
 import reactor.core.publisher.Mono;
 
 import java.util.Optional;
+import java.util.UUID;
 
 import static java.util.Objects.requireNonNull;
 
@@ -43,10 +44,11 @@ public class DeviceCertificateServiceImpl implements DeviceCertificateService {
 
     @Override
     @Transactional
-    public Mono<DeviceCertificate> createDeviceCertificate(CreateDeviceCertificateRequest request) {
+    public Mono<DeviceCertificate> createDeviceCertificate(ApplicationAuthentication auth, CreateDeviceCertificateRequest request) {
+        requireNonNull(auth, "`auth` must not be null");
         requireNonNull(request, "`request` must not be null");
 
-        ApplicationEntity application = findApplicationOrThrow(request);
+        ApplicationEntity application = findApplicationOrThrow(auth);
         DeviceCertificateRequest deviceCertificateRequest = saveCreateDeviceCertificateRequest(request);
         DeviceEntity device = createAndSaveDevice(application, deviceCertificateRequest);
 
@@ -65,6 +67,7 @@ public class DeviceCertificateServiceImpl implements DeviceCertificateService {
         IssuerEntity issuerEntity = findIssuerOrCreateIfNecessary(deviceCertificate.getIssuer());
 
         DeviceCertificateEntity deviceCertificateEntity = DeviceCertificateEntity.builder()
+                .uuid(UUID.randomUUID().toString())
                 .applicationId(application.getId())
                 .issuerId(issuerEntity.getId())
                 .deviceId(device.getId())
@@ -77,8 +80,8 @@ public class DeviceCertificateServiceImpl implements DeviceCertificateService {
         return Mono.justOrEmpty(deviceCertificate);
     }
 
-    private ApplicationEntity findApplicationOrThrow(CreateDeviceCertificateRequest request) {
-        ApplicationEntity application = applicationRepository.findOneByAppId(request.getAppId())
+    private ApplicationEntity findApplicationOrThrow(ApplicationAuthentication auth) {
+        ApplicationEntity application = applicationRepository.findOneByAppId(auth.getApplication().getAppId())
                 .orElseThrow(() -> new NotFoundException("ApplicationEntity with given appId not found"));
 
         if (!application.isEnabled()) {
@@ -94,8 +97,8 @@ public class DeviceCertificateServiceImpl implements DeviceCertificateService {
 
         DeviceCertificateRequest deviceCertificateRequestEntity = DeviceCertificateRequest.builder()
                 .appId(request.getAppId())
-                .publicKey(request.getPublicKey())
-                .name(request.getName())
+                .publicKeyBase64(request.getDevicePublicKeyBase64())
+                .name(request.getDeviceName())
                 .build();
 
         return deviceCertificateRequestRepository.save(deviceCertificateRequestEntity);
@@ -104,16 +107,15 @@ public class DeviceCertificateServiceImpl implements DeviceCertificateService {
     private DeviceEntity createAndSaveDevice(ApplicationEntity application, DeviceCertificateRequest deviceCertificateRequestEntity) {
         requireNonNull(application);
         requireNonNull(deviceCertificateRequestEntity);
-        requireNonNull(deviceCertificateRequestEntity.getPublicKey());
+        String publicKeyBase64 = requireNonNull(deviceCertificateRequestEntity.getPublicKeyBase64());
 
-        String devicePublicKey = CryptotoolUtils.decodeBase64AsHex(deviceCertificateRequestEntity.getPublicKey());
         String deviceSerialNumber = generateNewDeviceSerial();
 
         DeviceEntity device = DeviceEntity.builder()
-                .appId(application.getAppId())
+                .applicationId(application.getId())
                 .name(deviceCertificateRequestEntity.getName())
                 .serialNumber(deviceSerialNumber)
-                .publicKey(devicePublicKey)
+                .publicKeyBase64(publicKeyBase64)
                 .build();
 
         return deviceRepository.save(device);

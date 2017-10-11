@@ -27,7 +27,6 @@ import static java.util.Objects.requireNonNull;
 public class AccessCertificateServiceImpl implements AccessCertificateService {
 
     private final AmvAccessModuleSpi amvAccessModule;
-    private final IssuerRepository issuerRepository;
     private final ApplicationRepository applicationRepository;
     private final VehicleRepository vehicleRepository;
     private final DeviceRepository deviceRepository;
@@ -36,14 +35,12 @@ public class AccessCertificateServiceImpl implements AccessCertificateService {
 
     public AccessCertificateServiceImpl(
             AmvAccessModuleSpi amvAccessModule,
-            IssuerRepository issuerRepository,
             ApplicationRepository applicationRepository,
             VehicleRepository vehicleRepository,
             DeviceRepository deviceRepository,
             AccessCertificateRepository accessCertificateRepository,
             AccessCertificateRequestRepository accessCertificateRequestRepository) {
         this.amvAccessModule = requireNonNull(amvAccessModule);
-        this.issuerRepository = requireNonNull(issuerRepository);
         this.applicationRepository = requireNonNull(applicationRepository);
         this.vehicleRepository = requireNonNull(vehicleRepository);
         this.deviceRepository = requireNonNull(deviceRepository);
@@ -108,7 +105,7 @@ public class AccessCertificateServiceImpl implements AccessCertificateService {
         DeviceEntity device = deviceRepository.findBySerialNumber(request.getDeviceSerialNumber())
                 .orElseThrow(() -> new NotFoundException("DeviceEntity not found"));
 
-        boolean hasSameAppId = Objects.equals(device.getAppId(), request.getAppId());
+        boolean hasSameAppId = device.getApplicationId() == application.getId();
         if (!hasSameAppId) {
             throw new BadRequestException("Mismatching `appId`");
         }
@@ -128,6 +125,7 @@ public class AccessCertificateServiceImpl implements AccessCertificateService {
                 .orElseThrow(() -> new IllegalStateException("Could not create access certificate for " + request));
 
         AccessCertificateEntity accessCertificateEntity = AccessCertificateEntity.builder()
+                .uuid(UUID.randomUUID().toString())
                 .applicationId(application.getId())
                 .vehicleId(vehicle.getId())
                 .deviceId(device.getId())

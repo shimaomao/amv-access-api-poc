@@ -6,10 +6,11 @@ import com.google.common.collect.Lists;
 import lombok.extern.slf4j.Slf4j;
 import org.amv.access.AmvAccessApplication;
 import org.amv.access.model.*;
+import org.amv.access.util.MoreBase64;
+import org.amv.access.util.SecureRandomUtils;
 import org.amv.highmobility.cryptotool.Cryptotool;
-import org.amv.highmobility.cryptotool.CryptotoolUtils;
 import org.apache.commons.lang3.RandomStringUtils;
-import org.springframework.data.domain.PageRequest;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.util.ArrayList;
@@ -26,6 +27,7 @@ public class DemoService {
     private final ApplicationRepository applicationRepository;
     private final UserRepository userRepository;
     private final VehicleRepository vehicleRepository;
+    private final DeviceRepository deviceRepository;
 
     private final Supplier<DemoUser.DemoUserBuilder> demoUserBuilderSupplier = Suppliers
             .memoize(this::createDemoUserBuilder);
@@ -34,12 +36,14 @@ public class DemoService {
                        PasswordEncoder passwordEncoder,
                        ApplicationRepository applicationRepository,
                        UserRepository userRepository,
-                       VehicleRepository vehicleRepository) {
+                       VehicleRepository vehicleRepository,
+                       DeviceRepository deviceRepository) {
         this.cryptotool = cryptotool;
         this.passwordEncoder = requireNonNull(passwordEncoder);
         this.applicationRepository = requireNonNull(applicationRepository);
         this.userRepository = requireNonNull(userRepository);
-        this.vehicleRepository = vehicleRepository;
+        this.vehicleRepository = requireNonNull(vehicleRepository);
+        this.deviceRepository = requireNonNull(deviceRepository);
     }
 
     public DemoUser getOrCreateDemoUser() {
@@ -65,20 +69,12 @@ public class DemoService {
     }
 
     public void createDemoData() {
-        boolean hasDemoData = vehicleRepository.findAll(new PageRequest(0, 1)).hasContent();
-        if (hasDemoData) {
-            return;
-        }
+        this.getOrCreateDemoUser();
+        this.createDemoVehicle();
 
-        Cryptotool.Keys keys = cryptotool.generateKeys().block();
+        ApplicationEntity demoApplication = this.getOrCreateDemoApplication();
 
-        VehicleEntity vehicle = VehicleEntity.builder()
-                .id(10L)
-                .serialNumber(RandomStringUtils.randomNumeric(18))
-                .publicKey(keys.getPublicKey())
-                .build();
-
-        vehicleRepository.save(vehicle);
+        this.createDemoDevice(demoApplication);
     }
 
     private DemoUser createDemoUser() {
@@ -111,10 +107,39 @@ public class DemoService {
     private ApplicationEntity createDemoApplication() {
         return ApplicationEntity.builder()
                 .name(DEMO_APP_NAME)
-                .appId(CryptotoolUtils.TestUtils.generateRandomAppId())
+                .appId(SecureRandomUtils.generateRandomAppId())
                 .apiKey(RandomStringUtils.randomAlphanumeric(8))
                 .enabled(true)
                 .build();
     }
 
+
+    private DeviceEntity createDemoDevice(ApplicationEntity applicationEntity) {
+        Cryptotool.Keys keys = cryptotool.generateKeys().block();
+
+        String publicKeyBase64 = MoreBase64.toBase64(keys.getPublicKey())
+                .orElseThrow(IllegalStateException::new);
+        DeviceEntity device = DeviceEntity.builder()
+                .applicationId(applicationEntity.getId())
+                .name(StringUtils.prependIfMissing("test-", RandomStringUtils.randomAlphanumeric(10)))
+                .serialNumber(SecureRandomUtils.generateRandomSerial())
+                .publicKeyBase64(publicKeyBase64)
+                .build();
+
+        return deviceRepository.save(device);
+    }
+
+    private VehicleEntity createDemoVehicle() {
+        Cryptotool.Keys keys = cryptotool.generateKeys().block();
+
+        String publicKeyBase64 = MoreBase64.toBase64(keys.getPublicKey())
+                .orElseThrow(IllegalStateException::new);
+
+        VehicleEntity vehicle = VehicleEntity.builder()
+                .serialNumber(SecureRandomUtils.generateRandomSerial())
+                .publicKeyBase64(publicKeyBase64)
+                .build();
+
+        return vehicleRepository.save(vehicle);
+    }
 }

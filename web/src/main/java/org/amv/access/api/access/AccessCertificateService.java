@@ -9,7 +9,7 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 public interface AccessCertificateService {
-    Flux<AccessCertificate> getAccessCertificates(NonceAuthentication nonceAuthentication, GetAccessCertificateRequest request);
+    Flux<AccessCertificate> getAccessCertificates(NonceAuthentication auth, GetAccessCertificateRequest request);
 
     Mono<AccessCertificate> createAccessCertificate(CreateAccessCertificateRequest request);
 

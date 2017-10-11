@@ -12,9 +12,9 @@ import lombok.Data;
 public class AccessCertificateDto {
     @JsonProperty(value = "vehicle_access_certificate")
     @ApiModelProperty(notes = "the full access certificate for the vehicle in binary format", dataType = "String (encoded in base64)")
-    private String vehicleAccessCertificate;
+    private AccessCertificateDto vehicleAccessCertificate;
 
     @JsonProperty(value = "device_access_certificate")
     @ApiModelProperty(notes = "the full access certificate for the device in binary format", dataType = "String (encoded in base64)")
-    private String deviceAccessCertificate;
+    private AccessCertificateDto deviceAccessCertificate;
 }

@@ -1,6 +1,5 @@
 package org.amv.access.spi.highmobility;
 
-import com.google.common.base.Charsets;
 import org.amv.access.auth.NonceAuthentication;
 import org.amv.access.core.*;
 import org.amv.access.core.impl.AccessCertificateImpl;
@@ -15,11 +14,11 @@ import org.amv.highmobility.cryptotool.CryptotoolWithIssuer.CertificateIssuer;
 import reactor.core.publisher.Mono;
 
 import java.time.LocalDateTime;
-import java.util.Base64;
-import java.util.Optional;
 import java.util.UUID;
 
 import static java.util.Objects.requireNonNull;
+import static org.amv.access.util.MoreBase64.fromBase64OrThrow;
+import static org.amv.access.util.MoreBase64.toBase64OrThrow;
 
 public class HighmobilityModule implements AmvAccessModuleSpi {
 
@@ -34,18 +33,18 @@ public class HighmobilityModule implements AmvAccessModuleSpi {
 
         this.issuer = IssuerImpl.builder()
                 .name(certificateIssuer.getName())
-                .publicKeyBase64(base64OrThrow(certificateIssuer.getKeys().getPublicKey()))
+                .publicKeyBase64(toBase64OrThrow(certificateIssuer.getKeys().getPublicKey()))
                 .build();
     }
 
     @Override
-    public Mono<Boolean> isValidNonceAuth(NonceAuthentication nonceAuthentication, Device deviceEntity) {
-        requireNonNull(nonceAuthentication);
-        requireNonNull(deviceEntity);
+    public Mono<Boolean> isValidNonceAuth(NonceAuthentication auth, Device device) {
+        requireNonNull(auth);
+        requireNonNull(device);
 
-        return cryptotool.verifySignature(nonceAuthentication.getNonce(),
-                nonceAuthentication.getSignedNonce(),
-                deviceEntity.getPublicKey())
+        String devicePublicKey = fromBase64OrThrow(device.getPublicKeyBase64());
+
+        return cryptotool.verifySignature(auth.getNonce(), auth.getSignedNonce(), devicePublicKey)
                 .map(v -> v == Cryptotool.Validity.VALID);
     }
 
@@ -67,8 +66,8 @@ public class HighmobilityModule implements AmvAccessModuleSpi {
                 .issuer(this.issuer)
                 .application(application)
                 .device(device)
-                .certificate(deviceCertificate.getDeviceCertificate())
-                .signedCertificate(signedDeviceCertificate.getSignature())
+                .certificateBase64(toBase64OrThrow(deviceCertificate.getDeviceCertificate()))
+                .signedCertificateBase64(toBase64OrThrow(signedDeviceCertificate.getSignature()))
                 .build();
 
         return Mono.just(deviceCertificateEntity);
@@ -85,20 +84,12 @@ public class HighmobilityModule implements AmvAccessModuleSpi {
         LocalDateTime validFrom = requireNonNull(accessCertificateRequest.getValidFrom());
         LocalDateTime validUntil = requireNonNull(accessCertificateRequest.getValidUntil());
 
-        /*
-        LocalDateTime validFrom = LocalDateTime.ofInstant(accessCertificateRequest
-                        .getValidFrom()
-                        .toInstant(),
-                ZoneId.systemDefault());
-
-        LocalDateTime validUntil = LocalDateTime.ofInstant(accessCertificateRequest
-                        .getValidUntil()
-                        .toInstant(),
-                ZoneId.systemDefault());*/
+        String vehiclePublicKey = fromBase64OrThrow(vehicle.getPublicKeyBase64());
+        String devicePublicKey = fromBase64OrThrow(device.getPublicKeyBase64());
 
         Cryptotool.AccessCertificate deviceAccessCertificate = cryptotool.createAccessCertificate(
                 vehicle.getSerialNumber(),
-                vehicle.getPublicKey(),
+                vehiclePublicKey,
                 device.getSerialNumber(),
                 validFrom,
                 validUntil)
@@ -106,11 +97,10 @@ public class HighmobilityModule implements AmvAccessModuleSpi {
 
         Cryptotool.AccessCertificate vehicleAccessCertificate = cryptotool.createAccessCertificate(
                 device.getSerialNumber(),
-                device.getPublicKey(),
+                devicePublicKey,
                 vehicle.getSerialNumber(),
                 validFrom,
-                validUntil
-        ).block();
+                validUntil).block();
 
         String signedDeviceAccessCertificate = Mono.just(deviceAccessCertificate)
                 .map(Cryptotool.AccessCertificate::getAccessCertificate)
@@ -127,23 +117,16 @@ public class HighmobilityModule implements AmvAccessModuleSpi {
                 .block();
 
         AccessCertificate accessCertificateEntity = AccessCertificateImpl.builder()
-                .uuid(UUID.randomUUID().toString())
                 .application(application)
                 .vehicle(vehicle)
                 .device(device)
                 .validFrom(validFrom)
                 .validUntil(validUntil)
-                .signedVehicleAccessCertificateBase64(base64OrThrow(signedVehicleAccessCertificate))
-                .signedDeviceAccessCertificateBase64(base64OrThrow(signedDeviceAccessCertificate))
+                .signedVehicleAccessCertificateBase64(toBase64OrThrow(signedVehicleAccessCertificate))
+                .signedDeviceAccessCertificateBase64(toBase64OrThrow(signedDeviceAccessCertificate))
                 .build();
 
         return Mono.just(accessCertificateEntity);
     }
 
-    private String base64OrThrow(String signedDeviceAccessCertificate) {
-        return Optional.ofNullable(signedDeviceAccessCertificate)
-                .map(s -> s.getBytes(Charsets.UTF_8))
-                .map(s -> Base64.getEncoder().encodeToString(s))
-                .orElseThrow(() -> new IllegalStateException("Error while encoding to base64"));
-    }
 }

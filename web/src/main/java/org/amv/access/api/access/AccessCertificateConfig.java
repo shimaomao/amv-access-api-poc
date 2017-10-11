@@ -15,14 +15,12 @@ public class AccessCertificateConfig {
 
     @Bean
     public AccessCertificateService accessCertificateService(AmvAccessModuleSpi amvAccessModule,
-                                                             IssuerRepository issuerRepository,
                                                              ApplicationRepository applicationRepository,
                                                              VehicleRepository vehicleRepository,
                                                              DeviceRepository deviceRepository,
                                                              AccessCertificateRepository accessCertificateRepository,
                                                              AccessCertificateRequestRepository accessCertificateRequestRepository) {
         return new AccessCertificateServiceImpl(amvAccessModule,
-                issuerRepository,
                 applicationRepository,
                 vehicleRepository,
                 deviceRepository,

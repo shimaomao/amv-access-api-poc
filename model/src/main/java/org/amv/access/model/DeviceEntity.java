@@ -34,8 +34,8 @@ public class DeviceEntity implements Device {
     @Temporal(TemporalType.TIMESTAMP)
     private Date created;
 
-    @Column(name = "app_id")
-    private String appId;
+    @Column(name = "application_id")
+    private long applicationId;
 
     @Column(name = "device_name")
     private String name;
@@ -43,8 +43,8 @@ public class DeviceEntity implements Device {
     @Column(name = "serial_number")
     private String serialNumber;
 
-    @Column(name = "public_key")
-    private String publicKey;
+    @Column(name = "public_key_base64")
+    private String publicKeyBase64;
 
     @Tolerate
     protected DeviceEntity() {

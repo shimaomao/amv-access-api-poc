@@ -28,6 +28,13 @@ public class DeviceCertificateEntity {
     @Column(name = "id", columnDefinition = "bigint")
     private Long id;
 
+    //@GeneratedValue(generator = "uuid2")
+    //@GenericGenerator(name = "uuid2", strategy = "uuid2")
+    //@Column(columnDefinition = "BINARY(16)")
+    //private UUID uuid;
+    @Column(name = "uuid")
+    private String uuid;
+
     @CreatedDate
     @Column(name = "created", insertable = true, updatable = false)
     @Temporal(TemporalType.TIMESTAMP)

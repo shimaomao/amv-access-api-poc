@@ -46,7 +46,8 @@ public class CreateAccessCertificateRequestValidator implements Validator {
 
         boolean isValidFromOrUntilMissing = request != null && (request.getValidityStart() == null || request.getValidityEnd() == null);
         if (isValidFromOrUntilMissing) {
-            // TODO: while in prototype phase, we can set valid dates ourselves.. but raise error if "valid from" and "valid until" are missing in final release!
+            // TODO: while in prototype phase, we can set valid dates ourselves..
+            // TODO: but raise error if "valid from" and "valid until" are missing in final release!
             LocalDateTime validFrom = LocalDateTime.now();
             LocalDateTime validUntil = validFrom.plusDays(1)
                     .toLocalDate().atStartOfDay();

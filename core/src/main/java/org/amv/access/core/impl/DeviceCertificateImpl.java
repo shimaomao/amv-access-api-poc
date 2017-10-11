@@ -18,7 +18,7 @@ public class DeviceCertificateImpl implements DeviceCertificate {
     @NonNull
     private Device device;
     @NonNull
-    private String certificate;
+    private String certificateBase64;
     @NonNull
-    private String signedCertificate;
+    private String signedCertificateBase64;
 }

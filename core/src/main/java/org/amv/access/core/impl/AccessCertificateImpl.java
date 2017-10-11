@@ -10,8 +10,6 @@ import java.time.LocalDateTime;
 @Setter(AccessLevel.PROTECTED)
 @Builder(builderClassName = "Builder")
 public class AccessCertificateImpl implements AccessCertificate {
-    private String uuid;
-
     @NonNull
     private Issuer issuer;
     @NonNull

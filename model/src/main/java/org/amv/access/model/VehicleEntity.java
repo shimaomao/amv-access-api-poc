@@ -37,8 +37,8 @@ public class VehicleEntity implements Vehicle {
     @Column(name = "serial_number")
     private String serialNumber;
 
-    @Column(name = "public_key")
-    private String publicKey;
+    @Column(name = "public_key_base64")
+    private String publicKeyBase64;
 
     @Tolerate
     protected VehicleEntity() {

@@ -7,6 +7,7 @@ import org.amv.access.client.model.DeviceCertificateDto;
 import org.amv.access.config.TestDbConfig;
 import org.amv.access.model.ApplicationEntity;
 import org.amv.access.model.ApplicationRepository;
+import org.amv.access.util.SecureRandomUtils;
 import org.amv.highmobility.cryptotool.Cryptotool;
 import org.amv.highmobility.cryptotool.CryptotoolUtils;
 import org.apache.commons.lang3.RandomStringUtils;
@@ -50,7 +51,7 @@ public class DeviceCertificateCtrlTest {
     public void setUp() {
         this.application = applicationRepository.save(ApplicationEntity.builder()
                 .name("Test ApplicationEntity")
-                .appId(CryptotoolUtils.TestUtils.generateRandomAppId())
+                .appId(SecureRandomUtils.generateRandomAppId())
                 .apiKey(RandomStringUtils.randomAlphanumeric(8))
                 .enabled(true)
                 .build());

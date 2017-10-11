@@ -9,7 +9,7 @@ public class CreateDeviceCertificateRequest {
 
     private String appId;
 
-    private String publicKey;
+    private String devicePublicKeyBase64;
 
-    private String name;
+    private String deviceName;
 }

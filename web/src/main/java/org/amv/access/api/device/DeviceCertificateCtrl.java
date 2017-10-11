@@ -47,12 +47,12 @@ public class DeviceCertificateCtrl {
 
         CreateDeviceCertificateRequest createDeviceCertificateRequest = CreateDeviceCertificateRequest.builder()
                 .appId(auth.getApplication().getAppId())
-                .publicKey(requestBody.getDevicePublicKey())
-                .name(RandomStringUtils.randomAlphabetic(16))
+                .devicePublicKeyBase64(requestBody.getDevicePublicKey())
+                .deviceName(RandomStringUtils.randomAlphabetic(16))
                 .build();
 
         ResponseEntity<CreateDeviceCertificateResponseDto> response = deviceCertificateService
-                .createDeviceCertificate(createDeviceCertificateRequest)
+                .createDeviceCertificate(auth, createDeviceCertificateRequest)
                 .map(deviceCertificateEntity -> DeviceCertificateDto.builder()
                         .deviceCertificate(deviceCertificateEntity.getSignedCertificateBase64())
                         .issuerPublicKey(deviceCertificateEntity.getIssuer().getPublicKeyBase64())
