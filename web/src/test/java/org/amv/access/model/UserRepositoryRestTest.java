@@ -36,8 +36,8 @@ public class UserRepositoryRestTest {
         DemoUser user = demoService.getOrCreateDemoUser();
 
         ResponseEntity<String> responseEntity = restTemplate
-                .withBasicAuth(user.getName(), user.getPassword())
-                .getForEntity("/user", String.class);
+                //.withBasicAuth(user.getName(), user.getPassword())
+                .getForEntity("/model-user", String.class);
 
         assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
 

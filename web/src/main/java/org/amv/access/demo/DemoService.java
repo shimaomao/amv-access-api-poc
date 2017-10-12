@@ -22,6 +22,7 @@ import static java.util.Objects.requireNonNull;
 @Slf4j
 public class DemoService {
     private static final String DEMO_USER_NAME = "demo";
+    private static final String DEMO_USER_PASSWORD = "demodemodemo";
     private static final String DEMO_APP_NAME = "demo";
     private static final String DEMO_APP_API_KEY = "demodemodemo";
 
@@ -99,10 +100,9 @@ public class DemoService {
     }
 
     private DemoUser.DemoUserBuilder createDemoUserBuilder() {
-        final String username = DEMO_USER_NAME;
-        final String password = "demo";
+        final String password = DEMO_USER_PASSWORD;
         return DemoUser.builder()
-                .name(username)
+                .name(DEMO_USER_NAME)
                 .password(password)
                 .encryptedPassword(passwordEncoder.encode(password));
     }
