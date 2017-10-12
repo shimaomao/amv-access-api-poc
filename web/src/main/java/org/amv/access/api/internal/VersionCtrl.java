@@ -1,6 +1,5 @@
-package org.amv.access.api.version;
+package org.amv.access.api.internal;
 
-import io.swagger.annotations.Api;
 import lombok.Builder;
 import lombok.Value;
 import org.amv.access.AmvAccessApplication;
@@ -17,8 +16,8 @@ import java.util.List;
 import static java.util.Objects.requireNonNull;
 
 @RestController
-@Api(hidden = true)
-@RequestMapping(value = "/generic/version")
+//@ApiIgnore("This is an internal endpoint")
+@RequestMapping(value = "/internal/version")
 public class VersionCtrl {
 
     private final Environment environment;

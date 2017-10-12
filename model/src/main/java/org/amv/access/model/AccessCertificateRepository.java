@@ -6,7 +6,7 @@ import org.springframework.data.rest.core.annotation.RepositoryRestResource;
 import java.util.List;
 import java.util.Optional;
 
-@RepositoryRestResource(collectionResourceRel = "access_certificate", path = "access_certificate")
+@RepositoryRestResource(collectionResourceRel = "access_certificate", path = "model-access-certificate")
 public interface AccessCertificateRepository extends JpaRepository<AccessCertificateEntity, Long> {
 
     List<AccessCertificateEntity> findByDeviceIdAndVehicleId(long deviceId, long vehicleId);

@@ -23,11 +23,11 @@ import springfox.documentation.spring.web.plugins.Docket;
 import springfox.documentation.swagger2.annotations.EnableSwagger2;
 
 import java.util.Collections;
+import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 
 import static com.google.common.base.Predicates.and;
 import static java.util.Objects.requireNonNull;
-import static springfox.documentation.builders.RequestHandlerSelectors.basePackage;
 import static springfox.documentation.builders.RequestHandlerSelectors.withClassAnnotation;
 
 @Configuration
@@ -72,8 +72,19 @@ public class SwaggerConfiguration extends WebMvcConfigurerAdapter {
         return new Docket(DocumentationType.SWAGGER_2)
                 .groupName("api")
                 .select()
-                .apis(apiHandlerPredicate())
-                .paths(PathSelectors.any())
+                .apis(withClassAnnotation(RestController.class))
+                .paths(PathSelectors.regex("/api/.+"))
+                .build()
+                .apiInfo(apiInfo());
+    }
+
+    @Bean
+    public Docket internal() {
+        return new Docket(DocumentationType.SWAGGER_2)
+                .groupName("internal")
+                .select()
+                .apis(withClassAnnotation(RestController.class))
+                .paths(PathSelectors.regex("/internal/.+"))
                 .build()
                 .apiInfo(apiInfo());
     }
@@ -83,8 +94,8 @@ public class SwaggerConfiguration extends WebMvcConfigurerAdapter {
         return new Docket(DocumentationType.SWAGGER_2)
                 .groupName("models")
                 .select()
-                .apis(modelApiHandlerPredicate())
-                .paths(PathSelectors.any())
+                .apis(RequestHandlerSelectors.any())
+                .paths(PathSelectors.regex("/model-.+"))
                 .build()
                 .apiInfo(apiInfo());
     }
@@ -100,13 +111,7 @@ public class SwaggerConfiguration extends WebMvcConfigurerAdapter {
                 .apiInfo(apiInfo());
     }
 
-    private Predicate<RequestHandler> apiHandlerPredicate() {
-        return and(
-                withClassAnnotation(RestController.class),
-                basePackage("org.amv.access.api")
-        );
-    }
-
+    // TODO: this is not working correctly with Spring Boot 2.0.0 :/ (2017-10-12)
     private Predicate<RequestHandler> modelApiHandlerPredicate() {
         return and(
                 withClassAnnotation(RepositoryRestController.class)
@@ -114,10 +119,15 @@ public class SwaggerConfiguration extends WebMvcConfigurerAdapter {
     }
 
     private ApiInfo toApiInfo(SwaggerProperties properties) {
+        String version = Optional.ofNullable(this.getClass())
+                .map(Class::getPackage)
+                .map(Package::getImplementationVersion)
+                .orElse(properties.getVersion());
+
         return new ApiInfo(
                 properties.getTitle(),
                 properties.getDescription(),
-                properties.getVersion(),
+                version,
                 properties.getTermsOfServiceUrl(),
                 new Contact(properties.getContactName(),
                         properties.getContactUrl(),

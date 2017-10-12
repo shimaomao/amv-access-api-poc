@@ -37,7 +37,7 @@ public class ApplicationEntity implements Application {
     @Column(name = "app_id")
     private String appId;
 
-    @JsonIgnore
+    @JsonProperty("api_key")
     @Column(name = "api_key")
     private String apiKey;
 
@@ -48,6 +48,11 @@ public class ApplicationEntity implements Application {
     @Tolerate
     protected ApplicationEntity() {
 
+    }
+
+    @JsonIgnore
+    public String getApiKey() {
+        return apiKey;
     }
 
     @Override

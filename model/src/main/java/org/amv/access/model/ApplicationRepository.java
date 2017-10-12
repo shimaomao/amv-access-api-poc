@@ -9,7 +9,7 @@ import org.springframework.data.rest.core.annotation.RepositoryRestResource;
 
 import java.util.Optional;
 
-@RepositoryRestResource(excerptProjection = UserProjection.class, collectionResourceRel = "application", path = "application")
+@RepositoryRestResource(excerptProjection = UserProjection.class, collectionResourceRel = "application", path = "model-application")
 public interface ApplicationRepository extends JpaRepository<ApplicationEntity, Long> {
 
     Optional<ApplicationEntity> findOneByAppId(@Param("appId") String appId);
