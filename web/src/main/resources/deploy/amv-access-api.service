@@ -1,10 +1,10 @@
 [Unit]
 Description=AMV Access API
-After=syslog.target
+After=network.target
 
 [Service]
 User=root
-ExecStart=/var/amv/amv-access-api/amv-access-api.jar
+ExecStart=/usr/local/amv/amv-access-api/amv-access-api.jar
 SuccessExitStatus=143
 
 [Install]
