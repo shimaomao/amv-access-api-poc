@@ -179,6 +179,25 @@ subprojects {
             }
         }
     }
+
+    uploadArchives {
+        String nexusPwd = credentials.nexuspwd
+        
+        repositories {
+            mavenDeployer {
+                repository(url: "${nexusUrl}/content/repositories/releases") {
+                    authentication(userName: nexusUsername, password: nexusPwd)
+                }
+                snapshotRepository(url: "${nexusUrl}/content/repositories/snapshots") {
+                    authentication(userName: nexusUsername, password: nexusPwd)
+                }
+
+                pom.version = project.version
+                pom.artifactId = project.name
+                pom.groupId = project.group
+            }
+        }
+    }
 }
 
 project(':model') {
