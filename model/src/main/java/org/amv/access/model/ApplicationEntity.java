@@ -1,6 +1,5 @@
 package org.amv.access.model;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AccessLevel;
 import lombok.Builder;
@@ -28,6 +27,7 @@ public class ApplicationEntity implements Application {
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
     @Column(name = "id", columnDefinition = "bigint")
+    @JsonProperty(value = "id", access = JsonProperty.Access.READ_ONLY)
     private Long id;
 
     @Column(name = "name")
@@ -37,7 +37,7 @@ public class ApplicationEntity implements Application {
     @Column(name = "app_id")
     private String appId;
 
-    @JsonProperty("api_key")
+    @JsonProperty(value = "api_key", access = JsonProperty.Access.WRITE_ONLY)
     @Column(name = "api_key")
     private String apiKey;
 
@@ -48,11 +48,6 @@ public class ApplicationEntity implements Application {
     @Tolerate
     protected ApplicationEntity() {
 
-    }
-
-    @JsonIgnore
-    public String getApiKey() {
-        return apiKey;
     }
 
     @Override

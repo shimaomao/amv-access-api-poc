@@ -289,7 +289,7 @@ public class AccessCertificateCtrlTest {
 
         return deviceRepository.save(DeviceEntity.builder()
                 .applicationId(application.getId())
-                .name(StringUtils.prependIfMissing("test-", RandomStringUtils.randomAlphanumeric(10)))
+                .name(StringUtils.prependIfMissing(RandomStringUtils.randomAlphanumeric(10), "test-"))
                 .serialNumber(SecureRandomUtils.generateRandomSerial())
                 .publicKeyBase64(devicePublicKeyBase64)
                 .build());

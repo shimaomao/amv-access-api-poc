@@ -23,6 +23,7 @@ import static java.util.Objects.requireNonNull;
 public class DemoService {
     private static final String DEMO_USER_NAME = "demo";
     private static final String DEMO_APP_NAME = "demo";
+    private static final String DEMO_APP_API_KEY = "demodemodemo";
 
     private final Cryptotool cryptotool;
     private final PasswordEncoder passwordEncoder;
@@ -110,7 +111,7 @@ public class DemoService {
         return ApplicationEntity.builder()
                 .name(DEMO_APP_NAME)
                 .appId(SecureRandomUtils.generateRandomAppId())
-                .apiKey(RandomStringUtils.randomAlphanumeric(8))
+                .apiKey(DEMO_APP_API_KEY)
                 .enabled(true)
                 .build();
     }
@@ -144,7 +145,7 @@ public class DemoService {
 
         DeviceEntity device = DeviceEntity.builder()
                 .applicationId(applicationEntity.getId())
-                .name(StringUtils.prependIfMissing("demo-", RandomStringUtils.randomAlphanumeric(10)))
+                .name(StringUtils.prependIfMissing(RandomStringUtils.randomAlphanumeric(10), "demo-"))
                 .serialNumber(SecureRandomUtils.generateRandomSerial())
                 .publicKeyBase64(publicKeyBase64)
                 .build();
