@@ -61,6 +61,10 @@ public class AccessCertificateCtrl {
     public ResponseEntity<GetAccessCertificatesResponseDto> getAccessCertificates(
             NonceAuthentication nonceAuthentication,
             @ApiParam(required = true) @PathVariable("deviceSerialNumber") String deviceSerialNumber) {
+        requireNonNull(nonceAuthentication);
+        requireNonNull(deviceSerialNumber);
+
+        log.info("Fetch access certificates of device {}", deviceSerialNumber);
 
         GetAccessCertificateRequest request = GetAccessCertificateRequest.builder()
                 .deviceSerialNumber(deviceSerialNumber)
@@ -100,8 +104,11 @@ public class AccessCertificateCtrl {
             NonceAuthentication nonceAuthentication,
             @ApiParam(required = true) @PathVariable("deviceSerialNumber") String deviceSerialNumber,
             @ApiParam(required = true) @PathVariable("accessCertificateId") UUID accessCertificateId) {
+        requireNonNull(nonceAuthentication);
         requireNonNull(deviceSerialNumber);
         requireNonNull(accessCertificateId);
+
+        log.info("Revoke access certificate {} of device {}", accessCertificateId.toString(), deviceSerialNumber);
 
         RevokeAccessCertificateRequest revokeAccessCertificateRequest = RevokeAccessCertificateRequest.builder()
                 .deviceSerialNumber(deviceSerialNumber)
@@ -135,6 +142,11 @@ public class AccessCertificateCtrl {
             @ApiParam(required = true) @RequestBody CreateAccessCertificateRequestDto createAccessCertificateRequest) {
         requireNonNull(deviceSerialNumber);
         requireNonNull(createAccessCertificateRequest);
+
+        log.info("Create access certificates with application {} for device {} and vehicle {}",
+                createAccessCertificateRequest.getAppId(),
+                createAccessCertificateRequest.getDeviceSerialNumber(),
+                createAccessCertificateRequest.getVehicleSerialNumber());
 
         if (!deviceSerialNumber.equals(createAccessCertificateRequest.getDeviceSerialNumber())) {
             throw new BadRequestException("Device Serial Numbers do not match");

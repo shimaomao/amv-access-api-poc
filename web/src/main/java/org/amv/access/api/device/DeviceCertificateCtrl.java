@@ -63,6 +63,11 @@ public class DeviceCertificateCtrl {
                 .deviceName(RandomStringUtils.randomAlphabetic(16))
                 .build();
 
+        log.info("Create device certificates with application {} for device {} (key: {})",
+                createDeviceCertificateRequest.getAppId(),
+                createDeviceCertificateRequest.getDeviceName(),
+                createDeviceCertificateRequest.getDevicePublicKeyBase64());
+
         ResponseEntity<CreateDeviceCertificateResponseDto> response = deviceCertificateService
                 .createDeviceCertificate(auth, createDeviceCertificateRequest)
                 .map(deviceCertificateEntity -> DeviceCertificateDto.builder()
