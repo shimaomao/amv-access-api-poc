@@ -13,13 +13,10 @@ import org.amv.access.client.model.CreateDeviceCertificateRequestDto;
 import org.amv.access.client.model.CreateDeviceCertificateResponseDto;
 import org.amv.access.client.model.DeviceCertificateDto;
 import org.apache.commons.lang3.RandomStringUtils;
-import org.eclipse.jetty.http.HttpStatus;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import static java.util.Objects.requireNonNull;
 import static org.eclipse.jetty.http.HttpStatus.*;
@@ -37,14 +34,19 @@ public class DeviceCertificateCtrl {
 
     @PostMapping
     @ApiImplicitParams({
-            @ApiImplicitParam(name = HttpHeaders.AUTHORIZATION, value = "Application Api Key", paramType = "header")
+            @ApiImplicitParam(
+                    name = HttpHeaders.AUTHORIZATION,
+                    value = "The api key that was generated for client. This token is internally associated to an app_id",
+                    paramType = "header"
+            )
     })
-    @ApiResponses(value = {
-            @ApiResponse(code = CREATED_201, message = "DeviceEntity Certificate object", response = CreateDeviceCertificateResponseDto.class),
+    @ApiResponses({
+            @ApiResponse(code = CREATED_201, message = "Device Certificate object", response = CreateDeviceCertificateResponseDto.class),
             @ApiResponse(code = BAD_REQUEST_400, message = "If required params are missing or invalid", response = ErrorResponseDto.class),
             @ApiResponse(code = UNAUTHORIZED_401, message = "If api_key is invalid", response = ErrorResponseDto.class),
             @ApiResponse(code = UNPROCESSABLE_ENTITY_422, message = "If given input semantically erroneous", response = ErrorResponseDto.class)
     })
+    @ResponseStatus(HttpStatus.CREATED)
     public ResponseEntity<CreateDeviceCertificateResponseDto> createDeviceCertificate(
             ApplicationAuthentication auth,
             @RequestBody CreateDeviceCertificateRequestDto requestBody) {
@@ -66,7 +68,7 @@ public class DeviceCertificateCtrl {
                 .map(deviceCertificateDto -> CreateDeviceCertificateResponseDto.builder()
                         .deviceCertificate(deviceCertificateDto)
                         .build())
-                .map(body -> ResponseEntity.status(HttpStatus.CREATED_201).body(body))
+                .map(body -> ResponseEntity.status(CREATED_201).body(body))
                 .block();
 
         return response;

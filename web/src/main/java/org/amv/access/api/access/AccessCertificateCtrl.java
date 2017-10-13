@@ -49,12 +49,13 @@ public class AccessCertificateCtrl {
             @ApiImplicitParam(name = MoreHttpHeaders.AMV_NONCE, value = "", paramType = "header"),
             @ApiImplicitParam(name = MoreHttpHeaders.AMV_SIGNATURE, value = "", paramType = "header")
     })
-    @ApiResponses(value = {
+    @ApiResponses({
             @ApiResponse(code = OK_200, message = "Return list of Access Certificates", response = GetAccessCertificatesResponseDto.class),
             @ApiResponse(code = UNAUTHORIZED_401, message = "If signature is invalid", response = ErrorResponseDto.class),
             @ApiResponse(code = NOT_FOUND_404, message = "If a device with given serial number is not found", response = ErrorResponseDto.class),
             @ApiResponse(code = UNPROCESSABLE_ENTITY_422, message = "if required params are missing or invalid", response = ErrorResponseDto.class)
     })
+    @ResponseStatus(HttpStatus.OK)
     public ResponseEntity<GetAccessCertificatesResponseDto> getAccessCertificates(
             NonceAuthentication nonceAuthentication,
             @PathVariable("deviceSerialNumber") String deviceSerialNumber) {
@@ -84,11 +85,12 @@ public class AccessCertificateCtrl {
             @ApiImplicitParam(name = MoreHttpHeaders.AMV_NONCE, value = "", paramType = "header"),
             @ApiImplicitParam(name = MoreHttpHeaders.AMV_SIGNATURE, value = "", paramType = "header")
     })
-    @ApiResponses(value = {
+    @ApiResponses({
             @ApiResponse(code = NO_CONTENT_204, message = "The resource was deleted successfully."),
             @ApiResponse(code = BAD_REQUEST_400, message = "If required params are missing or invalid.", response = ErrorResponseDto.class),
             @ApiResponse(code = NOT_FOUND_404, message = "If a device with given serial number or access certificate is not found.", response = ErrorResponseDto.class)
     })
+    @ResponseStatus(HttpStatus.NO_CONTENT)
     public ResponseEntity<Void> revokeAccessCertificate(
             NonceAuthentication nonceAuthentication,
             @PathVariable("deviceSerialNumber") String deviceSerialNumber,
@@ -113,10 +115,11 @@ public class AccessCertificateCtrl {
 
     // TODO: this method must either only be called by authorized users or not callable via http at all
     // TODO: it currently just exists for testing purposes
-    @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "Success", response = CreateAccessCertificateResponseDto.class)
-    })
     @PostMapping
+    @ApiResponses({
+            @ApiResponse(code = OK_200, message = "Success", response = CreateAccessCertificateResponseDto.class)
+    })
+    @ResponseStatus(HttpStatus.OK)
     public ResponseEntity<CreateAccessCertificateResponseDto> createAccessCertificate(
             @PathVariable("deviceSerialNumber") String deviceSerialNumber,
             @RequestBody CreateAccessCertificateRequestDto createAccessCertificateRequest) {
