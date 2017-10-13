@@ -1,9 +1,12 @@
 package org.amv.access.api.access;
 
+import io.swagger.annotations.ApiImplicitParam;
+import io.swagger.annotations.ApiImplicitParams;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
 import lombok.extern.slf4j.Slf4j;
 import org.amv.access.api.ErrorResponseDto;
+import org.amv.access.api.MoreHttpHeaders;
 import org.amv.access.api.access.AccessCertificateService.GetAccessCertificateRequest;
 import org.amv.access.api.access.AccessCertificateService.RevokeAccessCertificateRequest;
 import org.amv.access.api.access.model.CreateAccessCertificateRequestDto;
@@ -41,13 +44,17 @@ public class AccessCertificateCtrl {
         this.accessCertificateService = requireNonNull(accessCertificateService);
     }
 
+    @GetMapping
+    @ApiImplicitParams({
+            @ApiImplicitParam(name = MoreHttpHeaders.AMV_NONCE, value = "", paramType = "header"),
+            @ApiImplicitParam(name = MoreHttpHeaders.AMV_SIGNATURE, value = "", paramType = "header")
+    })
     @ApiResponses(value = {
             @ApiResponse(code = OK_200, message = "Return list of Access Certificates", response = GetAccessCertificatesResponseDto.class),
             @ApiResponse(code = UNAUTHORIZED_401, message = "If signature is invalid", response = ErrorResponseDto.class),
             @ApiResponse(code = NOT_FOUND_404, message = "If a device with given serial number is not found", response = ErrorResponseDto.class),
             @ApiResponse(code = UNPROCESSABLE_ENTITY_422, message = "if required params are missing or invalid", response = ErrorResponseDto.class)
     })
-    @GetMapping
     public ResponseEntity<GetAccessCertificatesResponseDto> getAccessCertificates(
             NonceAuthentication nonceAuthentication,
             @PathVariable("deviceSerialNumber") String deviceSerialNumber) {
@@ -72,12 +79,16 @@ public class AccessCertificateCtrl {
         return response;
     }
 
+    @DeleteMapping("/{accessCertificateId}")
+    @ApiImplicitParams({
+            @ApiImplicitParam(name = MoreHttpHeaders.AMV_NONCE, value = "", paramType = "header"),
+            @ApiImplicitParam(name = MoreHttpHeaders.AMV_SIGNATURE, value = "", paramType = "header")
+    })
     @ApiResponses(value = {
             @ApiResponse(code = NO_CONTENT_204, message = "The resource was deleted successfully."),
             @ApiResponse(code = BAD_REQUEST_400, message = "If required params are missing or invalid.", response = ErrorResponseDto.class),
             @ApiResponse(code = NOT_FOUND_404, message = "If a device with given serial number or access certificate is not found.", response = ErrorResponseDto.class)
     })
-    @DeleteMapping("/{accessCertificateId}")
     public ResponseEntity<Void> revokeAccessCertificate(
             NonceAuthentication nonceAuthentication,
             @PathVariable("deviceSerialNumber") String deviceSerialNumber,
