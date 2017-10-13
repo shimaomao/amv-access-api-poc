@@ -1,9 +1,6 @@
 package org.amv.access.api.access;
 
-import io.swagger.annotations.ApiImplicitParam;
-import io.swagger.annotations.ApiImplicitParams;
-import io.swagger.annotations.ApiResponse;
-import io.swagger.annotations.ApiResponses;
+import io.swagger.annotations.*;
 import lombok.extern.slf4j.Slf4j;
 import org.amv.access.api.ErrorResponseDto;
 import org.amv.access.api.MoreHttpHeaders;
@@ -18,6 +15,7 @@ import org.amv.access.client.model.GetAccessCertificatesResponseDto;
 import org.amv.access.exception.BadRequestException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.BindException;
 import org.springframework.web.bind.annotation.*;
@@ -45,9 +43,13 @@ public class AccessCertificateCtrl {
     }
 
     @GetMapping
+    @ApiOperation(
+            value = "Retrieve all access certificates",
+            produces = MediaType.APPLICATION_JSON_UTF8_VALUE
+    )
     @ApiImplicitParams({
-            @ApiImplicitParam(name = MoreHttpHeaders.AMV_NONCE, value = "", paramType = "header"),
-            @ApiImplicitParam(name = MoreHttpHeaders.AMV_SIGNATURE, value = "", paramType = "header")
+            @ApiImplicitParam(name = MoreHttpHeaders.AMV_NONCE, value = "Randomly generated nonce in base64", paramType = "header", required = true),
+            @ApiImplicitParam(name = MoreHttpHeaders.AMV_SIGNATURE, value = "Nonce signed with device private key in base64", paramType = "header", required = true)
     })
     @ApiResponses({
             @ApiResponse(code = OK_200, message = "Return list of Access Certificates", response = GetAccessCertificatesResponseDto.class),
@@ -58,7 +60,7 @@ public class AccessCertificateCtrl {
     @ResponseStatus(HttpStatus.OK)
     public ResponseEntity<GetAccessCertificatesResponseDto> getAccessCertificates(
             NonceAuthentication nonceAuthentication,
-            @PathVariable("deviceSerialNumber") String deviceSerialNumber) {
+            @ApiParam(required = true) @PathVariable("deviceSerialNumber") String deviceSerialNumber) {
 
         GetAccessCertificateRequest request = GetAccessCertificateRequest.builder()
                 .deviceSerialNumber(deviceSerialNumber)
@@ -81,9 +83,12 @@ public class AccessCertificateCtrl {
     }
 
     @DeleteMapping("/{accessCertificateId}")
+    @ApiOperation(
+            value = "Revoke an access certificate"
+    )
     @ApiImplicitParams({
-            @ApiImplicitParam(name = MoreHttpHeaders.AMV_NONCE, value = "", paramType = "header"),
-            @ApiImplicitParam(name = MoreHttpHeaders.AMV_SIGNATURE, value = "", paramType = "header")
+            @ApiImplicitParam(name = MoreHttpHeaders.AMV_NONCE, value = "Randomly generated nonce in base64", paramType = "header", required = true),
+            @ApiImplicitParam(name = MoreHttpHeaders.AMV_SIGNATURE, value = "Nonce signed with device private key in base64", paramType = "header", required = true)
     })
     @ApiResponses({
             @ApiResponse(code = NO_CONTENT_204, message = "The resource was deleted successfully."),
@@ -93,8 +98,8 @@ public class AccessCertificateCtrl {
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public ResponseEntity<Void> revokeAccessCertificate(
             NonceAuthentication nonceAuthentication,
-            @PathVariable("deviceSerialNumber") String deviceSerialNumber,
-            @PathVariable("accessCertificateId") UUID accessCertificateId) {
+            @ApiParam(required = true) @PathVariable("deviceSerialNumber") String deviceSerialNumber,
+            @ApiParam(required = true) @PathVariable("accessCertificateId") UUID accessCertificateId) {
         requireNonNull(deviceSerialNumber);
         requireNonNull(accessCertificateId);
 
@@ -116,13 +121,18 @@ public class AccessCertificateCtrl {
     // TODO: this method must either only be called by authorized users or not callable via http at all
     // TODO: it currently just exists for testing purposes
     @PostMapping
+    @ApiOperation(
+            value = "Create an access certificate",
+            produces = MediaType.APPLICATION_JSON_UTF8_VALUE,
+            consumes = MediaType.APPLICATION_JSON_UTF8_VALUE
+    )
     @ApiResponses({
             @ApiResponse(code = OK_200, message = "Success", response = CreateAccessCertificateResponseDto.class)
     })
     @ResponseStatus(HttpStatus.OK)
     public ResponseEntity<CreateAccessCertificateResponseDto> createAccessCertificate(
-            @PathVariable("deviceSerialNumber") String deviceSerialNumber,
-            @RequestBody CreateAccessCertificateRequestDto createAccessCertificateRequest) {
+            @ApiParam(required = true) @PathVariable("deviceSerialNumber") String deviceSerialNumber,
+            @ApiParam(required = true) @RequestBody CreateAccessCertificateRequestDto createAccessCertificateRequest) {
         requireNonNull(deviceSerialNumber);
         requireNonNull(createAccessCertificateRequest);
 
