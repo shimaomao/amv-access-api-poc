@@ -1,5 +1,6 @@
 package org.amv.access.spi.highmobility;
 
+import lombok.extern.slf4j.Slf4j;
 import org.amv.access.auth.NonceAuthentication;
 import org.amv.access.core.*;
 import org.amv.access.core.impl.AccessCertificateImpl;
@@ -9,16 +10,19 @@ import org.amv.access.spi.AmvAccessModuleSpi;
 import org.amv.access.spi.CreateAccessCertificateRequest;
 import org.amv.access.spi.CreateDeviceCertificateRequest;
 import org.amv.highmobility.cryptotool.Cryptotool;
+import org.amv.highmobility.cryptotool.CryptotoolUtils;
 import org.amv.highmobility.cryptotool.CryptotoolWithIssuer;
 import org.amv.highmobility.cryptotool.CryptotoolWithIssuer.CertificateIssuer;
 import reactor.core.publisher.Mono;
 
 import java.time.LocalDateTime;
+import java.util.Optional;
 
 import static java.util.Objects.requireNonNull;
 import static org.amv.access.util.MoreBase64.fromBase64OrThrow;
 import static org.amv.access.util.MoreBase64.toBase64OrThrow;
 
+@Slf4j
 public class HighmobilityModule implements AmvAccessModuleSpi {
 
     private final CryptotoolWithIssuer cryptotool;
@@ -61,12 +65,18 @@ public class HighmobilityModule implements AmvAccessModuleSpi {
                 .generateSignature(deviceCertificate.getDeviceCertificate())
                 .block();
 
+        String deviceCertificateBase64 = hexToBase64(deviceCertificate.getDeviceCertificate())
+                .orElseThrow(() -> new IllegalStateException("Could not convert device certificate to base64"));
+
+        String signedDeviceCertificateBase64 = hexToBase64(signedDeviceCertificate.getSignature())
+                .orElseThrow(() -> new IllegalStateException("Could not convert device certificate to base64"));
+
         DeviceCertificate deviceCertificateEntity = DeviceCertificateImpl.builder()
                 .issuer(this.issuer)
                 .application(application)
                 .device(device)
-                .certificateBase64(toBase64OrThrow(deviceCertificate.getDeviceCertificate()))
-                .signedCertificateBase64(toBase64OrThrow(signedDeviceCertificate.getSignature()))
+                .certificateBase64(deviceCertificateBase64)
+                .signedCertificateBase64(signedDeviceCertificateBase64)
                 .build();
 
         return Mono.just(deviceCertificateEntity);
@@ -129,4 +139,14 @@ public class HighmobilityModule implements AmvAccessModuleSpi {
         return Mono.just(accessCertificateEntity);
     }
 
+    private Optional<String> hexToBase64(String value) {
+        requireNonNull(value);
+
+        try {
+            return Optional.of(CryptotoolUtils.encodeHexAsBase64(value));
+        } catch (Exception e) {
+            log.warn("Could not decode hex string {}", value);
+            return Optional.empty();
+        }
+    }
 }
