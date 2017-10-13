@@ -57,6 +57,7 @@ public class AccessCertificateServiceImpl implements AccessCertificateService {
     @Transactional
     public Flux<AccessCertificate> getAccessCertificates(NonceAuthentication nonceAuthentication,
                                                          GetAccessCertificateRequest request) {
+        requireNonNull(nonceAuthentication, "`nonceAuthentication` must not be null");
         requireNonNull(request, "`request` must not be null");
 
         DeviceEntity device = deviceRepository.findBySerialNumber(request.getDeviceSerialNumber())
@@ -78,7 +79,7 @@ public class AccessCertificateServiceImpl implements AccessCertificateService {
                 .map(AccessCertificateEntity::getIssuerId)
                 .distinct()
                 .map(id -> Optional.ofNullable(issuerRepository.findOne(id)))
-                .map(v -> v.orElseThrow(() -> new NotFoundException("IssuerEntiy not found")))
+                .map(v -> v.orElseThrow(() -> new NotFoundException("IssuerEntity not found")))
                 .collect(Collectors.toMap(IssuerEntity::getId, Function.identity()));
 
         Map<Long, VehicleEntity> vehicles = accessCertificates.stream()
@@ -140,7 +141,6 @@ public class AccessCertificateServiceImpl implements AccessCertificateService {
                 .map(Mono::block)
                 .orElseThrow(() -> new IllegalStateException("Could not create access certificate for " + request));
 
-
         Issuer issuer = accessCertificate.getIssuer();
         IssuerEntity issuerEntity = findIssuerOrCreateIfNecessary(issuer);
 
@@ -165,7 +165,8 @@ public class AccessCertificateServiceImpl implements AccessCertificateService {
     @Transactional
     public Mono<Void> revokeAccessCertificate(NonceAuthentication nonceAuthentication,
                                               RevokeAccessCertificateRequest request) {
-        requireNonNull(request);
+        requireNonNull(nonceAuthentication, "`nonceAuthentication` must not be null");
+        requireNonNull(request, "`request` must not be null");
 
         DeviceEntity device = deviceRepository.findBySerialNumber(request.getDeviceSerialNumber())
                 .orElseThrow(() -> new NotFoundException("DeviceEntity not found"));
