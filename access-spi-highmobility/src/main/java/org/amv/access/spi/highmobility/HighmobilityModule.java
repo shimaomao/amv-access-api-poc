@@ -69,7 +69,7 @@ public class HighmobilityModule implements AmvAccessModuleSpi {
                 .orElseThrow(() -> new IllegalStateException("Could not convert device certificate to base64"));
 
         String signedDeviceCertificateBase64 = hexToBase64(signedDeviceCertificate.getSignature())
-                .orElseThrow(() -> new IllegalStateException("Could not convert device certificate to base64"));
+                .orElseThrow(() -> new IllegalStateException("Could not convert signed device certificate to base64"));
 
         DeviceCertificate deviceCertificateEntity = DeviceCertificateImpl.builder()
                 .issuer(this.issuer)
@@ -80,7 +80,6 @@ public class HighmobilityModule implements AmvAccessModuleSpi {
                 .build();
 
         return Mono.just(deviceCertificateEntity);
-
     }
 
     @Override
@@ -125,6 +124,12 @@ public class HighmobilityModule implements AmvAccessModuleSpi {
                 .single()
                 .block();
 
+        String signedDeviceAccessCertificateBase64 = hexToBase64(signedDeviceAccessCertificate)
+                .orElseThrow(() -> new IllegalStateException("Could not convert signed device access certificate to base64"));
+
+        String signedVehicleAccessCertificateBase64 = hexToBase64(signedVehicleAccessCertificate)
+                .orElseThrow(() -> new IllegalStateException("Could not convert signed vehicle access certificate to base64"));
+
         AccessCertificate accessCertificateEntity = AccessCertificateImpl.builder()
                 .issuer(this.issuer)
                 .application(application)
@@ -132,8 +137,8 @@ public class HighmobilityModule implements AmvAccessModuleSpi {
                 .device(device)
                 .validFrom(validFrom)
                 .validUntil(validUntil)
-                .signedVehicleAccessCertificateBase64(toBase64OrThrow(signedVehicleAccessCertificate))
-                .signedDeviceAccessCertificateBase64(toBase64OrThrow(signedDeviceAccessCertificate))
+                .signedDeviceAccessCertificateBase64(signedDeviceAccessCertificateBase64)
+                .signedVehicleAccessCertificateBase64(signedVehicleAccessCertificateBase64)
                 .build();
 
         return Mono.just(accessCertificateEntity);
