@@ -12,12 +12,12 @@ public final class MoreBase64 {
 
     public static String toBase64OrThrow(String str) {
         return MoreBase64.toBase64(str)
-                .orElseThrow(() -> new IllegalStateException("Error while encoding to base64"));
+                .orElseThrow(() -> new IllegalStateException("Error while encoding to base64: " + str));
     }
 
     public static String fromBase64OrThrow(String str) {
         return MoreBase64.fromBase64(str)
-                .orElseThrow(() -> new IllegalStateException("Error while decoding to base64"));
+                .orElseThrow(() -> new IllegalStateException("Error while decoding to base64: " + str));
     }
 
     public static Optional<String> toBase64(String str) {

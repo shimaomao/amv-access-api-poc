@@ -1,5 +1,8 @@
 package org.amv.access.api.device;
 
+import com.google.common.net.HttpHeaders;
+import io.swagger.annotations.ApiImplicitParam;
+import io.swagger.annotations.ApiImplicitParams;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
 import lombok.extern.slf4j.Slf4j;
@@ -32,13 +35,16 @@ public class DeviceCertificateCtrl {
         this.deviceCertificateService = requireNonNull(deviceCertificateService);
     }
 
+    @PostMapping
+    @ApiImplicitParams({
+            @ApiImplicitParam(name = HttpHeaders.AUTHORIZATION, value = "Application Api Key", paramType = "header")
+    })
     @ApiResponses(value = {
             @ApiResponse(code = CREATED_201, message = "DeviceEntity Certificate object", response = CreateDeviceCertificateResponseDto.class),
             @ApiResponse(code = BAD_REQUEST_400, message = "If required params are missing or invalid", response = ErrorResponseDto.class),
             @ApiResponse(code = UNAUTHORIZED_401, message = "If api_key is invalid", response = ErrorResponseDto.class),
             @ApiResponse(code = UNPROCESSABLE_ENTITY_422, message = "If given input semantically erroneous", response = ErrorResponseDto.class)
     })
-    @PostMapping
     public ResponseEntity<CreateDeviceCertificateResponseDto> createDeviceCertificate(
             ApplicationAuthentication auth,
             @RequestBody CreateDeviceCertificateRequestDto requestBody) {
