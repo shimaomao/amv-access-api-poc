@@ -181,15 +181,17 @@ subprojects {
     }
 
     uploadArchives {
-        String nexusPwd = credentials.nexuspwd
+        String username = project.hasProperty('nexusUsername') ? project.nexusUsername : 'Add parameter -PnexusUsername'
+        String url = project.hasProperty('nexusUrl') ? project.nexusUrl : 'Add parameter -PnexusUrl'
+        String password = credentials.nexuspwd ?: 'Add encrypted password to your gradle.properties file'
         
         repositories {
             mavenDeployer {
-                repository(url: "${nexusUrl}/content/repositories/releases") {
-                    authentication(userName: nexusUsername, password: nexusPwd)
+                repository(url: "${url}/content/repositories/releases") {
+                    authentication(userName: username, password: password)
                 }
-                snapshotRepository(url: "${nexusUrl}/content/repositories/snapshots") {
-                    authentication(userName: nexusUsername, password: nexusPwd)
+                snapshotRepository(url: "${url}/content/repositories/snapshots") {
+                    authentication(userName: username, password: password)
                 }
 
                 pom.version = project.version
