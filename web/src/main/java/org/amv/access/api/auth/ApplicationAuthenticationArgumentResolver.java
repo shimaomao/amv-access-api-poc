@@ -29,7 +29,7 @@ public class ApplicationAuthenticationArgumentResolver implements HandlerMethodA
         Mono<Application> findByApiKey(String apiKey);
     }
 
-    private ApiKeyResolver apiKeyResolver;
+    private final ApiKeyResolver apiKeyResolver;
 
     public ApplicationAuthenticationArgumentResolver(ApiKeyResolver apiKeyResolver) {
         this.apiKeyResolver = requireNonNull(apiKeyResolver);

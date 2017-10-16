@@ -7,7 +7,7 @@ import static com.google.common.net.HttpHeaders.USER_AGENT;
 
 @Headers({
         ACCEPT + ": " + "application/json;charset=UTF-8",
-        USER_AGENT + ": amv-access-rest-client v0.0.1-SNAPSHOT"
+        USER_AGENT + ": " + "amv-access-rest-client v0.0.1-SNAPSHOT"
 })
 public interface AmvAccessClient {
 

@@ -3,7 +3,7 @@ package org.amv.access.api.access;
 import io.swagger.annotations.*;
 import lombok.extern.slf4j.Slf4j;
 import org.amv.access.api.ErrorResponseDto;
-import org.amv.access.api.MoreHttpHeaders;
+import org.amv.access.client.MoreHttpHeaders;
 import org.amv.access.api.access.AccessCertificateService.GetAccessCertificateRequest;
 import org.amv.access.api.access.AccessCertificateService.RevokeAccessCertificateRequest;
 import org.amv.access.api.access.model.CreateAccessCertificateRequestDto;

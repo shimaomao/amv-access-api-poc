@@ -1,7 +1,7 @@
 package org.amv.access.api.access;
 
 import org.amv.access.AmvAccessApplication;
-import org.amv.access.api.MoreHttpHeaders;
+import org.amv.access.client.MoreHttpHeaders;
 import org.amv.access.api.access.model.CreateAccessCertificateRequestDto;
 import org.amv.access.api.access.model.CreateAccessCertificateResponseDto;
 import org.amv.access.api.access.model.DeviceAndVehicleAccessCertificateDto;

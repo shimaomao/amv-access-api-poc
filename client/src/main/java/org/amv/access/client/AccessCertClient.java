@@ -15,8 +15,8 @@ import org.amv.access.client.model.GetAccessCertificatesResponseDto;
 public interface AccessCertClient extends AmvAccessClient {
 
     @Headers({
-            "amv-api-nonce: {nonce}",
-            "amv-api-signature: {signedNonce}"
+            MoreHttpHeaders.AMV_NONCE + ": " + "{nonce}",
+            MoreHttpHeaders.AMV_SIGNATURE + ": " + "{signedNonce}"
     })
     @RequestLine("GET /api/v1/device/{deviceSerialNumber}/access_certificates")
     HystrixCommand<GetAccessCertificatesResponseDto> fetchAccessCertificates(@Param("nonce") String nonce,
@@ -25,8 +25,8 @@ public interface AccessCertClient extends AmvAccessClient {
 
 
     @Headers({
-            "amv-api-nonce: {nonce}",
-            "amv-api-signature: {signedNonce}"
+            MoreHttpHeaders.AMV_NONCE + ": " + "{nonce}",
+            MoreHttpHeaders.AMV_SIGNATURE + ": " + "{signedNonce}"
     })
     @RequestLine("DELETE /api/v1/device/{deviceSerialNumber}/access_certificates/{accessCertificateId}")
     HystrixCommand<Void> revokeAccessCertificate(@Param("nonce") String nonce,

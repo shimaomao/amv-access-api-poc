@@ -1,4 +1,4 @@
-package org.amv.access.api;
+package org.amv.access.client;
 
 public final class MoreHttpHeaders {
 
