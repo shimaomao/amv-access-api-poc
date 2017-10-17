@@ -46,9 +46,11 @@ public class HighmobilityModule implements AmvAccessModuleSpi {
         requireNonNull(auth);
         requireNonNull(device);
 
-        String devicePublicKey = fromBase64OrThrow(device.getPublicKeyBase64());
+        String devicePublicKey = decodeBase64AsHex(device.getPublicKeyBase64());
+        String nonce = decodeBase64AsHex(auth.getNonce());
+        String signature = decodeBase64AsHex(auth.getSignedNonce());
 
-        return cryptotool.verifySignature(auth.getNonce(), auth.getSignedNonce(), devicePublicKey)
+        return cryptotool.verifySignature(nonce, signature, devicePublicKey)
                 .map(v -> v == Cryptotool.Validity.VALID);
     }
 
@@ -102,8 +104,8 @@ public class HighmobilityModule implements AmvAccessModuleSpi {
         LocalDateTime validFrom = requireNonNull(accessCertificateRequest.getValidFrom());
         LocalDateTime validUntil = requireNonNull(accessCertificateRequest.getValidUntil());
 
-        String vehiclePublicKey = fromBase64OrThrow(vehicle.getPublicKeyBase64());
-        String devicePublicKey = fromBase64OrThrow(device.getPublicKeyBase64());
+        String vehiclePublicKey = CryptotoolUtils.decodeBase64AsHex(vehicle.getPublicKeyBase64());
+        String devicePublicKey = CryptotoolUtils.decodeBase64AsHex(device.getPublicKeyBase64());
 
         Cryptotool.AccessCertificate deviceAccessCertificate = cryptotool.createAccessCertificate(
                 vehicle.getSerialNumber(),

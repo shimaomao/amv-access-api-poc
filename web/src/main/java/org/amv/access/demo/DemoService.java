@@ -11,6 +11,7 @@ import org.amv.access.model.*;
 import org.amv.access.util.MoreBase64;
 import org.amv.access.util.SecureRandomUtils;
 import org.amv.highmobility.cryptotool.Cryptotool;
+import org.amv.highmobility.cryptotool.CryptotoolUtils;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -119,8 +120,7 @@ public class DemoService {
     public VehicleEntity createDemoVehicle() {
         Cryptotool.Keys keys = cryptotool.generateKeys().block();
 
-        String publicKeyBase64 = MoreBase64.toBase64(keys.getPublicKey())
-                .orElseThrow(IllegalStateException::new);
+        String publicKeyBase64 = CryptotoolUtils.encodeHexAsBase64(keys.getPublicKey());
 
         VehicleEntity vehicle = VehicleEntity.builder()
                 .name(StringUtils.prependIfMissing(RandomStringUtils.randomAlphanumeric(10), "demo-vehicle-"))
@@ -141,8 +141,7 @@ public class DemoService {
     public DeviceWithKeys createDemoDeviceWithKeys(ApplicationEntity applicationEntity) {
         Cryptotool.Keys keys = cryptotool.generateKeys().block();
 
-        String publicKeyBase64 = MoreBase64.toBase64(keys.getPublicKey())
-                .orElseThrow(IllegalStateException::new);
+        String publicKeyBase64 = CryptotoolUtils.encodeHexAsBase64(keys.getPublicKey());
 
         DeviceEntity device = DeviceEntity.builder()
                 .applicationId(applicationEntity.getId())
