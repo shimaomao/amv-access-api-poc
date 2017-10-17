@@ -46,6 +46,16 @@ public class IssuerEntity implements Issuer {
     }
 
     @Override
+    public String getName() {
+        return name;
+    }
+
+    @Override
+    public String getPublicKeyBase64() {
+        return publicKeyBase64;
+    }
+
+    @Override
     public String toString() {
         return String.format("IssuerEntity[id=%d, name='%s']", id, name);
     }

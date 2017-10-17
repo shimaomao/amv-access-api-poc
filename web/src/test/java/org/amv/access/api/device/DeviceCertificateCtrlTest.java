@@ -10,6 +10,7 @@ import org.amv.access.model.ApplicationRepository;
 import org.amv.access.util.SecureRandomUtils;
 import org.amv.highmobility.cryptotool.Cryptotool;
 import org.amv.highmobility.cryptotool.CryptotoolUtils;
+import org.amv.highmobility.cryptotool.CryptotoolWithIssuer;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.junit.Before;
 import org.junit.Ignore;
@@ -37,7 +38,7 @@ import static org.junit.Assert.assertThat;
 public class DeviceCertificateCtrlTest {
 
     @Autowired
-    private Cryptotool cryptotool;
+    private CryptotoolWithIssuer cryptotool;
 
     @Autowired
     private ApplicationRepository applicationRepository;
@@ -123,6 +124,9 @@ public class DeviceCertificateCtrlTest {
         String deviceCertificate = responseDeviceCertificate.getDeviceCertificate();
         assertThat(deviceCertificate, is(notNullValue()));
         assertThat(isBase64(deviceCertificate), is(true));
+
+        final String expectedIssuerPublicKey = cryptotool.getCertificateIssuer().getPublicKeyBase64();
+        assertThat(responseDeviceCertificate.getIssuerPublicKey(), is(expectedIssuerPublicKey));
     }
 
     @Test

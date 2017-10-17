@@ -21,7 +21,6 @@ import java.util.UUID;
 
 import static java.util.Objects.requireNonNull;
 import static org.amv.access.util.MoreBase64.fromBase64OrThrow;
-import static org.amv.access.util.MoreBase64.toBase64OrThrow;
 
 @Slf4j
 public class HighmobilityModule implements AmvAccessModuleSpi {
@@ -37,7 +36,7 @@ public class HighmobilityModule implements AmvAccessModuleSpi {
 
         this.issuer = IssuerImpl.builder()
                 .name(certificateIssuer.getName())
-                .publicKeyBase64(toBase64OrThrow(certificateIssuer.getKeys().getPublicKey()))
+                .publicKeyBase64(certificateIssuer.getPublicKeyBase64())
                 .build();
     }
 
