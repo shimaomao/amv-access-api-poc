@@ -8,6 +8,8 @@ app.pid
 app.port
 app-management.port
 *.db
+*.db-shm
+*.db-wal
 
 ### Intellij ###
 .idea/
