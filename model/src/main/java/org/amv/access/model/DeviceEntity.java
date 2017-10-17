@@ -54,6 +54,21 @@ public class DeviceEntity implements Device {
     }
 
     @Override
+    public String getName() {
+        return name;
+    }
+
+    @Override
+    public String getSerialNumber() {
+        return serialNumber;
+    }
+
+    @Override
+    public String getPublicKeyBase64() {
+        return publicKeyBase64;
+    }
+
+    @Override
     public String toString() {
         return String.format("DeviceEntity[id=%d, name='%s', serialNumber='%s']", id, name, serialNumber);
     }

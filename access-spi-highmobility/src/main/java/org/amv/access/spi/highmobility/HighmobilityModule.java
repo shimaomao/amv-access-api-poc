@@ -21,6 +21,7 @@ import java.util.UUID;
 
 import static java.util.Objects.requireNonNull;
 import static org.amv.access.util.MoreBase64.fromBase64OrThrow;
+import static org.amv.highmobility.cryptotool.CryptotoolUtils.decodeBase64AsHex;
 
 @Slf4j
 public class HighmobilityModule implements AmvAccessModuleSpi {
@@ -58,14 +59,17 @@ public class HighmobilityModule implements AmvAccessModuleSpi {
         Device device = requireNonNull(deviceCertificateRequest.getDevice());
 
         Cryptotool.DeviceCertificate deviceCertificate = cryptotool
-                .createDeviceCertificate(application.getAppId(), device.getSerialNumber())
+                .createDeviceCertificate(cryptotool.getCertificateIssuer().getNameInHex(),
+                        application.getAppId(),
+                        device.getSerialNumber(),
+                        decodeBase64AsHex(device.getPublicKeyBase64()))
                 .block();
 
         Cryptotool.Signature signature = cryptotool
                 .generateSignature(deviceCertificate.getDeviceCertificate())
                 .block();
 
-        String fullDeviceCertificate  = deviceCertificate.getDeviceCertificate() + signature.getSignature();
+        String fullDeviceCertificate = deviceCertificate.getDeviceCertificate() + signature.getSignature();
         String fullDeviceCertificateBase64 = hexToBase64(fullDeviceCertificate)
                 .orElseThrow(() -> new IllegalStateException("Could not convert full device certificate to base64"));
 
@@ -129,11 +133,11 @@ public class HighmobilityModule implements AmvAccessModuleSpi {
                 .single()
                 .block();
 
-        String fullDeviceAccessCertificate  = deviceAccessCertificate.getAccessCertificate() + deviceAccessCertificateSignature;
+        String fullDeviceAccessCertificate = deviceAccessCertificate.getAccessCertificate() + deviceAccessCertificateSignature;
         String fullDeviceAccessCertificateBase64 = hexToBase64(fullDeviceAccessCertificate)
                 .orElseThrow(() -> new IllegalStateException("Could not convert full device access certificate to base64"));
 
-        String fullVehicleAccessCertificate  = vehicleAccessCertificate.getAccessCertificate() + vehicleAccessCertificateSignature;
+        String fullVehicleAccessCertificate = vehicleAccessCertificate.getAccessCertificate() + vehicleAccessCertificateSignature;
         String fullVehicleAccessCertificateBase64 = hexToBase64(fullVehicleAccessCertificate)
                 .orElseThrow(() -> new IllegalStateException("Could not convert full vehicle access certificate to base64"));
 
