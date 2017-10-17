@@ -5,6 +5,9 @@ import org.gradle.api.tasks.testing.logging.TestLogEvent
 buildscript {
     ext {
         springBootVersion = '1.5.7.RELEASE'
+        prometheusVersion = '0.0.26'
+        jacksonVersion = '2.8.10'
+        jettyVersion = '9.4.6.v20170531'
     }
     repositories {
         jcenter()

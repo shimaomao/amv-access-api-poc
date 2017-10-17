@@ -41,13 +41,14 @@ dependencies {
         exclude module: 'spring-boot-starter-tomcat'
     }
     compile 'org.springframework.boot:spring-boot-starter-jetty'
+    compile "org.eclipse.jetty:jetty-jmx:${jettyVersion}"
     // end::jetty[]
 
-    compile 'com.fasterxml.jackson.core:jackson-core:2.8.10'
-    compile 'com.fasterxml.jackson.core:jackson-annotations:2.8.10'
-    compile 'com.fasterxml.jackson.datatype:jackson-datatype-hibernate5:2.8.10'
-    compile 'com.fasterxml.jackson.datatype:jackson-datatype-jdk8:2.8.10'
-    compile 'com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.8.10'
+    compile "com.fasterxml.jackson.core:jackson-core:${jacksonVersion}"
+    compile "com.fasterxml.jackson.core:jackson-annotations:${jacksonVersion}"
+    compile "com.fasterxml.jackson.datatype:jackson-datatype-hibernate5:${jacksonVersion}"
+    compile "com.fasterxml.jackson.datatype:jackson-datatype-jdk8:${jacksonVersion}"
+    compile "com.fasterxml.jackson.datatype:jackson-datatype-jsr310:${jacksonVersion}"
 
     compile 'org.springframework.boot:spring-boot-starter-data-rest'
     compile 'org.springframework.boot:spring-boot-starter-data-jpa'
@@ -55,10 +56,19 @@ dependencies {
     compile 'org.springframework.boot:spring-boot-starter-actuator'
     compile 'org.springframework.boot:spring-boot-devtools'
 
-    compile('com.zaxxer:HikariCP:2.7.1') {
+    // tag:prometheus time-series database for monitoring
+    compile "io.prometheus:simpleclient:${prometheusVersion}"
+    compile "io.prometheus:simpleclient_hotspot:${prometheusVersion}"
+    compile "io.prometheus:simpleclient_guava:${prometheusVersion}"
+    compile "io.prometheus:simpleclient_servlet:${prometheusVersion}"
+    compile "io.prometheus:simpleclient_jetty:${prometheusVersion}"
+    compile "io.prometheus:simpleclient_spring_boot:${prometheusVersion}"
+    // end:prometheus
+
+    compile('com.zaxxer:HikariCP:2.7.2') {
         exclude group: 'org.slf4j', module: 'slf4j-api'
     }
-    compile 'org.xerial:sqlite-jdbc:3.20.0'
+    compile 'org.xerial:sqlite-jdbc:3.20.1'
 
     testCompile 'org.springframework.boot:spring-boot-starter-test'
     // temporarily disabled to focus on sqlite

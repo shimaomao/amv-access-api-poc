@@ -1,6 +1,7 @@
 package org.amv.access.api.device;
 
 import com.google.common.net.HttpHeaders;
+import io.prometheus.client.spring.web.PrometheusTimeMethod;
 import io.swagger.annotations.*;
 import lombok.extern.slf4j.Slf4j;
 import org.amv.access.api.ErrorResponseDto;
@@ -51,6 +52,7 @@ public class DeviceCertificateCtrl {
             @ApiResponse(code = UNPROCESSABLE_ENTITY_422, message = "If given input semantically erroneous", response = ErrorResponseDto.class)
     })
     @ResponseStatus(HttpStatus.CREATED)
+    @PrometheusTimeMethod(name = "device_certificate_ctrl_create_device_certificate", help = "")
     public ResponseEntity<CreateDeviceCertificateResponseDto> createDeviceCertificate(
             ApplicationAuthentication auth,
             @ApiParam(required = true) @RequestBody CreateDeviceCertificateRequestDto requestBody) {

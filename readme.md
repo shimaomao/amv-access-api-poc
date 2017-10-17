@@ -56,7 +56,10 @@ $ curl localhost:9001/manage/health
 As this project uses [Project Lombok](https://projectlombok.org/) make sure you have annotation processing enabled.
 
 ### Swagger
-Open `http://localhost:9000/swagger-ui.html` in your browser.
+Open `http://localhost:9000/amv-access-api/swagger-ui.html` in your browser.
+
+### Metrics
+Prometheus is supported as monitoring system. Metrics can be pulled from `http://localhost:9001/manage/prometheus` 
 
 ### Docker
 #### Build

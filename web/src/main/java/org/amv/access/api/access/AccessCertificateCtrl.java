@@ -1,5 +1,6 @@
 package org.amv.access.api.access;
 
+import io.prometheus.client.spring.web.PrometheusTimeMethod;
 import io.swagger.annotations.*;
 import lombok.extern.slf4j.Slf4j;
 import org.amv.access.api.ErrorResponseDto;
@@ -58,6 +59,7 @@ public class AccessCertificateCtrl {
             @ApiResponse(code = UNPROCESSABLE_ENTITY_422, message = "if required params are missing or invalid", response = ErrorResponseDto.class)
     })
     @ResponseStatus(HttpStatus.OK)
+    @PrometheusTimeMethod(name = "access_certificate_ctrl_retrieve_access_certificate", help = "")
     public ResponseEntity<GetAccessCertificatesResponseDto> getAccessCertificates(
             NonceAuthentication nonceAuthentication,
             @ApiParam(required = true) @PathVariable("deviceSerialNumber") String deviceSerialNumber) {
@@ -102,6 +104,7 @@ public class AccessCertificateCtrl {
             @ApiResponse(code = NOT_FOUND_404, message = "If a device with given serial number or access certificate is not found.", response = ErrorResponseDto.class)
     })
     @ResponseStatus(HttpStatus.NO_CONTENT)
+    @PrometheusTimeMethod(name = "access_certificate_ctrl_revoke_access_certificate", help = "")
     public ResponseEntity<Void> revokeAccessCertificate(
             NonceAuthentication nonceAuthentication,
             @ApiParam(required = true) @PathVariable("deviceSerialNumber") String deviceSerialNumber,
@@ -139,6 +142,7 @@ public class AccessCertificateCtrl {
             @ApiResponse(code = OK_200, message = "Success", response = CreateAccessCertificateResponseDto.class)
     })
     @ResponseStatus(HttpStatus.OK)
+    @PrometheusTimeMethod(name = "access_certificate_ctrl_create_access_certificate", help = "")
     public ResponseEntity<CreateAccessCertificateResponseDto> createAccessCertificate(
             @ApiParam(required = true) @PathVariable("deviceSerialNumber") String deviceSerialNumber,
             @ApiParam(required = true) @RequestBody CreateAccessCertificateRequestDto createAccessCertificateRequest) {
