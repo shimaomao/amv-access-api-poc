@@ -11,6 +11,8 @@ import java.time.LocalDateTime;
 @Builder(builderClassName = "Builder")
 public class AccessCertificateImpl implements AccessCertificate {
     @NonNull
+    private String uuid;
+    @NonNull
     private Issuer issuer;
     @NonNull
     private Application application;

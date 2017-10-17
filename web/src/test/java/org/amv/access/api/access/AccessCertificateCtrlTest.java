@@ -1,10 +1,10 @@
 package org.amv.access.api.access;
 
 import org.amv.access.AmvAccessApplication;
-import org.amv.access.client.MoreHttpHeaders;
 import org.amv.access.api.access.model.CreateAccessCertificateRequestDto;
 import org.amv.access.api.access.model.CreateAccessCertificateResponseDto;
 import org.amv.access.api.access.model.DeviceAndVehicleAccessCertificateDto;
+import org.amv.access.client.MoreHttpHeaders;
 import org.amv.access.client.model.AccessCertificateDto;
 import org.amv.access.client.model.CreateDeviceCertificateRequestDto;
 import org.amv.access.client.model.GetAccessCertificatesResponseDto;
@@ -12,13 +12,11 @@ import org.amv.access.config.TestDbConfig;
 import org.amv.access.demo.DemoService;
 import org.amv.access.model.*;
 import org.amv.access.util.MoreBase64;
-import org.amv.access.util.SecureRandomUtils;
 import org.amv.highmobility.cryptotool.Cryptotool;
 import org.amv.highmobility.cryptotool.CryptotoolUtils;
 import org.apache.commons.codec.binary.Hex;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.RandomUtils;
-import org.apache.commons.lang3.StringUtils;
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
@@ -143,7 +141,7 @@ public class AccessCertificateCtrlTest {
     }
 
     @Test
-    public void itShouldGetAccessCertificatesSuccessfully() throws Exception {
+    public void itShouldGetEmptyAccessCertificateListSuccessfully() throws Exception {
         DeviceEntity device = deviceWithKeys.getDevice();
 
         String nonce = generateNonceWithRandomLength();
@@ -169,7 +167,10 @@ public class AccessCertificateCtrlTest {
                         device.getSerialNumber());
 
         assertThat(responseEntity.getStatusCode(), is(HttpStatus.OK));
-        // TODO: test for present access certificates
+        assertThat(responseEntity.getBody(), is(notNullValue()));
+
+        GetAccessCertificatesResponseDto body = responseEntity.getBody();
+        assertThat(body.getAccessCertificates(), is(empty()));
     }
 
 
@@ -234,6 +235,7 @@ public class AccessCertificateCtrlTest {
 
         String devicePublicKey = MoreBase64.fromBase64(device.getPublicKeyBase64())
                 .orElseThrow(IllegalStateException::new);
+
         Cryptotool.Validity signedNonceValidity = Optional.of(cryptotool.verifySignature(nonce, signedNonce, devicePublicKey))
                 .map(Mono::block)
                 .orElse(Cryptotool.Validity.INVALID);
@@ -251,7 +253,6 @@ public class AccessCertificateCtrlTest {
                         HttpMethod.GET, entity, GetAccessCertificatesResponseDto.class,
                         device.getSerialNumber());
 
-
         assertThat(getAccessCertificateResponse.getStatusCode(), is(HttpStatus.OK));
 
         GetAccessCertificatesResponseDto body = getAccessCertificateResponse.getBody();
@@ -260,6 +261,11 @@ public class AccessCertificateCtrlTest {
         List<AccessCertificateDto> accessCertificates = body.getAccessCertificates();
         assertThat(accessCertificates, is(notNullValue()));
         assertThat(accessCertificates, hasSize(1));
+
+        AccessCertificateDto accessCertificateDto = accessCertificates.get(0);
+        assertThat(accessCertificateDto.getId(), is(notNullValue()));
+        assertThat(accessCertificateDto.getName(), is(notNullValue()));
+        assertThat(accessCertificateDto.getAccessCertificate(), is(notNullValue()));
     }
 
 
@@ -281,17 +287,5 @@ public class AccessCertificateCtrlTest {
                 .map(Mono::block)
                 .map(Cryptotool.Signature::getSignature)
                 .orElseThrow(IllegalStateException::new);
-    }
-
-    private DeviceEntity createAndSaveDevice(ApplicationEntity application, Cryptotool.Keys keys) {
-        String devicePublicKeyBase64 = MoreBase64.toBase64(keys.getPublicKey())
-                .orElseThrow(IllegalStateException::new);
-
-        return deviceRepository.save(DeviceEntity.builder()
-                .applicationId(application.getId())
-                .name(StringUtils.prependIfMissing(RandomStringUtils.randomAlphanumeric(10), "test-"))
-                .serialNumber(SecureRandomUtils.generateRandomSerial())
-                .publicKeyBase64(devicePublicKeyBase64)
-                .build());
     }
 }

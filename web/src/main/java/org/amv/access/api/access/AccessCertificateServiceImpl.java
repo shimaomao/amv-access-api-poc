@@ -19,7 +19,6 @@ import reactor.core.publisher.Mono;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.UUID;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -96,6 +95,7 @@ public class AccessCertificateServiceImpl implements AccessCertificateService {
                     VehicleEntity vehicle = vehicles.get(accessCertificate.getVehicleId());
 
                     return AccessCertificateImpl.builder()
+                            .uuid(accessCertificate.getUuid())
                             .issuer(issuer)
                             .application(application)
                             .device(device)
@@ -145,7 +145,7 @@ public class AccessCertificateServiceImpl implements AccessCertificateService {
         IssuerEntity issuerEntity = findIssuerOrCreateIfNecessary(issuer);
 
         AccessCertificateEntity accessCertificateEntity = AccessCertificateEntity.builder()
-                .uuid(UUID.randomUUID().toString())
+                .uuid(accessCertificate.getUuid())
                 .issuerId(issuerEntity.getId())
                 .applicationId(applicationEntity.getId())
                 .vehicleId(vehicleEntity.getId())

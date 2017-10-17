@@ -123,6 +123,7 @@ public class DemoService {
                 .orElseThrow(IllegalStateException::new);
 
         VehicleEntity vehicle = VehicleEntity.builder()
+                .name(StringUtils.prependIfMissing(RandomStringUtils.randomAlphanumeric(10), "demo-vehicle-"))
                 .serialNumber(SecureRandomUtils.generateRandomSerial())
                 .publicKeyBase64(publicKeyBase64)
                 .build();
@@ -145,7 +146,7 @@ public class DemoService {
 
         DeviceEntity device = DeviceEntity.builder()
                 .applicationId(applicationEntity.getId())
-                .name(StringUtils.prependIfMissing(RandomStringUtils.randomAlphanumeric(10), "demo-"))
+                .name(StringUtils.prependIfMissing(RandomStringUtils.randomAlphanumeric(10), "demo-device-"))
                 .serialNumber(SecureRandomUtils.generateRandomSerial())
                 .publicKeyBase64(publicKeyBase64)
                 .build();

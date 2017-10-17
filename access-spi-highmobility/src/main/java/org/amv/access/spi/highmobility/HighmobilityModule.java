@@ -17,6 +17,7 @@ import reactor.core.publisher.Mono;
 
 import java.time.LocalDateTime;
 import java.util.Optional;
+import java.util.UUID;
 
 import static java.util.Objects.requireNonNull;
 import static org.amv.access.util.MoreBase64.fromBase64OrThrow;
@@ -131,6 +132,7 @@ public class HighmobilityModule implements AmvAccessModuleSpi {
                 .orElseThrow(() -> new IllegalStateException("Could not convert signed vehicle access certificate to base64"));
 
         AccessCertificate accessCertificateEntity = AccessCertificateImpl.builder()
+                .uuid(UUID.randomUUID().toString())
                 .issuer(this.issuer)
                 .application(application)
                 .vehicle(vehicle)

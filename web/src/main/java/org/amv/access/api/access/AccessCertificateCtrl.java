@@ -3,13 +3,13 @@ package org.amv.access.api.access;
 import io.swagger.annotations.*;
 import lombok.extern.slf4j.Slf4j;
 import org.amv.access.api.ErrorResponseDto;
-import org.amv.access.client.MoreHttpHeaders;
 import org.amv.access.api.access.AccessCertificateService.GetAccessCertificateRequest;
 import org.amv.access.api.access.AccessCertificateService.RevokeAccessCertificateRequest;
 import org.amv.access.api.access.model.CreateAccessCertificateRequestDto;
 import org.amv.access.api.access.model.CreateAccessCertificateResponseDto;
 import org.amv.access.api.access.model.DeviceAndVehicleAccessCertificateDto;
 import org.amv.access.auth.NonceAuthentication;
+import org.amv.access.client.MoreHttpHeaders;
 import org.amv.access.client.model.AccessCertificateDto;
 import org.amv.access.client.model.GetAccessCertificatesResponseDto;
 import org.amv.access.exception.BadRequestException;
@@ -73,6 +73,8 @@ public class AccessCertificateCtrl {
         ResponseEntity<GetAccessCertificatesResponseDto> response = accessCertificateService
                 .getAccessCertificates(nonceAuthentication, request)
                 .map(accessCertificate -> AccessCertificateDto.builder()
+                        .id(accessCertificate.getUuid())
+                        .name(accessCertificate.getVehicle().getName())
                         .accessCertificate(accessCertificate.getSignedDeviceAccessCertificateBase64())
                         .build())
                 .collectList()

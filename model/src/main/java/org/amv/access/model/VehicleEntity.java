@@ -36,6 +36,9 @@ public class VehicleEntity implements Vehicle {
     @Temporal(TemporalType.TIMESTAMP)
     private Date created;
 
+    @Column(name = "name")
+    private String name;
+
     @Column(name = "serial_number")
     private String serialNumber;
 
