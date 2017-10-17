@@ -102,8 +102,12 @@ public class AccessCertificateServiceImpl implements AccessCertificateService {
                             .vehicle(vehicle)
                             .validFrom(accessCertificate.getValidFrom())
                             .validUntil(accessCertificate.getValidUntil())
-                            .signedDeviceAccessCertificateBase64(accessCertificate.getSignedDeviceAccessCertificateBase64())
-                            .signedVehicleAccessCertificateBase64(accessCertificate.getSignedVehicleAccessCertificateBase64())
+                            .deviceAccessCertificateBase64(accessCertificate.getDeviceAccessCertificateBase64())
+                            .deviceAccessCertificateSignatureBase64(accessCertificate.getDeviceAccessCertificateSignatureBase64())
+                            .vehicleAccessCertificateBase64(accessCertificate.getVehicleAccessCertificateBase64())
+                            .vehicleAccessCertificateSignatureBase64(accessCertificate.getVehicleAccessCertificateSignatureBase64())
+                            .fullDeviceAccessCertificateBase64(accessCertificate.getFullDeviceAccessCertificateBase64())
+                            .fullVehicleAccessCertificateBase64(accessCertificate.getFullVehicleAccessCertificateBase64())
                             .build();
                 });
     }
@@ -152,8 +156,12 @@ public class AccessCertificateServiceImpl implements AccessCertificateService {
                 .deviceId(deviceEntity.getId())
                 .validFrom(r.getValidFrom())
                 .validUntil(r.getValidUntil())
-                .signedVehicleAccessCertificateBase64(accessCertificate.getSignedDeviceAccessCertificateBase64())
-                .signedDeviceAccessCertificateBase64(accessCertificate.getSignedDeviceAccessCertificateBase64())
+                .deviceAccessCertificateBase64(accessCertificate.getDeviceAccessCertificateBase64())
+                .deviceAccessCertificateSignatureBase64(accessCertificate.getDeviceAccessCertificateSignatureBase64())
+                .vehicleAccessCertificateBase64(accessCertificate.getVehicleAccessCertificateBase64())
+                .vehicleAccessCertificateSignatureBase64(accessCertificate.getVehicleAccessCertificateSignatureBase64())
+                .fullDeviceAccessCertificateBase64(accessCertificate.getFullDeviceAccessCertificateBase64())
+                .fullVehicleAccessCertificateBase64(accessCertificate.getFullVehicleAccessCertificateBase64())
                 .build();
 
         accessCertificateRepository.save(accessCertificateEntity);

@@ -57,11 +57,23 @@ public class AccessCertificateEntity {
     @Column(name = "valid_until")
     private LocalDateTime validUntil;
 
-    @Column(name = "signed_vehicle_access_certificate_base64")
-    private String signedVehicleAccessCertificateBase64;
+    @Column(name = "vehicle_access_certificate_base64")
+    private String vehicleAccessCertificateBase64;
 
-    @Column(name = "signed_access_certificate_base64")
-    private String signedDeviceAccessCertificateBase64;
+    @Column(name = "vehicle_access_certificate_signature_base64")
+    private String vehicleAccessCertificateSignatureBase64;
+
+    @Column(name = "full_vehicle_access_certificate_base64")
+    private String fullVehicleAccessCertificateBase64;
+
+    @Column(name = "device_access_certificate_base64")
+    private String deviceAccessCertificateBase64;
+
+    @Column(name = "device_access_certificate_signature_base64")
+    private String deviceAccessCertificateSignatureBase64;
+
+    @Column(name = "full_device_access_certificate_base64")
+    private String fullDeviceAccessCertificateBase64;
 
     @Tolerate
     protected AccessCertificateEntity() {

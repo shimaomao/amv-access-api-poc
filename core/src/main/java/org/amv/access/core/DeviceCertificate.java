@@ -7,7 +7,11 @@ public interface DeviceCertificate {
 
     Device getDevice();
 
+    // TODO: this value is just for human inspection - not really needed.
     String getCertificateBase64();
 
-    String getSignedCertificateBase64();
+    // TODO: this value is just for human inspection - not really needed.
+    String getCertificateSignatureBase64();
+
+    String getFullDeviceCertificateBase64();
 }

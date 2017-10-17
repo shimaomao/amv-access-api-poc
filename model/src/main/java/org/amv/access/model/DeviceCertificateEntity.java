@@ -54,8 +54,11 @@ public class DeviceCertificateEntity {
     @Column(name = "certificate_base64")
     private String certificateBase64;
 
-    @Column(name = "signed_certificate_base64")
-    private String signedCertificateBase64;
+    @Column(name = "certificate_signature_base64")
+    private String certificateSignatureBase64;
+
+    @Column(name = "full_certificate_base64")
+    private String fullCertificateBase64;
 
     @Tolerate
     protected DeviceCertificateEntity() {

@@ -33,7 +33,7 @@ public class DeviceCertificateCtrl {
     @PostMapping
     @ApiOperation(
             value = "Create device certificates",
-            consumes =  MediaType.APPLICATION_JSON_UTF8_VALUE,
+            consumes = MediaType.APPLICATION_JSON_UTF8_VALUE,
             produces = MediaType.APPLICATION_JSON_UTF8_VALUE
     )
     @ApiImplicitParams({
@@ -71,7 +71,7 @@ public class DeviceCertificateCtrl {
         ResponseEntity<CreateDeviceCertificateResponseDto> response = deviceCertificateService
                 .createDeviceCertificate(auth, createDeviceCertificateRequest)
                 .map(deviceCertificateEntity -> DeviceCertificateDto.builder()
-                        .deviceCertificate(deviceCertificateEntity.getSignedCertificateBase64())
+                        .deviceCertificate(deviceCertificateEntity.getFullDeviceCertificateBase64())
                         .issuerPublicKey(deviceCertificateEntity.getIssuer().getPublicKeyBase64())
                         .build())
                 .map(deviceCertificateDto -> CreateDeviceCertificateResponseDto.builder()

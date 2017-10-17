@@ -61,14 +61,18 @@ public class HighmobilityModule implements AmvAccessModuleSpi {
                 .createDeviceCertificate(application.getAppId(), device.getSerialNumber())
                 .block();
 
-        Cryptotool.Signature signedDeviceCertificate = cryptotool
+        Cryptotool.Signature signature = cryptotool
                 .generateSignature(deviceCertificate.getDeviceCertificate())
                 .block();
+
+        String fullDeviceCertificate  = deviceCertificate.getDeviceCertificate() + signature.getSignature();
+        String fullDeviceCertificateBase64 = hexToBase64(fullDeviceCertificate)
+                .orElseThrow(() -> new IllegalStateException("Could not convert full device certificate to base64"));
 
         String deviceCertificateBase64 = hexToBase64(deviceCertificate.getDeviceCertificate())
                 .orElseThrow(() -> new IllegalStateException("Could not convert device certificate to base64"));
 
-        String signedDeviceCertificateBase64 = hexToBase64(signedDeviceCertificate.getSignature())
+        String deviceCertificateSignatureBase64 = hexToBase64(signature.getSignature())
                 .orElseThrow(() -> new IllegalStateException("Could not convert signed device certificate to base64"));
 
         DeviceCertificate deviceCertificateEntity = DeviceCertificateImpl.builder()
@@ -76,7 +80,8 @@ public class HighmobilityModule implements AmvAccessModuleSpi {
                 .application(application)
                 .device(device)
                 .certificateBase64(deviceCertificateBase64)
-                .signedCertificateBase64(signedDeviceCertificateBase64)
+                .certificateSignatureBase64(deviceCertificateSignatureBase64)
+                .fullDeviceCertificateBase64(fullDeviceCertificateBase64)
                 .build();
 
         return Mono.just(deviceCertificateEntity);
@@ -110,25 +115,39 @@ public class HighmobilityModule implements AmvAccessModuleSpi {
                 validFrom,
                 validUntil).block();
 
-        String signedDeviceAccessCertificate = Mono.just(deviceAccessCertificate)
+        String deviceAccessCertificateSignature = Mono.just(deviceAccessCertificate)
                 .map(Cryptotool.AccessCertificate::getAccessCertificate)
                 .flatMapMany(cryptotool::generateSignature)
                 .map(Cryptotool.Signature::getSignature)
                 .single()
                 .block();
 
-        String signedVehicleAccessCertificate = Mono.just(vehicleAccessCertificate)
+        String vehicleAccessCertificateSignature = Mono.just(vehicleAccessCertificate)
                 .map(Cryptotool.AccessCertificate::getAccessCertificate)
                 .flatMapMany(cryptotool::generateSignature)
                 .map(Cryptotool.Signature::getSignature)
                 .single()
                 .block();
 
-        String signedDeviceAccessCertificateBase64 = hexToBase64(signedDeviceAccessCertificate)
-                .orElseThrow(() -> new IllegalStateException("Could not convert signed device access certificate to base64"));
+        String fullDeviceAccessCertificate  = deviceAccessCertificate.getAccessCertificate() + deviceAccessCertificateSignature;
+        String fullDeviceAccessCertificateBase64 = hexToBase64(fullDeviceAccessCertificate)
+                .orElseThrow(() -> new IllegalStateException("Could not convert full device access certificate to base64"));
 
-        String signedVehicleAccessCertificateBase64 = hexToBase64(signedVehicleAccessCertificate)
-                .orElseThrow(() -> new IllegalStateException("Could not convert signed vehicle access certificate to base64"));
+        String fullVehicleAccessCertificate  = vehicleAccessCertificate.getAccessCertificate() + vehicleAccessCertificateSignature;
+        String fullVehicleAccessCertificateBase64 = hexToBase64(fullVehicleAccessCertificate)
+                .orElseThrow(() -> new IllegalStateException("Could not convert full vehicle access certificate to base64"));
+
+        String deviceAccessCertificateBase64 = hexToBase64(deviceAccessCertificate.getAccessCertificate())
+                .orElseThrow(() -> new IllegalStateException("Could not convert device access certificate to base64"));
+
+        String deviceAccessCertificateSignatureBase64 = hexToBase64(deviceAccessCertificateSignature)
+                .orElseThrow(() -> new IllegalStateException("Could not convert device access certificate signature to base64"));
+
+        String vehicleAccessCertificateBase64 = hexToBase64(vehicleAccessCertificate.getAccessCertificate())
+                .orElseThrow(() -> new IllegalStateException("Could not convert vehicle access certificate to base64"));
+
+        String vehicleAccessCertificateSignatureBase64 = hexToBase64(vehicleAccessCertificateSignature)
+                .orElseThrow(() -> new IllegalStateException("Could not convert vehicle access certificate signature to base64"));
 
         AccessCertificate accessCertificateEntity = AccessCertificateImpl.builder()
                 .uuid(UUID.randomUUID().toString())
@@ -138,8 +157,14 @@ public class HighmobilityModule implements AmvAccessModuleSpi {
                 .device(device)
                 .validFrom(validFrom)
                 .validUntil(validUntil)
-                .signedDeviceAccessCertificateBase64(signedDeviceAccessCertificateBase64)
-                .signedVehicleAccessCertificateBase64(signedVehicleAccessCertificateBase64)
+                // TODO: start -- these values are just for human inspection and my sanity
+                .deviceAccessCertificateBase64(deviceAccessCertificateBase64)
+                .deviceAccessCertificateSignatureBase64(deviceAccessCertificateSignatureBase64)
+                .vehicleAccessCertificateBase64(vehicleAccessCertificateBase64)
+                .vehicleAccessCertificateSignatureBase64(vehicleAccessCertificateSignatureBase64)
+                // TODO: -- end
+                .fullDeviceAccessCertificateBase64(fullDeviceAccessCertificateBase64)
+                .fullVehicleAccessCertificateBase64(fullVehicleAccessCertificateBase64)
                 .build();
 
         return Mono.just(accessCertificateEntity);
