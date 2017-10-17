@@ -17,6 +17,22 @@ e.g. `findbugs`, `checkstyle`, `javadoc` - tasks which results are not essential
 ```bash
 ./gradlew clean build -Pminimal
 ```
+
+## create a release
+```bash
+./gradlew final -Prelease.scope=patch
+```
+
+## release to bintray
+```bash
+./gradlew clean build bintrayUpload
+  -Prelease.stage=final
+  -Prelease.scope=patch
+  -PreleaseToBintray
+  -PbintrayUser=${username}
+  -PbintrayApiKey=${apiKey}
+```
+
 ## Development
 ### Spring Boot
 Run the application with active `development` profile
