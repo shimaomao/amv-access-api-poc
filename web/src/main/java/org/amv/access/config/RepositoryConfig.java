@@ -2,7 +2,7 @@ package org.amv.access.config;
 
 import com.google.common.reflect.ClassPath;
 import lombok.extern.slf4j.Slf4j;
-import org.amv.access.model.User;
+import org.amv.access.model.UserEntity;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.rest.core.config.RepositoryRestConfiguration;
 import org.springframework.data.rest.webmvc.config.RepositoryRestConfigurerAdapter;
@@ -22,8 +22,8 @@ public class RepositoryConfig extends RepositoryRestConfigurerAdapter {
         //config.setBasePath("api");
 
         try {
-            config.exposeIdsFor(User.class);
-            ClassPathUtils.streamClassesAnnotatedWith(User.class, Entity.class)
+            config.exposeIdsFor(UserEntity.class);
+            ClassPathUtils.streamClassesAnnotatedWith(UserEntity.class, Entity.class)
                     .peek(clazz -> log.debug("enable @Id json mapping for entity {}", clazz.getSimpleName()))
                     .forEach(config::exposeIdsFor);
         } catch (IOException e) {

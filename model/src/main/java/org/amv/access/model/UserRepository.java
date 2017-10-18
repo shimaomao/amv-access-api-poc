@@ -8,7 +8,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.data.rest.core.annotation.RepositoryRestResource;
 
 @RepositoryRestResource(excerptProjection = UserProjection.class, collectionResourceRel = "user", path = "model-user")
-public interface UserRepository extends JpaRepository<User, Long> {
+public interface UserRepository extends JpaRepository<UserEntity, Long> {
 
-    Page<User> findByName(@Param("name") String name, Pageable page);
+    Page<UserEntity> findByName(@Param("name") String name, Pageable page);
 }

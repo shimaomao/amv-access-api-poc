@@ -1,14 +1,14 @@
 package org.amv.access.demo;
 
-import org.amv.access.model.User;
+import org.amv.access.model.UserEntity;
 
 public class DemoUser {
     private String name;
     private String password;
     private String encryptedPassword;
-    private User origin;
+    private UserEntity origin;
 
-    DemoUser(String name, String password, String encryptedPassword, User origin) {
+    DemoUser(String name, String password, String encryptedPassword, UserEntity origin) {
         this.name = name;
         this.password = password;
         this.encryptedPassword = encryptedPassword;
@@ -31,7 +31,7 @@ public class DemoUser {
         return this.encryptedPassword;
     }
 
-    public User getOrigin() {
+    public UserEntity getOrigin() {
         return this.origin;
     }
 
@@ -39,7 +39,7 @@ public class DemoUser {
         private String name;
         private String password;
         private String encryptedPassword;
-        private User origin;
+        private UserEntity origin;
 
         DemoUserBuilder() {
         }
@@ -71,7 +71,7 @@ public class DemoUser {
             return encryptedPassword;
         }
 
-        public DemoUser.DemoUserBuilder origin(User origin) {
+        public DemoUser.DemoUserBuilder origin(UserEntity origin) {
             this.origin = origin;
             return this;
         }

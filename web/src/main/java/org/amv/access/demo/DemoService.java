@@ -57,7 +57,7 @@ public class DemoService {
     }
 
     public DemoUser getOrCreateDemoUser() {
-        final User user = userRepository.findByName(DEMO_USER_NAME, AmvAccessApplication.standardPageRequest)
+        final UserEntity user = userRepository.findByName(DEMO_USER_NAME, AmvAccessApplication.standardPageRequest)
                 .getContent()
                 .stream()
                 .findFirst()
@@ -105,7 +105,7 @@ public class DemoService {
         final DemoUser.DemoUserBuilder demoUserBuilder = demoUserBuilderSupplier.get();
         final ArrayList<String> authorities = Lists.newArrayList("ROLE_ADMIN", "ROLE_USER");
 
-        User demoUser = User.builder()
+        UserEntity demoUser = UserEntity.builder()
                 .name(demoUserBuilder.name())
                 .password(demoUserBuilder.encryptedPassword())
                 .authorities(authorities)

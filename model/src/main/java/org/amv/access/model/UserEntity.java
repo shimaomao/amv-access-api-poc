@@ -18,7 +18,7 @@ import java.util.List;
 @Builder(builderClassName = "Builder")
 @Entity
 @Table(name = "user")
-public class User {
+public class UserEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
     @Column(name = "user_id", columnDefinition = "bigint")
@@ -43,12 +43,12 @@ public class User {
     private List<String> authorities = Lists.newArrayList();
 
     @Tolerate
-    protected User() {
+    protected UserEntity() {
 
     }
 
     @Override
     public String toString() {
-        return String.format("User[id=%d, name='%s']", id, name);
+        return String.format("UserEntity[id=%d, name='%s']", id, name);
     }
 }
