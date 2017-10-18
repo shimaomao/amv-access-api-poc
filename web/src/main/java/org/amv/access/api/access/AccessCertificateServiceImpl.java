@@ -106,8 +106,8 @@ public class AccessCertificateServiceImpl implements AccessCertificateService {
                             .deviceAccessCertificateSignatureBase64(accessCertificate.getDeviceAccessCertificateSignatureBase64())
                             .vehicleAccessCertificateBase64(accessCertificate.getVehicleAccessCertificateBase64())
                             .vehicleAccessCertificateSignatureBase64(accessCertificate.getVehicleAccessCertificateSignatureBase64())
-                            .fullDeviceAccessCertificateBase64(accessCertificate.getFullDeviceAccessCertificateBase64())
-                            .fullVehicleAccessCertificateBase64(accessCertificate.getFullVehicleAccessCertificateBase64())
+                            .signedDeviceAccessCertificateBase64(accessCertificate.getSignedDeviceAccessCertificateBase64())
+                            .signedVehicleAccessCertificateBase64(accessCertificate.getSignedVehicleAccessCertificateBase64())
                             .build();
                 });
     }
@@ -161,8 +161,8 @@ public class AccessCertificateServiceImpl implements AccessCertificateService {
                 .deviceAccessCertificateSignatureBase64(accessCertificate.getDeviceAccessCertificateSignatureBase64())
                 .vehicleAccessCertificateBase64(accessCertificate.getVehicleAccessCertificateBase64())
                 .vehicleAccessCertificateSignatureBase64(accessCertificate.getVehicleAccessCertificateSignatureBase64())
-                .fullDeviceAccessCertificateBase64(accessCertificate.getFullDeviceAccessCertificateBase64())
-                .fullVehicleAccessCertificateBase64(accessCertificate.getFullVehicleAccessCertificateBase64())
+                .signedDeviceAccessCertificateBase64(accessCertificate.getSignedDeviceAccessCertificateBase64())
+                .signedVehicleAccessCertificateBase64(accessCertificate.getSignedVehicleAccessCertificateBase64())
                 .build();
 
         accessCertificateRepository.save(accessCertificateEntity);

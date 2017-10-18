@@ -73,7 +73,7 @@ public class DeviceCertificateCtrl {
         ResponseEntity<CreateDeviceCertificateResponseDto> response = deviceCertificateService
                 .createDeviceCertificate(auth, createDeviceCertificateRequest)
                 .map(deviceCertificateEntity -> DeviceCertificateDto.builder()
-                        .deviceCertificate(deviceCertificateEntity.getFullDeviceCertificateBase64())
+                        .deviceCertificate(deviceCertificateEntity.getSignedDeviceCertificateBase64())
                         .issuerPublicKey(deviceCertificateEntity.getIssuer().getPublicKeyBase64())
                         .build())
                 .map(deviceCertificateDto -> CreateDeviceCertificateResponseDto.builder()

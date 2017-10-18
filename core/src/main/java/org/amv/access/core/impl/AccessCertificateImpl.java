@@ -38,7 +38,7 @@ public class AccessCertificateImpl implements AccessCertificate {
      * base64(vehicleCert + sign(vehicleCert, issuerPrivateKey))
      */
     @NonNull
-    private String fullVehicleAccessCertificateBase64;
+    private String signedVehicleAccessCertificateBase64;
 
     // TODO: this value is just for human inspection - not really needed.
     @NonNull
@@ -51,5 +51,5 @@ public class AccessCertificateImpl implements AccessCertificate {
      * base64(deviceCert + sign(deviceCert, issuerPrivateKey))
      */
     @NonNull
-    private String fullDeviceAccessCertificateBase64;
+    private String signedDeviceAccessCertificateBase64;
 }

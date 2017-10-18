@@ -24,8 +24,8 @@ public interface AccessCertificate {
     // TODO: this value is just for human inspection - not really needed.
     String getVehicleAccessCertificateSignatureBase64();
 
-    String getFullDeviceAccessCertificateBase64();
+    String getSignedDeviceAccessCertificateBase64();
 
-    String getFullVehicleAccessCertificateBase64();
+    String getSignedVehicleAccessCertificateBase64();
 
 }
