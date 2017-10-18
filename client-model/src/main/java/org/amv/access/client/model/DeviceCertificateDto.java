@@ -22,7 +22,7 @@ public class DeviceCertificateDto {
 
     @JsonProperty("issuer_public_key")
     @ApiModelProperty(
-            value = "You may return car model or license plate number",
+            value = "The public key of certificate granting authority",
             dataType = "String",
             required = true
     )
