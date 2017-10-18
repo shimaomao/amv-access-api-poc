@@ -5,23 +5,28 @@ import org.amv.access.api.ErrorResponseDto.ErrorInfoDto;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.context.request.WebRequest;
 import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
+import org.springframework.web.util.NestedServletException;
 
+import javax.servlet.ServletException;
 import java.lang.reflect.UndeclaredThrowableException;
+import java.util.Optional;
+import java.util.function.Predicate;
 
 @Slf4j
 @RestControllerAdvice
 public class AmvAccessRestExceptionHandlerAdvice extends ResponseEntityExceptionHandler {
-
 
     @Override
     protected ResponseEntity<Object> handleExceptionInternal(Exception ex, Object body,
                                                              HttpHeaders headers, HttpStatus status, WebRequest request) {
         log.error("", ex);
 
-        Exception e = unwrapUndeclaredThrowableExceptionIfNecessary(ex);
+        Exception e = unwrapIfNecessary(ex);
 
         ErrorInfoDto errorInfoDto = ErrorInfoDto.builder()
                 .title(e.getClass().getSimpleName())
@@ -33,6 +38,28 @@ public class AmvAccessRestExceptionHandlerAdvice extends ResponseEntityException
                 .build();
 
         return new ResponseEntity<>(errorResponseDto, headers, status);
+    }
+
+
+    @ExceptionHandler({
+            Exception.class
+    })
+    public final ResponseEntity<Object> handle(Exception ex, WebRequest request) {
+        HttpHeaders headers = new HttpHeaders();
+
+        final HttpStatus status = Optional.ofNullable(ex.getClass().getAnnotation(ResponseStatus.class))
+                .map(ResponseStatus::value)
+                .orElse(HttpStatus.INTERNAL_SERVER_ERROR);
+
+        return handleExceptionInternal(ex, null, headers, status, request);
+    }
+
+    private Exception unwrapIfNecessary(Exception e) {
+        Exception e1 = unwrapUndeclaredThrowableExceptionIfNecessary(e);
+        Exception e2 = unwrapIfAssignableFrom(e1, ServletException.class);
+        Exception e3 = unwrapIfAssignableFrom(e2, NestedServletException.class);
+
+        return e3;
     }
 
     /**
@@ -48,7 +75,15 @@ public class AmvAccessRestExceptionHandlerAdvice extends ResponseEntityException
      * @return The unwrapped exception if necessary otherwise the provided exception
      */
     private Exception unwrapUndeclaredThrowableExceptionIfNecessary(Exception e) {
-        if (UndeclaredThrowableException.class.isAssignableFrom(e.getClass())) {
+        return unwrapIfAssignableFrom(e, UndeclaredThrowableException.class);
+    }
+
+    private Exception unwrapIfAssignableFrom(Exception e, Class<?> clazz) {
+        return unwrapIfNecessary(e, t -> clazz.isAssignableFrom(t.getClass()));
+    }
+
+    private Exception unwrapIfNecessary(Exception e, Predicate<Exception> predicate) {
+        if (predicate.test(e)) {
             return (Exception) e.getCause();
         }
         return e;
