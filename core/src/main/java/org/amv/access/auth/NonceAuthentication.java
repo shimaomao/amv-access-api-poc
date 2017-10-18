@@ -1,7 +1,7 @@
 package org.amv.access.auth;
 
 public interface NonceAuthentication {
-    String getNonce();
+    String getNonceBase64();
 
-    String getSignedNonce();
+    String getNonceSignatureBase64();
 }

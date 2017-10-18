@@ -1,5 +1,7 @@
 package org.amv.access.jetty;
 
+import io.prometheus.client.CollectorRegistry;
+import io.prometheus.client.jetty.JettyStatisticsCollector;
 import org.eclipse.jetty.server.handler.StatisticsHandler;
 import org.springframework.boot.context.embedded.jetty.JettyEmbeddedServletContainerFactory;
 import org.springframework.context.annotation.Bean;
@@ -10,6 +12,13 @@ public class JettyConfiguration {
     @Bean
     public StatisticsHandler statisticsHandler() {
         return new StatisticsHandler();
+    }
+
+    @Bean
+    public JettyStatisticsCollector jettyStatisticsCollector(CollectorRegistry metricRegistry,
+                                                             StatisticsHandler statisticsHandler) {
+        return new JettyStatisticsCollector(statisticsHandler)
+                .register(metricRegistry);
     }
 
     @Bean

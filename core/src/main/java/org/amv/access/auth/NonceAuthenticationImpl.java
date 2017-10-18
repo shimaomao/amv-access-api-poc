@@ -8,7 +8,7 @@ import lombok.Value;
 @Builder
 public class NonceAuthenticationImpl implements NonceAuthentication {
     @NonNull
-    private String nonce;
+    private String nonceBase64;
     @NonNull
-    private String signedNonce;
+    private String nonceSignatureBase64;
 }

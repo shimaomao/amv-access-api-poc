@@ -1,9 +1,9 @@
 package org.amv.access.api.auth;
 
 import com.google.common.collect.ImmutableList;
-import org.amv.access.client.MoreHttpHeaders;
 import org.amv.access.auth.NonceAuthentication;
 import org.amv.access.auth.NonceAuthenticationImpl;
+import org.amv.access.client.MoreHttpHeaders;
 import org.amv.access.exception.BadRequestException;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.core.MethodParameter;
@@ -18,6 +18,7 @@ import java.util.Optional;
 import static org.apache.commons.codec.binary.Base64.isBase64;
 
 public class NonceAuthenticationArgumentResolver implements HandlerMethodArgumentResolver {
+
     @Override
     public boolean supportsParameter(MethodParameter parameter) {
         return NonceAuthentication.class.isAssignableFrom(parameter.getParameterType());
@@ -25,19 +26,19 @@ public class NonceAuthenticationArgumentResolver implements HandlerMethodArgumen
 
     @Override
     public Object resolveArgument(MethodParameter parameter, ModelAndViewContainer mavContainer, NativeWebRequest webRequest, WebDataBinderFactory binderFactory) throws Exception {
-        String nonce = getNonceOrThrow(webRequest);
-        String signedNonce = getSignedNonceOrThrow(webRequest);
+        String nonceBase64 = getNonceOrThrow(webRequest);
+        String nonceSignatureBase64 = getNonceSignatureOrThrow(webRequest);
 
-        if (!isBase64(nonce)) {
+        if (!isBase64(nonceBase64)) {
             throw new BadRequestException("Nonce must be base64");
         }
-        if (!isBase64(signedNonce)) {
-            throw new BadRequestException("Signature must be base64");
+        if (!isBase64(nonceSignatureBase64)) {
+            throw new BadRequestException("Nonce signature must be base64");
         }
 
         return NonceAuthenticationImpl.builder()
-                .nonce(nonce)
-                .signedNonce(signedNonce)
+                .nonceBase64(nonceBase64)
+                .nonceSignatureBase64(nonceSignatureBase64)
                 .build();
     }
 
@@ -45,7 +46,7 @@ public class NonceAuthenticationArgumentResolver implements HandlerMethodArgumen
         return findFirstHeaderValueOrThrow(webRequest, MoreHttpHeaders.AMV_NONCE);
     }
 
-    private String getSignedNonceOrThrow(NativeWebRequest webRequest) {
+    private String getNonceSignatureOrThrow(NativeWebRequest webRequest) {
         return findFirstHeaderValueOrThrow(webRequest, MoreHttpHeaders.AMV_SIGNATURE);
     }
 

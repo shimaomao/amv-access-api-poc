@@ -20,7 +20,6 @@ import java.util.Optional;
 import java.util.UUID;
 
 import static java.util.Objects.requireNonNull;
-import static org.amv.access.util.MoreBase64.fromBase64OrThrow;
 import static org.amv.highmobility.cryptotool.CryptotoolUtils.decodeBase64AsHex;
 
 @Slf4j
@@ -47,8 +46,8 @@ public class HighmobilityModule implements AmvAccessModuleSpi {
         requireNonNull(device);
 
         String devicePublicKey = decodeBase64AsHex(device.getPublicKeyBase64());
-        String nonce = decodeBase64AsHex(auth.getNonce());
-        String signature = decodeBase64AsHex(auth.getSignedNonce());
+        String nonce = decodeBase64AsHex(auth.getNonceBase64());
+        String signature = decodeBase64AsHex(auth.getNonceSignatureBase64());
 
         return cryptotool.verifySignature(nonce, signature, devicePublicKey)
                 .map(v -> v == Cryptotool.Validity.VALID);
@@ -57,6 +56,7 @@ public class HighmobilityModule implements AmvAccessModuleSpi {
     @Override
     public Mono<DeviceCertificate> createDeviceCertificate(CreateDeviceCertificateRequest deviceCertificateRequest) {
         requireNonNull(deviceCertificateRequest);
+
         Application application = requireNonNull(deviceCertificateRequest.getApplication());
         Device device = requireNonNull(deviceCertificateRequest.getDevice());
 
