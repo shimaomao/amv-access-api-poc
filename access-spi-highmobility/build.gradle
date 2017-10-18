@@ -1,4 +1,4 @@
-description = 'Highmobility implemenation of the AMV access service provider interface'
+description = 'Highmobility implementation of the AMV access service provider interface'
 
 dependencies {
     compile project(':access-spi')

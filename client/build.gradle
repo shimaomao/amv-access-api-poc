@@ -1,4 +1,4 @@
-description = 'a simple client for the amv access rest interface'
+description = 'a simple client for the AMV access rest interface'
 
 buildscript {
     ext {

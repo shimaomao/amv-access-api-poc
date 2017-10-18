@@ -1,4 +1,4 @@
-description = 'AMV Access Service Provider Interface'
+description = 'AMV access service provider interface'
 
 dependencies {
     compile project(':core')

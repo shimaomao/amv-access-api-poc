@@ -1,4 +1,4 @@
-description = 'Models'
+description = 'models for the AMV access rest interface'
 
 buildscript {
     ext {
