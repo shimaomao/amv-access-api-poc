@@ -4,7 +4,6 @@ import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
 import com.zaxxer.hikari.metrics.prometheus.PrometheusMetricsTrackerFactory;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.boot.autoconfigure.jdbc.DataSourceBuilder;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Primary;
@@ -21,7 +20,7 @@ public class DatabaseConfig {
 
     @Primary
     @Bean(destroyMethod = "close")
-    public DataSource hikariDataSource() {
+    public DataSource dataSource() {
         return new HikariDataSource(hikariConfig());
     }
 
@@ -37,13 +36,6 @@ public class DatabaseConfig {
         config.setMetricsTrackerFactory(prometheusMetricsTrackerFactory());
 
         return config;
-    }
-
-    public DataSource dataSource() {
-        DataSourceBuilder dataSourceBuilder = DataSourceBuilder.create();
-        dataSourceBuilder.driverClassName(org.sqlite.JDBC.class.getName());
-        dataSourceBuilder.url("jdbc:sqlite:amv-access.db");
-        return dataSourceBuilder.build();
     }
 
     @Bean
