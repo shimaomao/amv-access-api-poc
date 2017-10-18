@@ -57,7 +57,7 @@ public class AmvAccessRestExceptionHandlerAdvice extends ResponseEntityException
 
     private Optional<HttpStatus> findHttpStatus(Exception ex) {
         return Optional.ofNullable(ex.getClass().getAnnotation(ResponseStatus.class))
-                .map(ResponseStatus::value);
+                .map(ResponseStatus::code);
     }
 
     private Exception unwrapIfNecessary(Exception e) {

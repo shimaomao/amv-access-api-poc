@@ -55,7 +55,7 @@ public class NonceAuthenticationArgumentResolver implements HandlerMethodArgumen
                 .stream()
                 .filter(StringUtils::isNotBlank)
                 .findFirst()
-                .orElseThrow(() -> new BadRequestException(headerName + " header not present"));
+                .orElseThrow(() -> new BadRequestException(headerName + " header is missing"));
     }
 
     private List<String> findHeaderValues(NativeWebRequest webRequest, String headerName) {

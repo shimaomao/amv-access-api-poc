@@ -2,12 +2,15 @@ package org.amv.access.api.device;
 
 import org.amv.access.AmvAccessApplication;
 import org.amv.access.MoreHex;
+import org.amv.access.api.ErrorResponseDto;
 import org.amv.access.client.model.CreateDeviceCertificateRequestDto;
 import org.amv.access.client.model.CreateDeviceCertificateResponseDto;
 import org.amv.access.client.model.DeviceCertificateDto;
 import org.amv.access.config.TestDbConfig;
 import org.amv.access.core.Issuer;
 import org.amv.access.demo.DemoService;
+import org.amv.access.exception.BadRequestException;
+import org.amv.access.exception.NotFoundException;
 import org.amv.access.model.ApplicationEntity;
 import org.amv.highmobility.cryptotool.Cryptotool;
 import org.amv.highmobility.cryptotool.CryptotoolUtils;
@@ -66,11 +69,22 @@ public class DeviceCertificateCtrlTest {
                 .devicePublicKey(publicKeyBase64)
                 .build();
 
-        ResponseEntity<?> responseEntity = restTemplate
+        ResponseEntity<ErrorResponseDto> responseEntity = restTemplate
                 .postForEntity("/api/v1/device_certificates", body,
-                        CreateDeviceCertificateResponseDto.class);
+                        ErrorResponseDto.class);
 
         assertThat(responseEntity.getStatusCode(), is(HttpStatus.BAD_REQUEST));
+
+        ErrorResponseDto errorResponseDto = responseEntity.getBody();
+        assertThat(errorResponseDto.getErrors(), hasSize(1));
+
+        ErrorResponseDto.ErrorInfoDto errorInfoDto = errorResponseDto.getErrors()
+                .stream()
+                .findFirst()
+                .orElseThrow(IllegalStateException::new);
+
+        assertThat(errorInfoDto.getTitle(), is(BadRequestException.class.getSimpleName()));
+        assertThat(errorInfoDto.getDetail(), is("Authorization header is invalid or missing"));
     }
 
     @Test
@@ -88,11 +102,22 @@ public class DeviceCertificateCtrlTest {
         headers.add(HttpHeaders.AUTHORIZATION, nonExistingApiKey);
         HttpEntity<CreateDeviceCertificateRequestDto> entity = new HttpEntity<>(body, headers);
 
-        ResponseEntity<?> responseEntity = restTemplate
+        ResponseEntity<ErrorResponseDto> responseEntity = restTemplate
                 .postForEntity("/api/v1/device_certificates", entity,
-                        CreateDeviceCertificateResponseDto.class);
+                        ErrorResponseDto.class);
 
         assertThat(responseEntity.getStatusCode(), is(HttpStatus.NOT_FOUND));
+
+        ErrorResponseDto errorResponseDto = responseEntity.getBody();
+        assertThat(errorResponseDto.getErrors(), hasSize(1));
+
+        ErrorResponseDto.ErrorInfoDto errorInfoDto = errorResponseDto.getErrors()
+                .stream()
+                .findFirst()
+                .orElseThrow(IllegalStateException::new);
+
+        assertThat(errorInfoDto.getTitle(), is(NotFoundException.class.getSimpleName()));
+        assertThat(errorInfoDto.getDetail(), is("ApplicationEntity not found"));
     }
 
     @Test

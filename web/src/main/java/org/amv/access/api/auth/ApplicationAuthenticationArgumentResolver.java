@@ -29,6 +29,7 @@ public class ApplicationAuthenticationArgumentResolver implements HandlerMethodA
         Mono<Application> findByApiKey(String apiKey);
     }
 
+    private static final String HEADER_NAME = HttpHeaders.AUTHORIZATION;
     private final ApiKeyResolver apiKeyResolver;
 
     public ApplicationAuthenticationArgumentResolver(ApiKeyResolver apiKeyResolver) {
@@ -43,11 +44,11 @@ public class ApplicationAuthenticationArgumentResolver implements HandlerMethodA
     @Override
     public Object resolveArgument(MethodParameter parameter, ModelAndViewContainer mavContainer, NativeWebRequest webRequest, WebDataBinderFactory binderFactory) throws Exception {
         String apiKey = Optional.ofNullable(webRequest)
-                .map(s -> s.getHeaderValues(HttpHeaders.AUTHORIZATION))
+                .map(s -> s.getHeaderValues(HEADER_NAME))
                 .map(Arrays::stream).orElseGet(Stream::empty)
                 .findFirst()
                 .filter(this::isValidApiKey)
-                .orElseThrow(() -> new BadRequestException("Authorization header not present or invalid"));
+                .orElseThrow(() -> new BadRequestException(HEADER_NAME + " header is invalid or missing"));
 
         Application application = Optional.of(apiKeyResolver.findByApiKey(apiKey))
                 .map(Mono::block)

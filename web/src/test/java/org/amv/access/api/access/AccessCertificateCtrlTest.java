@@ -1,6 +1,7 @@
 package org.amv.access.api.access;
 
 import org.amv.access.AmvAccessApplication;
+import org.amv.access.api.ErrorResponseDto;
 import org.amv.access.api.access.model.CreateAccessCertificateRequestDto;
 import org.amv.access.api.access.model.CreateAccessCertificateResponseDto;
 import org.amv.access.api.access.model.DeviceAndVehicleAccessCertificateDto;
@@ -10,6 +11,8 @@ import org.amv.access.client.model.CreateDeviceCertificateRequestDto;
 import org.amv.access.client.model.GetAccessCertificatesResponseDto;
 import org.amv.access.config.TestDbConfig;
 import org.amv.access.demo.DemoService;
+import org.amv.access.exception.BadRequestException;
+import org.amv.access.exception.UnauthorizedException;
 import org.amv.access.model.ApplicationEntity;
 import org.amv.access.model.DeviceEntity;
 import org.amv.access.model.IssuerEntity;
@@ -78,12 +81,23 @@ public class AccessCertificateCtrlTest {
 
         HttpEntity<?> entity = new HttpEntity<>(headers);
 
-        ResponseEntity<?> responseEntity = restTemplate
+        ResponseEntity<ErrorResponseDto> responseEntity = restTemplate
                 .exchange("/api/v1/device/{deviceSerialNumber}/access_certificates",
-                        HttpMethod.GET, entity, GetAccessCertificatesResponseDto.class,
+                        HttpMethod.GET, entity, ErrorResponseDto.class,
                         device.getSerialNumber());
 
         assertThat(responseEntity.getStatusCode(), is(HttpStatus.BAD_REQUEST));
+
+        ErrorResponseDto errorResponseDto = responseEntity.getBody();
+        assertThat(errorResponseDto.getErrors(), hasSize(1));
+
+        ErrorResponseDto.ErrorInfoDto errorInfoDto = errorResponseDto.getErrors()
+                .stream()
+                .findFirst()
+                .orElseThrow(IllegalStateException::new);
+
+        assertThat(errorInfoDto.getTitle(), is(BadRequestException.class.getSimpleName()));
+        assertThat(errorInfoDto.getDetail(), is("amv-api-nonce header is missing"));
     }
 
     @Test
@@ -95,12 +109,23 @@ public class AccessCertificateCtrlTest {
 
         HttpEntity<?> entity = new HttpEntity<>(headers);
 
-        ResponseEntity<?> responseEntity = restTemplate
+        ResponseEntity<ErrorResponseDto> responseEntity = restTemplate
                 .exchange("/api/v1/device/{deviceSerialNumber}/access_certificates",
-                        HttpMethod.GET, entity, GetAccessCertificatesResponseDto.class,
+                        HttpMethod.GET, entity, ErrorResponseDto.class,
                         device.getSerialNumber());
 
         assertThat(responseEntity.getStatusCode(), is(HttpStatus.BAD_REQUEST));
+
+        ErrorResponseDto errorResponseDto = responseEntity.getBody();
+        assertThat(errorResponseDto.getErrors(), hasSize(1));
+
+        ErrorResponseDto.ErrorInfoDto errorInfoDto = errorResponseDto.getErrors()
+                .stream()
+                .findFirst()
+                .orElseThrow(IllegalStateException::new);
+
+        assertThat(errorInfoDto.getTitle(), is(BadRequestException.class.getSimpleName()));
+        assertThat(errorInfoDto.getDetail(), is("amv-api-signature header is missing"));
     }
 
 
@@ -127,12 +152,23 @@ public class AccessCertificateCtrlTest {
 
         HttpEntity<?> entity = new HttpEntity<>(headers);
 
-        ResponseEntity<?> responseEntity = restTemplate
+        ResponseEntity<ErrorResponseDto> responseEntity = restTemplate
                 .exchange("/api/v1/device/{deviceSerialNumber}/access_certificates",
-                        HttpMethod.GET, entity, GetAccessCertificatesResponseDto.class,
+                        HttpMethod.GET, entity, ErrorResponseDto.class,
                         device.getSerialNumber());
 
         assertThat(responseEntity.getStatusCode(), is(HttpStatus.UNAUTHORIZED));
+
+        ErrorResponseDto errorResponseDto = responseEntity.getBody();
+        assertThat(errorResponseDto.getErrors(), hasSize(1));
+
+        ErrorResponseDto.ErrorInfoDto errorInfoDto = errorResponseDto.getErrors()
+                .stream()
+                .findFirst()
+                .orElseThrow(IllegalStateException::new);
+
+        assertThat(errorInfoDto.getTitle(), is(UnauthorizedException.class.getSimpleName()));
+        assertThat(errorInfoDto.getDetail(), is("Signature is invalid"));
     }
 
     @Test
