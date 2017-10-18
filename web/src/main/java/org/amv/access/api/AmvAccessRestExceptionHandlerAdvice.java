@@ -47,11 +47,17 @@ public class AmvAccessRestExceptionHandlerAdvice extends ResponseEntityException
     public final ResponseEntity<Object> handle(Exception ex, WebRequest request) {
         HttpHeaders headers = new HttpHeaders();
 
-        final HttpStatus status = Optional.ofNullable(ex.getClass().getAnnotation(ResponseStatus.class))
-                .map(ResponseStatus::value)
-                .orElse(HttpStatus.INTERNAL_SERVER_ERROR);
+        Exception e = unwrapIfNecessary(ex);
 
-        return handleExceptionInternal(ex, null, headers, status, request);
+        final HttpStatus status = findHttpStatus(ex)
+                .orElseGet(() -> findHttpStatus(e).orElse(HttpStatus.INTERNAL_SERVER_ERROR));
+
+        return handleExceptionInternal(e, null, headers, status, request);
+    }
+
+    private Optional<HttpStatus> findHttpStatus(Exception ex) {
+        return Optional.ofNullable(ex.getClass().getAnnotation(ResponseStatus.class))
+                .map(ResponseStatus::value);
     }
 
     private Exception unwrapIfNecessary(Exception e) {
