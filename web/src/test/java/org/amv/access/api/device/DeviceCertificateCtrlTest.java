@@ -8,7 +8,6 @@ import org.amv.access.config.TestDbConfig;
 import org.amv.access.core.Issuer;
 import org.amv.access.demo.DemoService;
 import org.amv.access.model.ApplicationEntity;
-import org.amv.access.model.IssuerEntity;
 import org.amv.highmobility.cryptotool.Cryptotool;
 import org.amv.highmobility.cryptotool.CryptotoolUtils;
 import org.junit.Before;
@@ -23,10 +22,12 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.test.context.junit4.SpringRunner;
+import reactor.core.publisher.Mono;
+
+import java.util.Optional;
 
 import static org.apache.commons.codec.binary.Base64.isBase64;
-import static org.hamcrest.Matchers.is;
-import static org.hamcrest.Matchers.notNullValue;
+import static org.hamcrest.Matchers.*;
 import static org.junit.Assert.assertThat;
 
 @RunWith(SpringRunner.class)
@@ -49,12 +50,10 @@ public class DeviceCertificateCtrlTest {
     private Issuer issuer;
 
     private ApplicationEntity application;
-    //private IssuerEntity issuer;
 
     @Before
     public void setUp() {
         this.application = demoService.getOrCreateDemoApplication();
-        //this.issuer = demoService.getOrCreateDemoIssuer();
     }
 
     @Test
@@ -120,12 +119,34 @@ public class DeviceCertificateCtrlTest {
         DeviceCertificateDto responseDeviceCertificate = response.getDeviceCertificate();
         assertThat(responseDeviceCertificate, is(notNullValue()));
 
-        String deviceCertificate = responseDeviceCertificate.getDeviceCertificate();
-        assertThat(deviceCertificate, is(notNullValue()));
-        assertThat(isBase64(deviceCertificate), is(true));
-
-        final String expectedIssuerPublicKey = issuer.getPublicKeyBase64();
+        String expectedIssuerPublicKey = issuer.getPublicKeyBase64();
         assertThat(responseDeviceCertificate.getIssuerPublicKey(), is(expectedIssuerPublicKey));
+
+        String signedDeviceCertificate = responseDeviceCertificate.getDeviceCertificate();
+        assertThat(signedDeviceCertificate, is(notNullValue()));
+        assertThat(isBase64(signedDeviceCertificate), is(true));
+
+        String signedDeviceCertificateInHex = CryptotoolUtils.decodeBase64AsHex(signedDeviceCertificate);
+
+        String deviceCertificate = signedDeviceCertificateInHex.substring(0, 178);
+        String signatureInHex = signedDeviceCertificateInHex.substring(178, signedDeviceCertificateInHex.length());
+
+        String issuerNameInHex = deviceCertificate.substring(0, 8);
+        String applicationIdInHex = deviceCertificate.substring(8, 32);
+        String deviceSerialNumberInHex = deviceCertificate.substring(32, 50);
+        String devicePublicKeyInHex = deviceCertificate.substring(50, deviceCertificate.length());
+
+        assertThat(issuerNameInHex, is(issuer.getNameInHex()));
+        assertThat(applicationIdInHex, is(application.getAppId()));
+        assertThat(devicePublicKeyInHex, is(equalToIgnoringCase(keys.getPublicKey())));
+
+        String issuerPublicKeyInHex = CryptotoolUtils.decodeBase64AsHex(issuer.getPublicKeyBase64());
+        Cryptotool.Validity validity = Optional.of(cryptotool.verifySignature(deviceCertificate, signatureInHex, issuerPublicKeyInHex))
+                .map(Mono::block)
+                .filter(val -> val == Cryptotool.Validity.VALID)
+                .orElseThrow(IllegalStateException::new);
+
+        assertThat(validity, is(Cryptotool.Validity.VALID));
     }
 
     @Test

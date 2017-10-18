@@ -68,7 +68,7 @@ public class HighmobilityModule implements AmvAccessModuleSpi {
                 .orElseThrow(() -> new IllegalStateException("Could not convert device certificate to base64"));
 
         String deviceCertificateSignatureBase64 = hexToBase64(signature.getSignature())
-                .orElseThrow(() -> new IllegalStateException("Could not convert signed device certificate to base64"));
+                .orElseThrow(() -> new IllegalStateException("Could not convert device certificate signature to base64"));
 
         DeviceCertificate deviceCertificateEntity = DeviceCertificateImpl.builder()
                 .issuer(issuer)
@@ -154,12 +154,10 @@ public class HighmobilityModule implements AmvAccessModuleSpi {
                 .device(device)
                 .validFrom(validFrom)
                 .validUntil(validUntil)
-                // TODO: start -- these values are just for human inspection and my sanity
                 .deviceAccessCertificateBase64(deviceAccessCertificateBase64)
                 .deviceAccessCertificateSignatureBase64(deviceAccessCertificateSignatureBase64)
                 .vehicleAccessCertificateBase64(vehicleAccessCertificateBase64)
                 .vehicleAccessCertificateSignatureBase64(vehicleAccessCertificateSignatureBase64)
-                // TODO: -- end
                 .fullDeviceAccessCertificateBase64(fullDeviceAccessCertificateBase64)
                 .fullVehicleAccessCertificateBase64(fullVehicleAccessCertificateBase64)
                 .build();
