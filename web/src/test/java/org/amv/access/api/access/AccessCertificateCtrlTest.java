@@ -10,10 +10,12 @@ import org.amv.access.client.model.CreateDeviceCertificateRequestDto;
 import org.amv.access.client.model.GetAccessCertificatesResponseDto;
 import org.amv.access.config.TestDbConfig;
 import org.amv.access.demo.DemoService;
-import org.amv.access.model.*;
+import org.amv.access.model.ApplicationEntity;
+import org.amv.access.model.DeviceEntity;
+import org.amv.access.model.IssuerEntity;
+import org.amv.access.model.VehicleEntity;
 import org.amv.highmobility.cryptotool.Cryptotool;
 import org.amv.highmobility.cryptotool.CryptotoolUtils;
-import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.RandomUtils;
 import org.junit.Before;
 import org.junit.Ignore;
@@ -27,6 +29,9 @@ import org.springframework.test.context.junit4.SpringRunner;
 import reactor.core.publisher.Mono;
 
 import java.security.SecureRandom;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeFormatterBuilder;
 import java.util.List;
 import java.util.Optional;
 
@@ -54,12 +59,13 @@ public class AccessCertificateCtrlTest {
     private ApplicationEntity application;
 
     private DemoService.DeviceWithKeys deviceWithKeys;
+    private IssuerEntity demoIssuer;
 
     @Before
     public void setUp() {
         this.application = demoService.getOrCreateDemoApplication();
 
-        final IssuerEntity demoIssuer = demoService.getOrCreateDemoIssuer();
+        this.demoIssuer = demoService.getOrCreateDemoIssuer();
 
         this.deviceWithKeys = demoService.createDemoDeviceWithKeys(demoIssuer, application);
     }
@@ -207,10 +213,15 @@ public class AccessCertificateCtrlTest {
         VehicleEntity vehicle = demoService.createDemoVehicle();
         DeviceEntity device = deviceWithKeys.getDevice();
 
+        LocalDateTime validFrom = LocalDateTime.now();
+        LocalDateTime validUntil = validFrom.plusMinutes(RandomUtils.nextInt(10, 1_000_000));
+
         CreateAccessCertificateRequestDto createAccessCertificateRequest = CreateAccessCertificateRequestDto.builder()
                 .appId(application.getAppId())
                 .deviceSerialNumber(device.getSerialNumber())
                 .vehicleSerialNumber(vehicle.getSerialNumber())
+                .validityStart(validFrom)
+                .validityEnd(validUntil)
                 .build();
 
         ResponseEntity<CreateAccessCertificateResponseDto> createAccessCertificateResponse = restTemplate
@@ -259,6 +270,37 @@ public class AccessCertificateCtrlTest {
         assertThat(accessCertificateDto.getId(), is(notNullValue()));
         assertThat(accessCertificateDto.getName(), is(notNullValue()));
         assertThat(accessCertificateDto.getAccessCertificate(), is(notNullValue()));
+
+        final String signedAccessCertificateInHex = CryptotoolUtils.decodeBase64AsHex(accessCertificateDto.getAccessCertificate());
+
+        String accessCertificateInHex = signedAccessCertificateInHex.substring(0, 184);
+        String signatureInHex = signedAccessCertificateInHex.substring(184, signedAccessCertificateInHex.length());
+
+        String issuerPublicKeyInHex = CryptotoolUtils.decodeBase64AsHex(demoIssuer.getPublicKeyBase64());
+        Cryptotool.Validity validity = Optional.of(cryptotool.verifySignature(accessCertificateInHex, signatureInHex, issuerPublicKeyInHex))
+                .map(Mono::block)
+                .filter(val -> val == Cryptotool.Validity.VALID)
+                .orElseThrow(IllegalStateException::new);
+
+        assertThat(validity, is(Cryptotool.Validity.VALID));
+
+        final String datePattern = "yyMMddHHmm";
+        final DateTimeFormatter dateTimeFormatter = new DateTimeFormatterBuilder()
+                .appendPattern(datePattern)
+                .toFormatter();
+
+        String vehicleSerialNumber = accessCertificateInHex.substring(0, 18);
+        String vehiclePublicKey = accessCertificateInHex.substring(18, 146);
+        String deviceSerialNumber = accessCertificateInHex.substring(146, 164);
+        String validFromValue = accessCertificateInHex.substring(164, 164 + datePattern.length());
+        String validUntilValue = accessCertificateInHex.substring(164 + datePattern.length(), accessCertificateInHex.length());
+
+        assertThat(deviceSerialNumber, is(device.getSerialNumber()));
+        assertThat(vehiclePublicKey, is(CryptotoolUtils.decodeBase64AsHex(vehicle.getPublicKeyBase64())));
+        assertThat(vehicleSerialNumber, is(vehicle.getSerialNumber()));
+
+        assertThat(validFromValue, is(validFrom.format(dateTimeFormatter)));
+        assertThat(validUntilValue, is(validUntil.format(dateTimeFormatter)));
     }
 
 

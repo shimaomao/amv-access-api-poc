@@ -1,6 +1,7 @@
 package org.amv.access.api.device;
 
 import org.amv.access.AmvAccessApplication;
+import org.amv.access.MoreHex;
 import org.amv.access.client.model.CreateDeviceCertificateRequestDto;
 import org.amv.access.client.model.CreateDeviceCertificateResponseDto;
 import org.amv.access.client.model.DeviceCertificateDto;
@@ -131,15 +132,6 @@ public class DeviceCertificateCtrlTest {
         String deviceCertificate = signedDeviceCertificateInHex.substring(0, 178);
         String signatureInHex = signedDeviceCertificateInHex.substring(178, signedDeviceCertificateInHex.length());
 
-        String issuerNameInHex = deviceCertificate.substring(0, 8);
-        String applicationIdInHex = deviceCertificate.substring(8, 32);
-        String deviceSerialNumberInHex = deviceCertificate.substring(32, 50);
-        String devicePublicKeyInHex = deviceCertificate.substring(50, deviceCertificate.length());
-
-        assertThat(issuerNameInHex, is(issuer.getNameInHex()));
-        assertThat(applicationIdInHex, is(application.getAppId()));
-        assertThat(devicePublicKeyInHex, is(equalToIgnoringCase(keys.getPublicKey())));
-
         String issuerPublicKeyInHex = CryptotoolUtils.decodeBase64AsHex(issuer.getPublicKeyBase64());
         Cryptotool.Validity validity = Optional.of(cryptotool.verifySignature(deviceCertificate, signatureInHex, issuerPublicKeyInHex))
                 .map(Mono::block)
@@ -147,6 +139,17 @@ public class DeviceCertificateCtrlTest {
                 .orElseThrow(IllegalStateException::new);
 
         assertThat(validity, is(Cryptotool.Validity.VALID));
+
+        String issuerNameInHex = deviceCertificate.substring(0, 8);
+        String applicationIdInHex = deviceCertificate.substring(8, 32);
+        String deviceSerialNumberInHex = deviceCertificate.substring(32, 50);
+        String devicePublicKeyInHex = deviceCertificate.substring(50, deviceCertificate.length());
+
+        assertThat(issuerNameInHex, is(issuer.getNameInHex()));
+        assertThat(applicationIdInHex, is(application.getAppId()));
+        assertThat(MoreHex.isHex(deviceSerialNumberInHex), is(true));
+        assertThat(devicePublicKeyInHex, is(equalToIgnoringCase(keys.getPublicKey())));
+
     }
 
     @Test
