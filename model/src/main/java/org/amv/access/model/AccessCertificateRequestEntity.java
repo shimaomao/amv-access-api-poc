@@ -37,13 +37,13 @@ public class AccessCertificateRequestEntity {
     @Column(name = "valid_until", updatable = false)
     private LocalDateTime validUntil;
 
-    @Column(name = "app_id", updatable = false)
+    @Column(name = "app_id", updatable = false/*, length = 24*/)
     private String appId;
 
-    @Column(name = "device_serial_number", updatable = false)
+    @Column(name = "device_serial_number", updatable = false/*, length = 18*/)
     private String deviceSerialNumber;
 
-    @Column(name = "vehicle_serial_number", updatable = false)
+    @Column(name = "vehicle_serial_number", updatable = false/*, length = 18*/)
     private String vehicleSerialNumber;
 
     @Tolerate

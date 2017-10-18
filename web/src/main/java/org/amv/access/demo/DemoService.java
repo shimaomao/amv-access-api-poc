@@ -8,7 +8,6 @@ import lombok.Value;
 import lombok.extern.slf4j.Slf4j;
 import org.amv.access.AmvAccessApplication;
 import org.amv.access.model.*;
-import org.amv.access.util.MoreBase64;
 import org.amv.access.util.SecureRandomUtils;
 import org.amv.highmobility.cryptotool.Cryptotool;
 import org.amv.highmobility.cryptotool.CryptotoolUtils;
@@ -16,12 +15,15 @@ import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
+import java.sql.Date;
+import java.time.Instant;
 import java.util.ArrayList;
 
 import static java.util.Objects.requireNonNull;
 
 @Slf4j
 public class DemoService {
+    private static final String DEMO_ISSUER_NAME = "demo";
     private static final String DEMO_USER_NAME = "demo";
     private static final String DEMO_USER_PASSWORD = "demodemodemo";
     private static final String DEMO_APP_NAME = "demo";
@@ -29,6 +31,7 @@ public class DemoService {
 
     private final Cryptotool cryptotool;
     private final PasswordEncoder passwordEncoder;
+    private final IssuerRepository issuerRepository;
     private final ApplicationRepository applicationRepository;
     private final UserRepository userRepository;
     private final VehicleRepository vehicleRepository;
@@ -39,12 +42,14 @@ public class DemoService {
 
     public DemoService(Cryptotool cryptotool,
                        PasswordEncoder passwordEncoder,
+                       IssuerRepository issuerRepository,
                        ApplicationRepository applicationRepository,
                        UserRepository userRepository,
                        VehicleRepository vehicleRepository,
                        DeviceRepository deviceRepository) {
         this.cryptotool = cryptotool;
         this.passwordEncoder = requireNonNull(passwordEncoder);
+        this.issuerRepository = requireNonNull(issuerRepository);
         this.applicationRepository = requireNonNull(applicationRepository);
         this.userRepository = requireNonNull(userRepository);
         this.vehicleRepository = requireNonNull(vehicleRepository);
@@ -63,23 +68,37 @@ public class DemoService {
                 .build();
     }
 
+    public IssuerEntity getOrCreateDemoIssuer() {
+        return issuerRepository.findByName(DEMO_ISSUER_NAME)
+                .stream()
+                .findFirst()
+                .orElseGet(this::createDemoIssuer);
+    }
+
     public ApplicationEntity getOrCreateDemoApplication() {
-        ApplicationEntity application = applicationRepository.findByName(DEMO_APP_NAME, AmvAccessApplication.standardPageRequest)
+        return applicationRepository.findByName(DEMO_APP_NAME, AmvAccessApplication.standardPageRequest)
                 .getContent()
                 .stream()
                 .findFirst()
                 .orElseGet(this::createDemoApplication);
+    }
 
-        return applicationRepository.save(application);
+    public DeviceEntity createDemoDevice(ApplicationEntity applicationEntity) {
+        return createDemoDevice(getOrCreateDemoIssuer(), applicationEntity);
+    }
+
+    public VehicleEntity createDemoVehicle() {
+        return createDemoVehicle(getOrCreateDemoIssuer());
     }
 
     public void createDemoData() {
-        this.getOrCreateDemoUser();
-        this.createDemoVehicle();
-
+        IssuerEntity demoIssuer = this.getOrCreateDemoIssuer();
         ApplicationEntity demoApplication = this.getOrCreateDemoApplication();
 
-        this.createDemoDevice(demoApplication);
+        this.createDemoVehicle(demoIssuer);
+        this.createDemoDevice(demoIssuer, demoApplication);
+
+        this.getOrCreateDemoUser();
     }
 
     private DemoUser createDemoUser() {
@@ -100,6 +119,24 @@ public class DemoService {
                 .build();
     }
 
+    private IssuerEntity createDemoIssuer() {
+        Cryptotool.Keys keys = cryptotool.generateKeys().block();
+
+        IssuerEntity demoIssuer = IssuerEntity.builder()
+                .name(DEMO_ISSUER_NAME)
+                .created(Date.from(Instant.EPOCH))
+                .publicKeyBase64(CryptotoolUtils.encodeHexAsBase64(keys.getPublicKey()))
+                .privateKeyBase64(CryptotoolUtils.encodeHexAsBase64(keys.getPrivateKey()))
+                .build();
+
+        IssuerEntity savedDemoIssuer = issuerRepository.save(demoIssuer);
+
+        log.info("Created demo issuer: {}", savedDemoIssuer);
+
+        return savedDemoIssuer;
+
+    }
+
     private DemoUser.DemoUserBuilder createDemoUserBuilder() {
         final String password = DEMO_USER_PASSWORD;
         return DemoUser.builder()
@@ -109,49 +146,64 @@ public class DemoService {
     }
 
     private ApplicationEntity createDemoApplication() {
-        return ApplicationEntity.builder()
+        ApplicationEntity application = ApplicationEntity.builder()
                 .name(DEMO_APP_NAME)
                 .appId(SecureRandomUtils.generateRandomAppId())
                 .apiKey(DEMO_APP_API_KEY)
                 .enabled(true)
                 .build();
+
+        ApplicationEntity savedDemoApplication = applicationRepository.save(application);
+
+        log.info("Created demo application: {}", savedDemoApplication);
+
+        return savedDemoApplication;
     }
 
-    public VehicleEntity createDemoVehicle() {
+    private VehicleEntity createDemoVehicle(IssuerEntity demoIssuer) {
         Cryptotool.Keys keys = cryptotool.generateKeys().block();
 
         String publicKeyBase64 = CryptotoolUtils.encodeHexAsBase64(keys.getPublicKey());
 
-        VehicleEntity vehicle = VehicleEntity.builder()
+        VehicleEntity demoVehicle = VehicleEntity.builder()
+                .issuerId(demoIssuer.getId())
                 .name(StringUtils.prependIfMissing(RandomStringUtils.randomAlphanumeric(10), "demo-vehicle-"))
                 .serialNumber(SecureRandomUtils.generateRandomSerial())
                 .publicKeyBase64(publicKeyBase64)
                 .build();
 
-        return vehicleRepository.save(vehicle);
+        final VehicleEntity savedDemoVehicle = vehicleRepository.save(demoVehicle);
+
+        log.info("Created demo vehicle: {}", savedDemoVehicle);
+
+        return savedDemoVehicle;
     }
 
-
-    public DeviceEntity createDemoDevice(ApplicationEntity applicationEntity) {
-        DeviceWithKeys demoDeviceWithKeys = createDemoDeviceWithKeys(applicationEntity);
+    private DeviceEntity createDemoDevice(IssuerEntity issuerEntity, ApplicationEntity applicationEntity) {
+        DeviceWithKeys demoDeviceWithKeys = createDemoDeviceWithKeys(issuerEntity, applicationEntity);
 
         return demoDeviceWithKeys.getDevice();
     }
 
-    public DeviceWithKeys createDemoDeviceWithKeys(ApplicationEntity applicationEntity) {
+    public DeviceWithKeys createDemoDeviceWithKeys(IssuerEntity issuerEntity, ApplicationEntity applicationEntity) {
         Cryptotool.Keys keys = cryptotool.generateKeys().block();
 
         String publicKeyBase64 = CryptotoolUtils.encodeHexAsBase64(keys.getPublicKey());
 
-        DeviceEntity device = DeviceEntity.builder()
+        DeviceEntity demoDevice = DeviceEntity.builder()
+                .issuerId(issuerEntity.getId())
                 .applicationId(applicationEntity.getId())
                 .name(StringUtils.prependIfMissing(RandomStringUtils.randomAlphanumeric(10), "demo-device-"))
                 .serialNumber(SecureRandomUtils.generateRandomSerial())
                 .publicKeyBase64(publicKeyBase64)
                 .build();
 
+        final DeviceEntity savedDemoDevice = deviceRepository.save(demoDevice);
+
+        log.info("Created demo device: {}", savedDemoDevice);
+
         return DeviceWithKeys.builder()
-                .device(deviceRepository.save(device))
+                .device(savedDemoDevice)
                 .keys(keys)
                 .build();
     }

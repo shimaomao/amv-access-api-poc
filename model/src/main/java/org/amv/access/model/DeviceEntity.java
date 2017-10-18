@@ -36,13 +36,16 @@ public class DeviceEntity implements Device {
     @Temporal(TemporalType.TIMESTAMP)
     private Date created;
 
+    @Column(name = "issuer_id")
+    private long issuerId;
+
     @Column(name = "application_id")
     private long applicationId;
 
-    @Column(name = "device_name")
+    @Column(name = "device_name", length = 63)
     private String name;
 
-    @Column(name = "serial_number")
+    @Column(name = "serial_number"/*, length = 18*/)
     private String serialNumber;
 
     @Column(name = "public_key_base64")

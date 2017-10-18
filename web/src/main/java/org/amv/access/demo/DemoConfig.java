@@ -1,11 +1,8 @@
 package org.amv.access.demo;
 
-import org.amv.access.model.ApplicationRepository;
-import org.amv.access.model.DeviceRepository;
-import org.amv.access.model.UserRepository;
-import org.amv.access.model.VehicleRepository;
+import org.amv.access.model.*;
 import org.amv.highmobility.cryptotool.Cryptotool;
-import org.springframework.boot.CommandLineRunner;
+import org.springframework.beans.factory.InitializingBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -17,6 +14,7 @@ public class DemoConfig {
     @Bean
     public DemoService demoService(Cryptotool cryptotool,
                                    PasswordEncoder passwordEncoder,
+                                   IssuerRepository issuerRepository,
                                    ApplicationRepository applicationRepository,
                                    UserRepository userRepository,
                                    VehicleRepository vehicleRepository,
@@ -24,6 +22,7 @@ public class DemoConfig {
         return new DemoService(
                 cryptotool,
                 passwordEncoder,
+                issuerRepository,
                 applicationRepository,
                 userRepository,
                 vehicleRepository,
@@ -31,11 +30,11 @@ public class DemoConfig {
     }
 
     @Bean
-    public CommandLineRunner demo(DemoService demoService) {
-        return new CommandLineRunner() {
+    public InitializingBean demo(DemoService demoService) {
+        return new InitializingBean() {
             @Override
             @Transactional
-            public void run(String... args) throws Exception {
+            public void afterPropertiesSet() throws Exception {
                 demoService.createDemoData();
             }
         };

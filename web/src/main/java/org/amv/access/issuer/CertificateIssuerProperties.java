@@ -1,4 +1,4 @@
-package org.amv.access.spi.highmobility;
+package org.amv.access.issuer;
 
 import lombok.Data;
 import org.springframework.boot.context.properties.ConfigurationProperties;

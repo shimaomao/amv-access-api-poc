@@ -11,7 +11,6 @@ import org.amv.access.client.model.GetAccessCertificatesResponseDto;
 import org.amv.access.config.TestDbConfig;
 import org.amv.access.demo.DemoService;
 import org.amv.access.model.*;
-import org.amv.access.util.MoreBase64;
 import org.amv.highmobility.cryptotool.Cryptotool;
 import org.amv.highmobility.cryptotool.CryptotoolUtils;
 import org.apache.commons.lang3.RandomStringUtils;
@@ -32,7 +31,7 @@ import java.util.List;
 import java.util.Optional;
 
 import static com.google.common.base.Preconditions.checkArgument;
-import static org.amv.access.util.MoreBase64.toBase64OrThrow;
+import static org.amv.access.MoreBase64.toBase64OrThrow;
 import static org.apache.commons.codec.binary.Base64.isBase64;
 import static org.hamcrest.Matchers.*;
 import static org.junit.Assert.assertThat;
@@ -50,15 +49,6 @@ public class AccessCertificateCtrlTest {
     private DemoService demoService;
 
     @Autowired
-    private VehicleRepository vehicleRepository;
-
-    @Autowired
-    private DeviceRepository deviceRepository;
-
-    @Autowired
-    private ApplicationRepository applicationRepository;
-
-    @Autowired
     private TestRestTemplate restTemplate;
 
     private ApplicationEntity application;
@@ -67,14 +57,11 @@ public class AccessCertificateCtrlTest {
 
     @Before
     public void setUp() {
-        this.application = applicationRepository.save(ApplicationEntity.builder()
-                .name("Test ApplicationEntity")
-                .appId(CryptotoolUtils.TestUtils.generateRandomAppId())
-                .apiKey(RandomStringUtils.randomAlphanumeric(8))
-                .enabled(true)
-                .build());
+        this.application = demoService.getOrCreateDemoApplication();
 
-        this.deviceWithKeys = demoService.createDemoDeviceWithKeys(application);
+        final IssuerEntity demoIssuer = demoService.getOrCreateDemoIssuer();
+
+        this.deviceWithKeys = demoService.createDemoDeviceWithKeys(demoIssuer, application);
     }
 
     @Test
@@ -116,12 +103,12 @@ public class AccessCertificateCtrlTest {
         DeviceEntity device = deviceWithKeys.getDevice();
 
         String nonceBase64 = generateNonceWithRandomLengthBase64();
-        String signedNonceBase64 = signNonceBase64(deviceWithKeys.getKeys(), generateNonceWithRandomLengthBase64());
+        String nonceSignatureBase64 = createNonceSignatureBase64(deviceWithKeys.getKeys(), generateNonceWithRandomLengthBase64());
 
         String devicePublicKey = CryptotoolUtils.decodeBase64AsHex(device.getPublicKeyBase64());
         Cryptotool.Validity signedNonceValidity = Optional.of(cryptotool.verifySignature(
                 CryptotoolUtils.decodeBase64AsHex(nonceBase64),
-                CryptotoolUtils.decodeBase64AsHex(signedNonceBase64),
+                CryptotoolUtils.decodeBase64AsHex(nonceSignatureBase64),
                 devicePublicKey))
                 .map(Mono::block)
                 .orElse(Cryptotool.Validity.VALID);
@@ -130,7 +117,7 @@ public class AccessCertificateCtrlTest {
 
         HttpHeaders headers = new HttpHeaders();
         headers.add(MoreHttpHeaders.AMV_NONCE, nonceBase64);
-        headers.add(MoreHttpHeaders.AMV_SIGNATURE, signedNonceBase64);
+        headers.add(MoreHttpHeaders.AMV_SIGNATURE, nonceSignatureBase64);
 
         HttpEntity<?> entity = new HttpEntity<>(headers);
 
@@ -147,12 +134,12 @@ public class AccessCertificateCtrlTest {
         DeviceEntity device = deviceWithKeys.getDevice();
 
         String nonceBase64 = generateNonceWithRandomLengthBase64();
-        String signedNonceBase64 = signNonceBase64(deviceWithKeys.getKeys(), CryptotoolUtils.decodeBase64AsHex(nonceBase64));
+        String nonceSignatureBase64 = createNonceSignatureBase64(deviceWithKeys.getKeys(), CryptotoolUtils.decodeBase64AsHex(nonceBase64));
 
         String devicePublicKey = CryptotoolUtils.decodeBase64AsHex(device.getPublicKeyBase64());
         Cryptotool.Validity signedNonceValidity = Optional.of(cryptotool.verifySignature(
                 CryptotoolUtils.decodeBase64AsHex(nonceBase64),
-                CryptotoolUtils.decodeBase64AsHex(signedNonceBase64),
+                CryptotoolUtils.decodeBase64AsHex(nonceSignatureBase64),
                 devicePublicKey))
                 .map(Mono::block)
                 .orElse(Cryptotool.Validity.INVALID);
@@ -161,7 +148,7 @@ public class AccessCertificateCtrlTest {
 
         HttpHeaders headers = new HttpHeaders();
         headers.add(MoreHttpHeaders.AMV_NONCE, nonceBase64);
-        headers.add(MoreHttpHeaders.AMV_SIGNATURE, signedNonceBase64);
+        headers.add(MoreHttpHeaders.AMV_SIGNATURE, nonceSignatureBase64);
 
         HttpEntity<CreateDeviceCertificateRequestDto> entity = new HttpEntity<>(headers);
 
@@ -235,13 +222,13 @@ public class AccessCertificateCtrlTest {
         assertThat(createAccessCertificateResponse.getStatusCode(), is(HttpStatus.OK));
 
         String nonceBase64 = generateNonceWithRandomLengthBase64();
-        String signedNonceBase64 = signNonceBase64(deviceWithKeys.getKeys(), CryptotoolUtils.decodeBase64AsHex(nonceBase64));
+        String nonceSignatureBase64 = createNonceSignatureBase64(deviceWithKeys.getKeys(), CryptotoolUtils.decodeBase64AsHex(nonceBase64));
 
         String devicePublicKey = CryptotoolUtils.decodeBase64AsHex(device.getPublicKeyBase64());
 
         Cryptotool.Validity signedNonceValidity = Optional.of(cryptotool.verifySignature(
                 CryptotoolUtils.decodeBase64AsHex(nonceBase64),
-                CryptotoolUtils.decodeBase64AsHex(signedNonceBase64),
+                CryptotoolUtils.decodeBase64AsHex(nonceSignatureBase64),
                 devicePublicKey))
                 .map(Mono::block)
                 .orElse(Cryptotool.Validity.INVALID);
@@ -250,7 +237,7 @@ public class AccessCertificateCtrlTest {
 
         HttpHeaders headers = new HttpHeaders();
         headers.add(MoreHttpHeaders.AMV_NONCE, nonceBase64);
-        headers.add(MoreHttpHeaders.AMV_SIGNATURE, signedNonceBase64);
+        headers.add(MoreHttpHeaders.AMV_SIGNATURE, nonceSignatureBase64);
 
         HttpEntity<CreateDeviceCertificateRequestDto> entity = new HttpEntity<>(headers);
 
@@ -288,7 +275,7 @@ public class AccessCertificateCtrlTest {
         return toBase64OrThrow(new String(nonceBytes));
     }
 
-    private String signNonceBase64(Cryptotool.Keys keys, String nonce) {
+    private String createNonceSignatureBase64(Cryptotool.Keys keys, String nonce) {
         return Optional.of(cryptotool.generateSignature(nonce, keys.getPrivateKey()))
                 .map(Mono::block)
                 .map(Cryptotool.Signature::getSignature)

@@ -5,6 +5,7 @@ import lombok.NonNull;
 import lombok.Value;
 import org.amv.access.core.Application;
 import org.amv.access.core.Device;
+import org.amv.access.core.Issuer;
 import org.amv.access.core.Vehicle;
 import org.amv.access.spi.CreateAccessCertificateRequest;
 
@@ -13,6 +14,9 @@ import java.time.LocalDateTime;
 @Value
 @Builder(builderClassName = "Builder")
 public class CreateAccessCertificateRequestImpl implements CreateAccessCertificateRequest {
+
+    @NonNull
+    private Issuer issuer;
 
     @NonNull
     private Application application;

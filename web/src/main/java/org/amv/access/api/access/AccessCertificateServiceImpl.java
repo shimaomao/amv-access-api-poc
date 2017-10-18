@@ -4,11 +4,11 @@ import lombok.extern.slf4j.Slf4j;
 import org.amv.access.api.access.model.CreateAccessCertificateRequestDto;
 import org.amv.access.auth.NonceAuthentication;
 import org.amv.access.core.AccessCertificate;
-import org.amv.access.core.Issuer;
 import org.amv.access.core.impl.AccessCertificateImpl;
 import org.amv.access.exception.BadRequestException;
 import org.amv.access.exception.NotFoundException;
 import org.amv.access.exception.UnauthorizedException;
+import org.amv.access.issuer.IssuerService;
 import org.amv.access.model.*;
 import org.amv.access.spi.AmvAccessModuleSpi;
 import org.amv.access.spi.model.CreateAccessCertificateRequestImpl;
@@ -28,7 +28,7 @@ import static java.util.Objects.requireNonNull;
 public class AccessCertificateServiceImpl implements AccessCertificateService {
 
     private final AmvAccessModuleSpi amvAccessModule;
-    private final IssuerRepository issuerRepository;
+    private final IssuerService issuerService;
     private final ApplicationRepository applicationRepository;
     private final VehicleRepository vehicleRepository;
     private final DeviceRepository deviceRepository;
@@ -37,14 +37,14 @@ public class AccessCertificateServiceImpl implements AccessCertificateService {
 
     public AccessCertificateServiceImpl(
             AmvAccessModuleSpi amvAccessModule,
-            IssuerRepository issuerRepository,
+            IssuerService issuerService,
             ApplicationRepository applicationRepository,
             VehicleRepository vehicleRepository,
             DeviceRepository deviceRepository,
             AccessCertificateRepository accessCertificateRepository,
             AccessCertificateRequestRepository accessCertificateRequestRepository) {
         this.amvAccessModule = requireNonNull(amvAccessModule);
-        this.issuerRepository = requireNonNull(issuerRepository);
+        this.issuerService = requireNonNull(issuerService);
         this.applicationRepository = requireNonNull(applicationRepository);
         this.vehicleRepository = requireNonNull(vehicleRepository);
         this.deviceRepository = requireNonNull(deviceRepository);
@@ -77,7 +77,7 @@ public class AccessCertificateServiceImpl implements AccessCertificateService {
         Map<Long, IssuerEntity> issuers = accessCertificates.stream()
                 .map(AccessCertificateEntity::getIssuerId)
                 .distinct()
-                .map(id -> Optional.ofNullable(issuerRepository.findOne(id)))
+                .map(issuerService::findIssuerById)
                 .map(v -> v.orElseThrow(() -> new NotFoundException("IssuerEntity not found")))
                 .collect(Collectors.toMap(IssuerEntity::getId, Function.identity()));
 
@@ -126,6 +126,9 @@ public class AccessCertificateServiceImpl implements AccessCertificateService {
         DeviceEntity deviceEntity = deviceRepository.findBySerialNumber(request.getDeviceSerialNumber())
                 .orElseThrow(() -> new NotFoundException("DeviceEntity not found"));
 
+        IssuerEntity issuerEntity = issuerService.findIssuerById(vehicleEntity.getIssuerId())
+                .orElseThrow(() -> new NotFoundException("DeviceEntity not found"));
+
         boolean hasSameAppId = deviceEntity.getApplicationId() == applicationEntity.getId();
         if (!hasSameAppId) {
             throw new BadRequestException("Mismatching `appId`");
@@ -134,6 +137,7 @@ public class AccessCertificateServiceImpl implements AccessCertificateService {
         saveAccessCertificateRequest(request).block();
 
         CreateAccessCertificateRequestImpl r = CreateAccessCertificateRequestImpl.builder()
+                .issuer(issuerEntity)
                 .application(applicationEntity)
                 .device(deviceEntity)
                 .vehicle(vehicleEntity)
@@ -144,9 +148,6 @@ public class AccessCertificateServiceImpl implements AccessCertificateService {
         AccessCertificate accessCertificate = Optional.of(amvAccessModule.createAccessCertificate(r))
                 .map(Mono::block)
                 .orElseThrow(() -> new IllegalStateException("Could not create access certificate for " + request));
-
-        Issuer issuer = accessCertificate.getIssuer();
-        IssuerEntity issuerEntity = findIssuerOrCreateIfNecessary(issuer);
 
         AccessCertificateEntity accessCertificateEntity = AccessCertificateEntity.builder()
                 .uuid(accessCertificate.getUuid())
@@ -219,23 +220,5 @@ public class AccessCertificateServiceImpl implements AccessCertificateService {
         AccessCertificateRequestEntity savedEntity = accessCertificateRequestRepository.save(accessCertificateRequestEntityEntity);
 
         return Mono.just(savedEntity);
-    }
-
-
-    // TODO: currently an issuer must be created on demand - should be created on application start
-    private IssuerEntity findIssuerOrCreateIfNecessary(Issuer issuer) {
-        requireNonNull(issuer);
-
-        try {
-            return issuerRepository
-                    .findByNameAndPublicKeyBase64(issuer.getName(), issuer.getPublicKeyBase64())
-                    .orElseThrow(() -> new IllegalStateException("Could not find issuer"));
-        } catch (IllegalStateException e) {
-            log.warn("Issuer '{}' will be created as it does not yet exist.", issuer.getName());
-            return issuerRepository.save(IssuerEntity.builder()
-                    .name(issuer.getName())
-                    .publicKeyBase64(issuer.getPublicKeyBase64())
-                    .build());
-        }
     }
 }

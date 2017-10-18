@@ -5,11 +5,15 @@ import lombok.NonNull;
 import lombok.Value;
 import org.amv.access.core.Application;
 import org.amv.access.core.Device;
+import org.amv.access.core.Issuer;
 import org.amv.access.spi.CreateDeviceCertificateRequest;
 
 @Value
 @Builder(builderClassName = "Builder")
 public class CreateDeviceCertificateRequestImpl implements CreateDeviceCertificateRequest {
+
+    @NonNull
+    private Issuer issuer;
 
     @NonNull
     private Application application;

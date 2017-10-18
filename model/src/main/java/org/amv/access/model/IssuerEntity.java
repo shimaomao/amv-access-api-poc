@@ -11,6 +11,7 @@ import org.amv.access.core.Issuer;
 import org.springframework.data.annotation.CreatedDate;
 
 import javax.persistence.*;
+import javax.validation.constraints.Max;
 import java.util.Date;
 
 
@@ -33,12 +34,15 @@ public class IssuerEntity implements Issuer {
     @Temporal(TemporalType.TIMESTAMP)
     private Date created;
 
-    @Column(name = "name")
+    @Column(name = "name", length = 4)
     private String name;
 
-    @JsonIgnore
     @Column(name = "public_key_base64")
     private String publicKeyBase64;
+
+    @JsonIgnore
+    @Column(name = "private_key_base64")
+    private String privateKeyBase64;
 
     @Tolerate
     protected IssuerEntity() {

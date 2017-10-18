@@ -3,9 +3,9 @@ package org.amv.access.api.device;
 import lombok.extern.slf4j.Slf4j;
 import org.amv.access.auth.ApplicationAuthentication;
 import org.amv.access.core.DeviceCertificate;
-import org.amv.access.core.Issuer;
 import org.amv.access.exception.BadRequestException;
 import org.amv.access.exception.NotFoundException;
+import org.amv.access.issuer.IssuerService;
 import org.amv.access.model.*;
 import org.amv.access.spi.AmvAccessModuleSpi;
 import org.amv.access.spi.model.CreateDeviceCertificateRequestImpl;
@@ -21,20 +21,20 @@ import static java.util.Objects.requireNonNull;
 @Slf4j
 public class DeviceCertificateServiceImpl implements DeviceCertificateService {
     private final AmvAccessModuleSpi amvAccessModule;
-    private final IssuerRepository issuerRepository;
+    private final IssuerService issuerService;
     private final ApplicationRepository applicationRepository;
     private final DeviceRepository deviceRepository;
     private final DeviceCertificateRepository deviceCertificateRepository;
     private final DeviceCertificateRequestRepository deviceCertificateRequestRepository;
 
     public DeviceCertificateServiceImpl(AmvAccessModuleSpi amvAccessModule,
-                                        IssuerRepository issuerRepository,
+                                        IssuerService issuerService,
                                         ApplicationRepository applicationRepository,
                                         DeviceRepository deviceRepository,
                                         DeviceCertificateRepository deviceCertificateRepository,
                                         DeviceCertificateRequestRepository deviceCertificateRequestRepository) {
         this.amvAccessModule = requireNonNull(amvAccessModule);
-        this.issuerRepository = requireNonNull(issuerRepository);
+        this.issuerService = requireNonNull(issuerService);
         this.applicationRepository = requireNonNull(applicationRepository);
         this.deviceRepository = requireNonNull(deviceRepository);
         this.deviceCertificateRepository = requireNonNull(deviceCertificateRepository);
@@ -48,7 +48,10 @@ public class DeviceCertificateServiceImpl implements DeviceCertificateService {
         requireNonNull(request, "`request` must not be null");
 
         ApplicationEntity application = findApplicationOrThrow(auth);
-        DeviceCertificateRequest deviceCertificateRequest = saveCreateDeviceCertificateRequest(request);
+
+        IssuerEntity issuerEntity = issuerService.findActiveIssuerOrThrow();
+
+        DeviceCertificateRequestEntity deviceCertificateRequest = saveCreateDeviceCertificateRequest(request);
         DeviceEntity device = createAndSaveDevice(application, deviceCertificateRequest);
 
         if (log.isDebugEnabled()) {
@@ -58,17 +61,16 @@ public class DeviceCertificateServiceImpl implements DeviceCertificateService {
 
         DeviceCertificate deviceCertificate = amvAccessModule
                 .createDeviceCertificate(CreateDeviceCertificateRequestImpl.builder()
+                        .issuer(issuerEntity)
                         .application(application)
                         .device(device)
                         .build())
                 .block();
 
-        IssuerEntity issuerEntity = findIssuerOrCreateIfNecessary(deviceCertificate.getIssuer());
-
         DeviceCertificateEntity deviceCertificateEntity = DeviceCertificateEntity.builder()
                 .uuid(UUID.randomUUID().toString())
-                .applicationId(application.getId())
                 .issuerId(issuerEntity.getId())
+                .applicationId(application.getId())
                 .deviceId(device.getId())
                 .certificateBase64(deviceCertificate.getCertificateBase64())
                 .certificateSignatureBase64(deviceCertificate.getCertificateSignatureBase64())
@@ -92,10 +94,10 @@ public class DeviceCertificateServiceImpl implements DeviceCertificateService {
     }
 
 
-    private DeviceCertificateRequest saveCreateDeviceCertificateRequest(CreateDeviceCertificateRequest request) {
+    private DeviceCertificateRequestEntity saveCreateDeviceCertificateRequest(CreateDeviceCertificateRequest request) {
         requireNonNull(request);
 
-        DeviceCertificateRequest deviceCertificateRequestEntity = DeviceCertificateRequest.builder()
+        DeviceCertificateRequestEntity deviceCertificateRequestEntity = DeviceCertificateRequestEntity.builder()
                 .appId(request.getAppId())
                 .publicKeyBase64(request.getDevicePublicKeyBase64())
                 .name(request.getDeviceName())
@@ -104,7 +106,7 @@ public class DeviceCertificateServiceImpl implements DeviceCertificateService {
         return deviceCertificateRequestRepository.save(deviceCertificateRequestEntity);
     }
 
-    private DeviceEntity createAndSaveDevice(ApplicationEntity application, DeviceCertificateRequest deviceCertificateRequestEntity) {
+    private DeviceEntity createAndSaveDevice(ApplicationEntity application, DeviceCertificateRequestEntity deviceCertificateRequestEntity) {
         requireNonNull(application);
         requireNonNull(deviceCertificateRequestEntity);
         String publicKeyBase64 = requireNonNull(deviceCertificateRequestEntity.getPublicKeyBase64());
@@ -143,20 +145,4 @@ public class DeviceCertificateServiceImpl implements DeviceCertificateService {
         throw new IllegalStateException(errorMessage);
     }
 
-    // TODO: currently an issuer must be created on demand - should be created on application start
-    private IssuerEntity findIssuerOrCreateIfNecessary(Issuer issuer) {
-        requireNonNull(issuer);
-
-        try {
-            return issuerRepository
-                    .findByNameAndPublicKeyBase64(issuer.getName(), issuer.getPublicKeyBase64())
-                    .orElseThrow(() -> new IllegalStateException("Could not find issuer"));
-        } catch (IllegalStateException e) {
-            log.warn("Issuer '{}' will be created as it does not yet exist.", issuer.getName());
-            return issuerRepository.save(IssuerEntity.builder()
-                    .name(issuer.getName())
-                    .publicKeyBase64(issuer.getPublicKeyBase64())
-                    .build());
-        }
-    }
 }

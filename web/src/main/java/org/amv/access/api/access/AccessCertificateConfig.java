@@ -1,5 +1,6 @@
 package org.amv.access.api.access;
 
+import org.amv.access.issuer.IssuerService;
 import org.amv.access.model.*;
 import org.amv.access.spi.AmvAccessModuleSpi;
 import org.springframework.context.annotation.Bean;
@@ -15,14 +16,14 @@ public class AccessCertificateConfig {
 
     @Bean
     public AccessCertificateService accessCertificateService(AmvAccessModuleSpi amvAccessModule,
-                                                             IssuerRepository issuerRepository,
+                                                             IssuerService issuerService,
                                                              ApplicationRepository applicationRepository,
                                                              VehicleRepository vehicleRepository,
                                                              DeviceRepository deviceRepository,
                                                              AccessCertificateRepository accessCertificateRepository,
                                                              AccessCertificateRequestRepository accessCertificateRequestRepository) {
         return new AccessCertificateServiceImpl(amvAccessModule,
-                issuerRepository,
+                issuerService,
                 applicationRepository,
                 vehicleRepository,
                 deviceRepository,

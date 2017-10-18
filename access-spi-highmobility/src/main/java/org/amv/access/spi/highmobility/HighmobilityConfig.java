@@ -1,10 +1,6 @@
 package org.amv.access.spi.highmobility;
 
 import org.amv.highmobility.cryptotool.*;
-import org.amv.highmobility.cryptotool.CryptotoolWithIssuer.CertificateIssuer;
-import org.amv.highmobility.cryptotool.CryptotoolWithIssuer.CertificateIssuerImpl;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -15,17 +11,7 @@ import java.time.Duration;
 import static java.util.Objects.requireNonNull;
 
 @Configuration
-@EnableConfigurationProperties({
-        CertificateIssuerProperties.class
-})
 public class HighmobilityConfig {
-
-    private final CertificateIssuerProperties certificateIssuerProperties;
-
-    @Autowired
-    public HighmobilityConfig(CertificateIssuerProperties certificateIssuerProperties) {
-        this.certificateIssuerProperties = requireNonNull(certificateIssuerProperties);
-    }
 
     @Bean
     public BinaryExecutor binaryExecutor() throws URISyntaxException, IOException {
@@ -50,33 +36,13 @@ public class HighmobilityConfig {
     }
 
     @Bean
-    public CryptotoolWithIssuer cryptotoolWithIssuer(CryptotoolOptions cryptotoolOptions, CertificateIssuer issuer) {
+    public Cryptotool cryptotool(CryptotoolOptions cryptotoolOptions) {
         requireNonNull(cryptotoolOptions, "`cryptotoolOptions` must not be null");
-        requireNonNull(issuer, "`issuer` must not be null");
-
-        return new CryptotoolWithIssuerImpl(cryptotoolOptions, issuer);
+        return new CryptotoolImpl(cryptotoolOptions);
     }
 
     @Bean
-    public CertificateIssuer certificateIssuer(Cryptotool.Keys certificateIssuerKeys) throws IOException {
-        requireNonNull(certificateIssuerKeys, "`certificateIssuerKeys` must not be null");
-
-        return CertificateIssuerImpl.builder()
-                .name(certificateIssuerProperties.getName())
-                .keys(certificateIssuerKeys)
-                .build();
-    }
-
-    @Bean
-    public Cryptotool.Keys certificateIssuerKeys() throws IOException {
-        return CryptotoolImpl.KeysImpl.builder()
-                .privateKey(certificateIssuerProperties.getPrivateKey())
-                .publicKey(certificateIssuerProperties.getPublicKey())
-                .build();
-    }
-
-    @Bean
-    public HighmobilityModule highmobilityModule(CryptotoolWithIssuer cryptotoolWithIssuer) {
-        return new HighmobilityModule(cryptotoolWithIssuer);
+    public HighmobilityModule highmobilityModule(Cryptotool cryptotool) {
+        return new HighmobilityModule(cryptotool);
     }
 }

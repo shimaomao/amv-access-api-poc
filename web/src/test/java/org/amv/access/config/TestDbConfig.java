@@ -17,7 +17,7 @@ public class TestDbConfig {
     public DataSource dataSource() {
         DataSourceBuilder dataSourceBuilder = DataSourceBuilder.create();
         dataSourceBuilder.driverClassName(org.sqlite.JDBC.class.getName());
-        dataSourceBuilder.url("jdbc:sqlite:build/tmp/~amv-access-test.db");
+        dataSourceBuilder.url("jdbc:sqlite:build/tmp/~amv-access-test.db?journal_mode=wal");
         return dataSourceBuilder.build();
     }
 

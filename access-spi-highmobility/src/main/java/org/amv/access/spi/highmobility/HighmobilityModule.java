@@ -5,14 +5,11 @@ import org.amv.access.auth.NonceAuthentication;
 import org.amv.access.core.*;
 import org.amv.access.core.impl.AccessCertificateImpl;
 import org.amv.access.core.impl.DeviceCertificateImpl;
-import org.amv.access.core.impl.IssuerImpl;
 import org.amv.access.spi.AmvAccessModuleSpi;
 import org.amv.access.spi.CreateAccessCertificateRequest;
 import org.amv.access.spi.CreateDeviceCertificateRequest;
 import org.amv.highmobility.cryptotool.Cryptotool;
 import org.amv.highmobility.cryptotool.CryptotoolUtils;
-import org.amv.highmobility.cryptotool.CryptotoolWithIssuer;
-import org.amv.highmobility.cryptotool.CryptotoolWithIssuer.CertificateIssuer;
 import reactor.core.publisher.Mono;
 
 import java.time.LocalDateTime;
@@ -25,19 +22,10 @@ import static org.amv.highmobility.cryptotool.CryptotoolUtils.decodeBase64AsHex;
 @Slf4j
 public class HighmobilityModule implements AmvAccessModuleSpi {
 
-    private final CryptotoolWithIssuer cryptotool;
+    private final Cryptotool cryptotool;
 
-    private final Issuer issuer;
-
-    public HighmobilityModule(CryptotoolWithIssuer cryptotool) {
+    public HighmobilityModule(Cryptotool cryptotool) {
         this.cryptotool = requireNonNull(cryptotool);
-
-        CertificateIssuer certificateIssuer = cryptotool.getCertificateIssuer();
-
-        this.issuer = IssuerImpl.builder()
-                .name(certificateIssuer.getName())
-                .publicKeyBase64(certificateIssuer.getPublicKeyBase64())
-                .build();
     }
 
     @Override
@@ -57,18 +45,19 @@ public class HighmobilityModule implements AmvAccessModuleSpi {
     public Mono<DeviceCertificate> createDeviceCertificate(CreateDeviceCertificateRequest deviceCertificateRequest) {
         requireNonNull(deviceCertificateRequest);
 
+        Issuer issuer = requireNonNull(deviceCertificateRequest.getIssuer());
         Application application = requireNonNull(deviceCertificateRequest.getApplication());
         Device device = requireNonNull(deviceCertificateRequest.getDevice());
 
         Cryptotool.DeviceCertificate deviceCertificate = cryptotool
-                .createDeviceCertificate(cryptotool.getCertificateIssuer().getNameInHex(),
+                .createDeviceCertificate(issuer.getNameInHex(),
                         application.getAppId(),
                         device.getSerialNumber(),
                         decodeBase64AsHex(device.getPublicKeyBase64()))
                 .block();
 
         Cryptotool.Signature signature = cryptotool
-                .generateSignature(deviceCertificate.getDeviceCertificate())
+                .generateSignature(deviceCertificate.getDeviceCertificate(), decodeBase64AsHex(issuer.getPrivateKeyBase64()))
                 .block();
 
         String fullDeviceCertificate = deviceCertificate.getDeviceCertificate() + signature.getSignature();
@@ -82,7 +71,7 @@ public class HighmobilityModule implements AmvAccessModuleSpi {
                 .orElseThrow(() -> new IllegalStateException("Could not convert signed device certificate to base64"));
 
         DeviceCertificate deviceCertificateEntity = DeviceCertificateImpl.builder()
-                .issuer(this.issuer)
+                .issuer(issuer)
                 .application(application)
                 .device(device)
                 .certificateBase64(deviceCertificateBase64)
@@ -97,7 +86,8 @@ public class HighmobilityModule implements AmvAccessModuleSpi {
     public Mono<AccessCertificate> createAccessCertificate(CreateAccessCertificateRequest accessCertificateRequest) {
         requireNonNull(accessCertificateRequest);
 
-        Application application = accessCertificateRequest.getApplication();
+        Issuer issuer = requireNonNull(accessCertificateRequest.getIssuer());
+        Application application = requireNonNull(accessCertificateRequest.getApplication());
         Device device = requireNonNull(accessCertificateRequest.getDevice());
         Vehicle vehicle = requireNonNull(accessCertificateRequest.getVehicle());
 
@@ -121,16 +111,17 @@ public class HighmobilityModule implements AmvAccessModuleSpi {
                 validFrom,
                 validUntil).block();
 
+        String issuerPrivateKeyInHey = decodeBase64AsHex(issuer.getPrivateKeyBase64());
         String deviceAccessCertificateSignature = Mono.just(deviceAccessCertificate)
                 .map(Cryptotool.AccessCertificate::getAccessCertificate)
-                .flatMapMany(cryptotool::generateSignature)
+                .flatMapMany(cert -> cryptotool.generateSignature(cert, issuerPrivateKeyInHey))
                 .map(Cryptotool.Signature::getSignature)
                 .single()
                 .block();
 
         String vehicleAccessCertificateSignature = Mono.just(vehicleAccessCertificate)
                 .map(Cryptotool.AccessCertificate::getAccessCertificate)
-                .flatMapMany(cryptotool::generateSignature)
+                .flatMapMany(cert -> cryptotool.generateSignature(cert, issuerPrivateKeyInHey))
                 .map(Cryptotool.Signature::getSignature)
                 .single()
                 .block();
@@ -157,7 +148,7 @@ public class HighmobilityModule implements AmvAccessModuleSpi {
 
         AccessCertificate accessCertificateEntity = AccessCertificateImpl.builder()
                 .uuid(UUID.randomUUID().toString())
-                .issuer(this.issuer)
+                .issuer(issuer)
                 .application(application)
                 .vehicle(vehicle)
                 .device(device)

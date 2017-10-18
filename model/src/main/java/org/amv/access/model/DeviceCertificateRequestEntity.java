@@ -18,7 +18,7 @@ import java.util.Date;
 @Entity
 @Table(name = "device_certificate_request")
 @EntityListeners(AuditingEntityListener.class)
-public class DeviceCertificateRequest {
+public class DeviceCertificateRequestEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
     @Column(name = "id", columnDefinition = "bigint")
@@ -40,7 +40,7 @@ public class DeviceCertificateRequest {
     private String publicKeyBase64;
 
     @Tolerate
-    protected DeviceCertificateRequest() {
+    protected DeviceCertificateRequestEntity() {
 
     }
 }

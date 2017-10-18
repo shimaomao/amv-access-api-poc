@@ -5,13 +5,12 @@ import org.amv.access.client.model.CreateDeviceCertificateRequestDto;
 import org.amv.access.client.model.CreateDeviceCertificateResponseDto;
 import org.amv.access.client.model.DeviceCertificateDto;
 import org.amv.access.config.TestDbConfig;
+import org.amv.access.core.Issuer;
+import org.amv.access.demo.DemoService;
 import org.amv.access.model.ApplicationEntity;
-import org.amv.access.model.ApplicationRepository;
-import org.amv.access.util.SecureRandomUtils;
+import org.amv.access.model.IssuerEntity;
 import org.amv.highmobility.cryptotool.Cryptotool;
 import org.amv.highmobility.cryptotool.CryptotoolUtils;
-import org.amv.highmobility.cryptotool.CryptotoolWithIssuer;
-import org.apache.commons.lang3.RandomStringUtils;
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
@@ -38,24 +37,24 @@ import static org.junit.Assert.assertThat;
 public class DeviceCertificateCtrlTest {
 
     @Autowired
-    private CryptotoolWithIssuer cryptotool;
+    private Cryptotool cryptotool;
 
     @Autowired
-    private ApplicationRepository applicationRepository;
+    private DemoService demoService;
 
     @Autowired
     private TestRestTemplate restTemplate;
 
+    @Autowired
+    private Issuer issuer;
+
     private ApplicationEntity application;
+    //private IssuerEntity issuer;
 
     @Before
     public void setUp() {
-        this.application = applicationRepository.save(ApplicationEntity.builder()
-                .name("Test ApplicationEntity")
-                .appId(SecureRandomUtils.generateRandomAppId())
-                .apiKey(RandomStringUtils.randomAlphanumeric(8))
-                .enabled(true)
-                .build());
+        this.application = demoService.getOrCreateDemoApplication();
+        //this.issuer = demoService.getOrCreateDemoIssuer();
     }
 
     @Test
@@ -125,7 +124,7 @@ public class DeviceCertificateCtrlTest {
         assertThat(deviceCertificate, is(notNullValue()));
         assertThat(isBase64(deviceCertificate), is(true));
 
-        final String expectedIssuerPublicKey = cryptotool.getCertificateIssuer().getPublicKeyBase64();
+        final String expectedIssuerPublicKey = issuer.getPublicKeyBase64();
         assertThat(responseDeviceCertificate.getIssuerPublicKey(), is(expectedIssuerPublicKey));
     }
 

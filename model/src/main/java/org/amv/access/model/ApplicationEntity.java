@@ -30,11 +30,11 @@ public class ApplicationEntity implements Application {
     @JsonProperty(value = "id", access = JsonProperty.Access.READ_ONLY)
     private Long id;
 
-    @Column(name = "name")
+    @Column(name = "name", length = 63)
     private String name;
 
     @JsonProperty("app_id")
-    @Column(name = "app_id")
+    @Column(name = "app_id", length = 24)
     private String appId;
 
     @JsonProperty(value = "api_key", access = JsonProperty.Access.WRITE_ONLY)

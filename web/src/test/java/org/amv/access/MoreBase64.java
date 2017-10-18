@@ -1,4 +1,4 @@
-package org.amv.access.util;
+package org.amv.access;
 
 import com.google.common.base.Charsets;
 
