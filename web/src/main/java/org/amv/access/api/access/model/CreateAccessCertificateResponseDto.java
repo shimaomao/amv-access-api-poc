@@ -6,6 +6,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NonNull;
 import lombok.experimental.Tolerate;
+import org.amv.access.client.model.AccessCertificateDto;
 
 @Data
 @Builder(builderClassName = "Builder")
@@ -13,7 +14,7 @@ import lombok.experimental.Tolerate;
 public class CreateAccessCertificateResponseDto {
 
     @JsonProperty(value = "access_certificate")
-    private DeviceAndVehicleAccessCertificateDto accessCertificate;
+    private AccessCertificateDto accessCertificate;
 
     @Tolerate
     protected CreateAccessCertificateResponseDto() {

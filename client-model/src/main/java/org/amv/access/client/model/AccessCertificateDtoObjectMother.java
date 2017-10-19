@@ -11,7 +11,8 @@ public final class AccessCertificateDtoObjectMother {
     public static AccessCertificateDto random() {
         return AccessCertificateDto.builder()
                 .id(RandomStringUtils.randomAlphanumeric(10))
-                .accessCertificate(RandomStringUtils.randomAlphanumeric(10))
+                .deviceAccessCertificate(RandomStringUtils.randomAlphanumeric(10))
+                .vehicleAccessCertificate(RandomStringUtils.randomAlphanumeric(10))
                 .name(RandomStringUtils.randomAlphanumeric(10))
                 .build();
     }

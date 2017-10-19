@@ -22,13 +22,21 @@ public class AccessCertificateDto {
     )
     private String id;
 
-    @JsonProperty("access_certificate")
+    @JsonProperty("device_access_certificate")
+    @ApiModelProperty(
+            value = "the full access certificate for the device in binary format",
+            dataType = "String (encoded in base64)",
+            required = true
+    )
+    private String deviceAccessCertificate;
+
+    @JsonProperty("vehicle_access_certificate")
     @ApiModelProperty(
             value = "the full access certificate for the vehicle in binary format",
             dataType = "String (encoded in base64)",
             required = true
     )
-    private String accessCertificate;
+    private String vehicleAccessCertificate;
 
     @JsonProperty("name")
     @ApiModelProperty(

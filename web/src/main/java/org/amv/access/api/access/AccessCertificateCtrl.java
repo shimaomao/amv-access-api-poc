@@ -8,7 +8,6 @@ import org.amv.access.api.access.AccessCertificateService.GetAccessCertificateRe
 import org.amv.access.api.access.AccessCertificateService.RevokeAccessCertificateRequest;
 import org.amv.access.api.access.model.CreateAccessCertificateRequestDto;
 import org.amv.access.api.access.model.CreateAccessCertificateResponseDto;
-import org.amv.access.api.access.model.DeviceAndVehicleAccessCertificateDto;
 import org.amv.access.auth.NonceAuthentication;
 import org.amv.access.client.MoreHttpHeaders;
 import org.amv.access.client.model.AccessCertificateDto;
@@ -77,7 +76,8 @@ public class AccessCertificateCtrl {
                 .map(accessCertificate -> AccessCertificateDto.builder()
                         .id(accessCertificate.getUuid())
                         .name(accessCertificate.getVehicle().getName())
-                        .accessCertificate(accessCertificate.getSignedDeviceAccessCertificateBase64())
+                        .deviceAccessCertificate(accessCertificate.getSignedDeviceAccessCertificateBase64())
+                        .vehicleAccessCertificate(accessCertificate.getSignedVehicleAccessCertificateBase64())
                         .build())
                 .collectList()
                 .map(accessCertificateDto -> GetAccessCertificatesResponseDto.builder()
@@ -167,13 +167,9 @@ public class AccessCertificateCtrl {
         ResponseEntity<CreateAccessCertificateResponseDto> response = accessCertificateService
                 .createAccessCertificate(createAccessCertificateRequest)
                 .map(accessCertificate -> CreateAccessCertificateResponseDto.builder()
-                        .accessCertificate(DeviceAndVehicleAccessCertificateDto.builder()
-                                .deviceAccessCertificate(AccessCertificateDto.builder()
-                                        .accessCertificate(accessCertificate.getSignedDeviceAccessCertificateBase64())
-                                        .build())
-                                .vehicleAccessCertificate(AccessCertificateDto.builder()
-                                        .accessCertificate(accessCertificate.getSignedVehicleAccessCertificateBase64())
-                                        .build())
+                        .accessCertificate(AccessCertificateDto.builder()
+                                .deviceAccessCertificate(accessCertificate.getSignedDeviceAccessCertificateBase64())
+                                .vehicleAccessCertificate(accessCertificate.getSignedVehicleAccessCertificateBase64())
                                 .build())
                         .build())
                 .map(ResponseEntity::ok)
