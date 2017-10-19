@@ -1,4 +1,4 @@
-package org.amv.access;
+package org.amv.access.util;
 
 import com.google.common.base.CharMatcher;
 

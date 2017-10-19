@@ -1,7 +1,7 @@
 package org.amv.access.api.device;
 
 import org.amv.access.AmvAccessApplication;
-import org.amv.access.MoreHex;
+import org.amv.access.util.MoreHex;
 import org.amv.access.api.ErrorResponseDto;
 import org.amv.access.client.model.CreateDeviceCertificateRequestDto;
 import org.amv.access.client.model.CreateDeviceCertificateResponseDto;

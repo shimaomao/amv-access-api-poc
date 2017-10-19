@@ -39,7 +39,7 @@ import java.util.List;
 import java.util.Optional;
 
 import static com.google.common.base.Preconditions.checkArgument;
-import static org.amv.access.MoreBase64.toBase64OrThrow;
+import static org.amv.access.util.MoreBase64.toBase64OrThrow;
 import static org.apache.commons.codec.binary.Base64.isBase64;
 import static org.hamcrest.Matchers.*;
 import static org.junit.Assert.assertThat;
