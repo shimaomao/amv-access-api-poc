@@ -41,3 +41,21 @@ amv.swagger:
   contact-name: 'AMV Networks GmbH'
   contact-url: 'https://www.amv-networks.com'
   contact-email: 'support@amv-networks.com'
+
+amv.access.demo:
+  enabled: true
+  vehicles:
+   - name: 'TEST-VEHICLE-1'
+     serialNumber: '0000073cbc01354c9c'
+     publicKeyBase64: 'HmXjzb0VJXf98p7F6gYiIAs0DHP6UlAKJSwHNBLeGIFNe6pYdW7e7HAXCNWJsI4tIOSnfn8uJ0ERv1CnQjZAww=='
+   - name: 'TEST-VEHICLE-2'
+     serialNumber: '00000fe5ad48c04a1d'
+     publicKeyBase64: 'QJ+HNttBcWryKJfrlkH8EfZkR/7uDCdZgIC0vkthqVNxZ51Q6tsh20mNPPWFlhPGgXau+LZm/O44btkkmLxgSA=='
+  application:
+   - name: 'TEST-APP-1'
+     appId: '0000039ef127894fa456809e'
+     apiKey: 'test-app-1-api-key'
+   - name: 'TEST-APP-2'
+     appId: '00000e542a7a7a110f856b88'
+     apiKey: 'test-app-2-api-key'
+

@@ -62,7 +62,9 @@ public class ApplicationAuthenticationArgumentResolver implements HandlerMethodA
     private boolean isValidApiKey(String key) {
         int keyLength = key.length();
         boolean hasValidLength = 8 <= keyLength && keyLength <= 1024;
-        boolean hasValidChars = CharMatcher.JAVA_LETTER_OR_DIGIT.matchesAllOf(key);
+        boolean hasValidChars = CharMatcher.anyOf("-")
+                .or(CharMatcher.JAVA_LETTER_OR_DIGIT)
+                .matchesAllOf(key);
 
         return hasValidLength && hasValidChars;
     }

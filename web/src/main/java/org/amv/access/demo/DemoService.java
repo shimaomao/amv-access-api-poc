@@ -56,6 +56,28 @@ public class DemoService {
         this.deviceRepository = requireNonNull(deviceRepository);
     }
 
+    public void createDemoData() {
+        this.getOrCreateDemoIssuer();
+        this.getOrCreateDemoApplication();
+        this.getOrCreateDemoUser();
+
+        this.createDemoVehicle();
+        this.createDemoDevice();
+    }
+
+    public void createDemoData(DemoProperties demoProperties) {
+        createDemoData();
+
+        demoProperties.getVehicles().stream()
+                .filter(v -> !vehicleRepository.findOneBySerialNumber(v.getSerialNumber()).isPresent())
+                .forEach(this::createDemoVehicle);
+
+        demoProperties.getApplications().stream()
+                .filter(app -> !applicationRepository.findOneByAppId(app.getAppId()).isPresent())
+                .forEach(this::createDemoApplication);
+    }
+
+
     public DemoUser getOrCreateDemoUser() {
         final UserEntity user = userRepository.findByName(DEMO_USER_NAME, AmvAccessApplication.standardPageRequest)
                 .getContent()
@@ -83,6 +105,10 @@ public class DemoService {
                 .orElseGet(this::createDemoApplication);
     }
 
+    public DeviceEntity createDemoDevice() {
+        return createDemoDevice(getOrCreateDemoIssuer(), getOrCreateDemoApplication());
+    }
+
     public DeviceEntity createDemoDevice(ApplicationEntity applicationEntity) {
         return createDemoDevice(getOrCreateDemoIssuer(), applicationEntity);
     }
@@ -91,14 +117,23 @@ public class DemoService {
         return createDemoVehicle(getOrCreateDemoIssuer());
     }
 
-    public void createDemoData() {
-        IssuerEntity demoIssuer = this.getOrCreateDemoIssuer();
-        ApplicationEntity demoApplication = this.getOrCreateDemoApplication();
+    public VehicleEntity createDemoVehicle(DemoProperties.DemoVehicle demoVehicle) {
+        return createDemoVehicle(getOrCreateDemoIssuer(), demoVehicle);
+    }
 
-        this.createDemoVehicle(demoIssuer);
-        this.createDemoDevice(demoIssuer, demoApplication);
+    public ApplicationEntity createDemoApplication(DemoProperties.DemoApplication demoApplication) {
+        ApplicationEntity application = ApplicationEntity.builder()
+                .name(demoApplication.getName())
+                .appId(demoApplication.getAppId())
+                .apiKey(demoApplication.getApiKey())
+                .enabled(true)
+                .build();
 
-        this.getOrCreateDemoUser();
+        ApplicationEntity savedDemoApplication = applicationRepository.save(application);
+
+        log.info("Created demo application: {}", savedDemoApplication);
+
+        return savedDemoApplication;
     }
 
     private DemoUser createDemoUser() {
@@ -146,37 +181,40 @@ public class DemoService {
     }
 
     private ApplicationEntity createDemoApplication() {
-        ApplicationEntity application = ApplicationEntity.builder()
+        return createDemoApplication(DemoProperties.DemoApplication.builder()
                 .name(DEMO_APP_NAME)
                 .appId(SecureRandomUtils.generateRandomAppId())
                 .apiKey(DEMO_APP_API_KEY)
-                .enabled(true)
-                .build();
-
-        ApplicationEntity savedDemoApplication = applicationRepository.save(application);
-
-        log.info("Created demo application: {}", savedDemoApplication);
-
-        return savedDemoApplication;
+                .build());
     }
 
-    private VehicleEntity createDemoVehicle(IssuerEntity demoIssuer) {
+    private VehicleEntity createDemoVehicle(IssuerEntity issuerEntity) {
         Cryptotool.Keys keys = cryptotool.generateKeys().block();
 
         String publicKeyBase64 = CryptotoolUtils.encodeHexAsBase64(keys.getPublicKey());
 
-        VehicleEntity demoVehicle = VehicleEntity.builder()
-                .issuerId(demoIssuer.getId())
+        final DemoProperties.DemoVehicle demoVehicle = DemoProperties.DemoVehicle.builder()
                 .name(StringUtils.prependIfMissing(RandomStringUtils.randomAlphanumeric(10), "demo-vehicle-"))
                 .serialNumber(SecureRandomUtils.generateRandomSerial())
                 .publicKeyBase64(publicKeyBase64)
                 .build();
 
-        final VehicleEntity savedDemoVehicle = vehicleRepository.save(demoVehicle);
+        return createDemoVehicle(issuerEntity, demoVehicle);
+    }
 
-        log.info("Created demo vehicle: {}", savedDemoVehicle);
+    private VehicleEntity createDemoVehicle(IssuerEntity demoIssuer, DemoProperties.DemoVehicle demoVehicle) {
+        VehicleEntity vehicleEntity = VehicleEntity.builder()
+                .issuerId(demoIssuer.getId())
+                .name(demoVehicle.getName())
+                .serialNumber(demoVehicle.getSerialNumber())
+                .publicKeyBase64(demoVehicle.getPublicKeyBase64())
+                .build();
 
-        return savedDemoVehicle;
+        final VehicleEntity savedVehicleEntity = vehicleRepository.save(vehicleEntity);
+
+        log.info("Created demo vehicle: {}", savedVehicleEntity);
+
+        return savedVehicleEntity;
     }
 
     private DeviceEntity createDemoDevice(IssuerEntity issuerEntity, ApplicationEntity applicationEntity) {
