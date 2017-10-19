@@ -10,18 +10,21 @@ import org.amv.access.AmvAccessApplication;
 import org.amv.access.model.*;
 import org.amv.access.util.SecureRandomUtils;
 import org.amv.highmobility.cryptotool.Cryptotool;
-import org.amv.highmobility.cryptotool.CryptotoolUtils;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.sql.Date;
 import java.time.Instant;
-import java.util.ArrayList;
+import java.util.List;
 
 import static java.util.Objects.requireNonNull;
+import static org.amv.highmobility.cryptotool.CryptotoolUtils.decodeBase64AsHex;
+import static org.amv.highmobility.cryptotool.CryptotoolUtils.encodeHexAsBase64;
 
 @Slf4j
+@Transactional
 public class DemoService {
     private static final String DEMO_ISSUER_NAME = "demo";
     private static final String DEMO_USER_NAME = "demo";
@@ -56,30 +59,37 @@ public class DemoService {
         this.deviceRepository = requireNonNull(deviceRepository);
     }
 
-    public void createDemoData() {
-        this.getOrCreateDemoIssuer();
-        this.getOrCreateDemoApplication();
-        this.getOrCreateDemoUser();
-
-        this.createDemoVehicle();
-        this.createDemoDevice();
-    }
-
-    public void createDemoData(DemoProperties demoProperties) {
-        createDemoData();
+    public void createDemoDataFromProperties(DemoProperties demoProperties) {
+        IssuerEntity demoIssuer = demoProperties.getIssuer()
+                .map(i -> issuerRepository.findByName(i.getName()).stream().findFirst()
+                        .orElseGet(() -> this.createDemoIssuer(i)))
+                .orElseThrow(() -> new IllegalStateException("Could not find or create demo issuer from properties file"));
 
         demoProperties.getVehicles().stream()
                 .filter(v -> !vehicleRepository.findOneBySerialNumber(v.getSerialNumber()).isPresent())
-                .forEach(this::createDemoVehicle);
+                .forEach(vehicle -> this.createDemoVehicle(demoIssuer, vehicle));
 
         demoProperties.getApplications().stream()
                 .filter(app -> !applicationRepository.findOneByAppId(app.getAppId()).isPresent())
                 .forEach(this::createDemoApplication);
+
+        this.getOrCreateDemoUser();
+        this.getOrCreateDemoApplication();
+
+        boolean vehicleTableIsEmpty = vehicleRepository.count() == 0;
+        if (vehicleTableIsEmpty) {
+            this.createDemoVehicle();
+        }
+
+        boolean deviceTableIsEmpty = deviceRepository.count() == 0;
+        if (deviceTableIsEmpty) {
+            this.createDemoDevice();
+        }
     }
 
 
     public DemoUser getOrCreateDemoUser() {
-        final UserEntity user = userRepository.findByName(DEMO_USER_NAME, AmvAccessApplication.standardPageRequest)
+        UserEntity user = userRepository.findByName(DEMO_USER_NAME, AmvAccessApplication.standardPageRequest)
                 .getContent()
                 .stream()
                 .findFirst()
@@ -105,10 +115,6 @@ public class DemoService {
                 .orElseGet(this::createDemoApplication);
     }
 
-    public DeviceEntity createDemoDevice() {
-        return createDemoDevice(getOrCreateDemoIssuer(), getOrCreateDemoApplication());
-    }
-
     public DeviceEntity createDemoDevice(ApplicationEntity applicationEntity) {
         return createDemoDevice(getOrCreateDemoIssuer(), applicationEntity);
     }
@@ -117,11 +123,16 @@ public class DemoService {
         return createDemoVehicle(getOrCreateDemoIssuer());
     }
 
-    public VehicleEntity createDemoVehicle(DemoProperties.DemoVehicle demoVehicle) {
+
+    private DeviceEntity createDemoDevice() {
+        return createDemoDevice(getOrCreateDemoIssuer(), getOrCreateDemoApplication());
+    }
+
+    private VehicleEntity createDemoVehicle(DemoProperties.DemoVehicle demoVehicle) {
         return createDemoVehicle(getOrCreateDemoIssuer(), demoVehicle);
     }
 
-    public ApplicationEntity createDemoApplication(DemoProperties.DemoApplication demoApplication) {
+    private ApplicationEntity createDemoApplication(DemoProperties.DemoApplication demoApplication) {
         ApplicationEntity application = ApplicationEntity.builder()
                 .name(demoApplication.getName())
                 .appId(demoApplication.getAppId())
@@ -137,8 +148,8 @@ public class DemoService {
     }
 
     private DemoUser createDemoUser() {
-        final DemoUser.DemoUserBuilder demoUserBuilder = demoUserBuilderSupplier.get();
-        final ArrayList<String> authorities = Lists.newArrayList("ROLE_ADMIN", "ROLE_USER");
+        DemoUser.DemoUserBuilder demoUserBuilder = demoUserBuilderSupplier.get();
+        List<String> authorities = Lists.newArrayList("ROLE_ADMIN", "ROLE_USER");
 
         UserEntity demoUser = UserEntity.builder()
                 .name(demoUserBuilder.name())
@@ -157,14 +168,23 @@ public class DemoService {
     private IssuerEntity createDemoIssuer() {
         Cryptotool.Keys keys = cryptotool.generateKeys().block();
 
-        IssuerEntity demoIssuer = IssuerEntity.builder()
+        return createDemoIssuer(DemoProperties.DemoIssuer.builder()
                 .name(DEMO_ISSUER_NAME)
+                .publicKeyBase64(encodeHexAsBase64(keys.getPublicKey()))
+                .privateKeyBase64(encodeHexAsBase64(keys.getPrivateKey()))
+                .build());
+    }
+
+
+    private IssuerEntity createDemoIssuer(DemoProperties.DemoIssuer demoIssuer) {
+        IssuerEntity issuerEntity = IssuerEntity.builder()
+                .name(demoIssuer.getName())
                 .created(Date.from(Instant.EPOCH))
-                .publicKeyBase64(CryptotoolUtils.encodeHexAsBase64(keys.getPublicKey()))
-                .privateKeyBase64(CryptotoolUtils.encodeHexAsBase64(keys.getPrivateKey()))
+                .publicKeyBase64(encodeHexAsBase64(decodeBase64AsHex(demoIssuer.getPublicKeyBase64())))
+                .privateKeyBase64(encodeHexAsBase64(decodeBase64AsHex(demoIssuer.getPrivateKeyBase64())))
                 .build();
 
-        IssuerEntity savedDemoIssuer = issuerRepository.save(demoIssuer);
+        IssuerEntity savedDemoIssuer = issuerRepository.save(issuerEntity);
 
         log.info("Created demo issuer: {}", savedDemoIssuer);
 
@@ -173,7 +193,7 @@ public class DemoService {
     }
 
     private DemoUser.DemoUserBuilder createDemoUserBuilder() {
-        final String password = DEMO_USER_PASSWORD;
+        String password = DEMO_USER_PASSWORD;
         return DemoUser.builder()
                 .name(DEMO_USER_NAME)
                 .password(password)
@@ -191,7 +211,7 @@ public class DemoService {
     private VehicleEntity createDemoVehicle(IssuerEntity issuerEntity) {
         Cryptotool.Keys keys = cryptotool.generateKeys().block();
 
-        String publicKeyBase64 = CryptotoolUtils.encodeHexAsBase64(keys.getPublicKey());
+        String publicKeyBase64 = encodeHexAsBase64(keys.getPublicKey());
 
         final DemoProperties.DemoVehicle demoVehicle = DemoProperties.DemoVehicle.builder()
                 .name(StringUtils.prependIfMissing(RandomStringUtils.randomAlphanumeric(10), "demo-vehicle-"))
@@ -226,7 +246,7 @@ public class DemoService {
     public DeviceWithKeys createDemoDeviceWithKeys(IssuerEntity issuerEntity, ApplicationEntity applicationEntity) {
         Cryptotool.Keys keys = cryptotool.generateKeys().block();
 
-        String publicKeyBase64 = CryptotoolUtils.encodeHexAsBase64(keys.getPublicKey());
+        String publicKeyBase64 = encodeHexAsBase64(keys.getPublicKey());
 
         DeviceEntity demoDevice = DeviceEntity.builder()
                 .issuerId(issuerEntity.getId())
@@ -236,7 +256,7 @@ public class DemoService {
                 .publicKeyBase64(publicKeyBase64)
                 .build();
 
-        final DeviceEntity savedDemoDevice = deviceRepository.save(demoDevice);
+        DeviceEntity savedDemoDevice = deviceRepository.save(demoDevice);
 
         log.info("Created demo device: {}", savedDemoDevice);
 

@@ -7,13 +7,31 @@ import lombok.experimental.Tolerate;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
 import java.util.List;
+import java.util.Optional;
 
 @Data
 @ConfigurationProperties("amv.access.demo")
 public class DemoProperties {
-    private boolean enabled = true;
+    private boolean enabled = false;
+    private DemoIssuer issuer;
     private List<DemoVehicle> vehicles = Lists.newArrayList();
     private List<DemoApplication> applications = Lists.newArrayList();
+
+    public Optional<DemoIssuer> getIssuer() {
+        return Optional.ofNullable(issuer);
+    }
+
+    @Data
+    @Builder
+    public static class DemoIssuer {
+        private String name;
+        private String publicKeyBase64;
+        private String privateKeyBase64;
+
+        @Tolerate
+        public DemoIssuer() {
+        }
+    }
 
     @Data
     @Builder

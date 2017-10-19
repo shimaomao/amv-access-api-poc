@@ -48,7 +48,7 @@ public class DemoConfig {
             @Transactional
             public void afterPropertiesSet() throws Exception {
                 if (demoProperties.isEnabled()) {
-                    demoService.createDemoData(demoProperties);
+                    demoService.createDemoDataFromProperties(demoProperties);
                 }
             }
         };

@@ -10,6 +10,7 @@ app-management.port
 *.db
 *.db-shm
 *.db-wal
+application-local-*.yml
 
 ### Intellij ###
 .idea/

@@ -44,6 +44,10 @@ amv.swagger:
 
 amv.access.demo:
   enabled: true
+  issuer:
+     name: 'DEMO'
+     publicKeyBase64: 'qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqg=='
+     privateKeyBase64: 'u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7s='
   vehicles:
    - name: 'TEST-VEHICLE-1'
      serialNumber: '0000073cbc01354c9c'
@@ -51,11 +55,11 @@ amv.access.demo:
    - name: 'TEST-VEHICLE-2'
      serialNumber: '00000fe5ad48c04a1d'
      publicKeyBase64: 'QJ+HNttBcWryKJfrlkH8EfZkR/7uDCdZgIC0vkthqVNxZ51Q6tsh20mNPPWFlhPGgXau+LZm/O44btkkmLxgSA=='
-  application:
-   - name: 'TEST-APP-1'
-     appId: '0000039ef127894fa456809e'
-     apiKey: 'test-app-1-api-key'
-   - name: 'TEST-APP-2'
+  applications:
+   - name: 'DEMO-APP-1'
+     appId: '9ff545aa4d4e662e636ca9a4'
+     apiKey: 'demodemodemo'
+   - name: 'DEMO-APP-2'
      appId: '00000e542a7a7a110f856b88'
-     apiKey: 'test-app-2-api-key'
+     apiKey: 'demo-app-2-api-key'
 
