@@ -59,6 +59,6 @@ public class VehicleEntity implements Vehicle {
 
     @Override
     public String toString() {
-        return String.format("VehicleEntity[id=%d, serialNumber='%s']", id, serialNumber);
+        return String.format("VehicleEntity[id=%d, name='%s', serialNumber='%s']", id, name, serialNumber);
     }
 }

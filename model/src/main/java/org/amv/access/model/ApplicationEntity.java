@@ -52,6 +52,6 @@ public class ApplicationEntity implements Application {
 
     @Override
     public String toString() {
-        return String.format("ApplicationEntity[id=%d, name='%s']", id, name);
+        return String.format("ApplicationEntity[id=%d, name='%s', app_id='%s']", id, name, appId);
     }
 }
