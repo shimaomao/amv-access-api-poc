@@ -59,6 +59,7 @@ subprojects {
     apply plugin: 'io.franzbecker.gradle-lombok'
     apply plugin: 'checkstyle'
     apply plugin: 'findbugs'
+    apply plugin: 'com.jfrog.bintray'
 
     group = 'org.amv.access'
 
@@ -78,7 +79,6 @@ subprojects {
         }
     }
 
-    //only use AMV internal nexus repository for dependencies
     repositories {
         mavenLocal()
         jcenter()
