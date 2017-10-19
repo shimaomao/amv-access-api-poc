@@ -1,4 +1,5 @@
 [![Build Status](https://travis-ci.org/amvnetworks/amv-access-api-poc.svg?branch=master)](https://travis-ci.org/amvnetworks/amv-access-api-poc)
+[![Download](https://api.bintray.com/packages/amvnetworks/amv-access-api-poc/client/images/download.svg) ](https://bintray.com/amvnetworks/amv-access-api-poc/client/_latestVersion)
 [![License](https://img.shields.io/github/license/amvnetworks/amv-access-api-poc.svg?maxAge=2592000)](https://github.com/amvnetworks/amv-access-api-poc/blob/master/LICENSE)
 
 amv-access-api
@@ -25,9 +26,8 @@ e.g. `findbugs`, `checkstyle`, `javadoc` - tasks which results are not essential
 
 ## release to bintray
 ```bash
-./gradlew clean build bintrayUpload
-  -Prelease.stage=final
-  -Prelease.scope=patch
+./gradlew clean build final bintrayUpload
+  -Prelease.useLastTag=true
   -PreleaseToBintray
   -PbintrayUser=${username}
   -PbintrayApiKey=${apiKey}
