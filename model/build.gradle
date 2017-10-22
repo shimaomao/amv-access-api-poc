@@ -4,6 +4,8 @@ dependencies {
     compile project(':core')
     compile 'io.swagger:swagger-annotations:1.5.13'
 
-    compile 'org.springframework.boot:spring-boot-starter-data-rest'
+    compile ('org.springframework.boot:spring-boot-starter-data-rest') {
+        exclude module: 'spring-boot-starter-tomcat'
+    }
     compile 'org.springframework.boot:spring-boot-starter-data-jpa'
 }

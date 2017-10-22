@@ -50,7 +50,9 @@ dependencies {
     compile "com.fasterxml.jackson.datatype:jackson-datatype-jdk8:${jacksonVersion}"
     compile "com.fasterxml.jackson.datatype:jackson-datatype-jsr310:${jacksonVersion}"
 
-    compile 'org.springframework.boot:spring-boot-starter-data-rest'
+    compile ('org.springframework.boot:spring-boot-starter-data-rest') {
+        exclude module: 'spring-boot-starter-tomcat'
+    }
     compile 'org.springframework.boot:spring-boot-starter-data-jpa'
     compile 'org.springframework.boot:spring-boot-starter-security'
     compile 'org.springframework.boot:spring-boot-starter-actuator'

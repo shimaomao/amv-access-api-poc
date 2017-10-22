@@ -28,7 +28,8 @@ dependencies {
     testCompile 'com.marvinformatics.feign:feign-mock:0.6'
 
     testCompile "org.springframework.boot:spring-boot-starter-test:${springBootVersion}"
-    testCompile "org.springframework.boot:spring-boot-starter-web:${springBootVersion}"
-
+    testCompile("org.springframework.boot:spring-boot-starter-web:${springBootVersion}") {
+        exclude module: 'spring-boot-starter-tomcat'
+    }
 }
 
