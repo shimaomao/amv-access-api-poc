@@ -6,6 +6,6 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 @ResponseStatus(code = HttpStatus.UNPROCESSABLE_ENTITY)
 public class UnprocessableEntityException extends AmvAccessRuntimeException {
     public UnprocessableEntityException(String message) {
-        super(message);
+        super(message, null);
     }
 }

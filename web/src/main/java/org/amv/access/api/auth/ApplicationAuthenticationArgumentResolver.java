@@ -7,7 +7,7 @@ import org.amv.access.auth.ApplicationAuthentication;
 import org.amv.access.auth.ApplicationAuthenticationImpl;
 import org.amv.access.core.Application;
 import org.amv.access.exception.BadRequestException;
-import org.amv.access.exception.NotFoundException;
+import org.amv.access.exception.UnauthorizedException;
 import org.springframework.core.MethodParameter;
 import org.springframework.web.bind.support.WebDataBinderFactory;
 import org.springframework.web.context.request.NativeWebRequest;
@@ -51,8 +51,9 @@ public class ApplicationAuthenticationArgumentResolver implements HandlerMethodA
                 .orElseThrow(() -> new BadRequestException(HEADER_NAME + " header is invalid or missing"));
 
         Application application = Optional.of(apiKeyResolver.findByApiKey(apiKey))
+                .map(app -> app.onErrorMap(e -> new UnauthorizedException("", e)))
                 .map(Mono::block)
-                .orElseThrow(() -> new NotFoundException("ApplicationEntity not found"));
+                .orElseThrow(() -> new UnauthorizedException("ApplicationEntity not found"));
 
         return ApplicationAuthenticationImpl.builder()
                 .application(application)

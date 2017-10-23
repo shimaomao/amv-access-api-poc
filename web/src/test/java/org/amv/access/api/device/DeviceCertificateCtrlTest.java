@@ -1,6 +1,7 @@
 package org.amv.access.api.device;
 
 import org.amv.access.AmvAccessApplication;
+import org.amv.access.exception.UnauthorizedException;
 import org.amv.access.util.MoreHex;
 import org.amv.access.api.ErrorResponseDto;
 import org.amv.access.client.model.CreateDeviceCertificateRequestDto;
@@ -106,7 +107,7 @@ public class DeviceCertificateCtrlTest {
                 .postForEntity("/api/v1/device_certificates", entity,
                         ErrorResponseDto.class);
 
-        assertThat(responseEntity.getStatusCode(), is(HttpStatus.NOT_FOUND));
+        assertThat(responseEntity.getStatusCode(), is(HttpStatus.UNAUTHORIZED));
 
         ErrorResponseDto errorResponseDto = responseEntity.getBody();
         assertThat(errorResponseDto.getErrors(), hasSize(1));
@@ -116,7 +117,7 @@ public class DeviceCertificateCtrlTest {
                 .findFirst()
                 .orElseThrow(IllegalStateException::new);
 
-        assertThat(errorInfoDto.getTitle(), is(NotFoundException.class.getSimpleName()));
+        assertThat(errorInfoDto.getTitle(), is(UnauthorizedException.class.getSimpleName()));
         assertThat(errorInfoDto.getDetail(), is("ApplicationEntity not found"));
     }
 
