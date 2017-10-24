@@ -34,22 +34,22 @@ public class VehicleEntity implements Vehicle {
     @CreatedDate
     @Column(name = "created", insertable = true, updatable = false)
     @Temporal(TemporalType.TIMESTAMP)
-    @JsonProperty(value = "created", access = JsonProperty.Access.READ_ONLY)
+    @JsonProperty(value = "created")
     private Date created;
 
     @Column(name = "issuer_id")
-    @JsonProperty(value = "issuer_id", access = JsonProperty.Access.READ_ONLY)
+    @JsonProperty(value = "issuer_id")
     private long issuerId;
 
     @Column(name = "name", length = 63)
     private String name;
 
     @Column(name = "serial_number"/*, length = 18*/)
-    @JsonProperty(value = "serial_number", access = JsonProperty.Access.READ_ONLY)
+    @JsonProperty(value = "serial_number")
     private String serialNumber;
 
     @Column(name = "public_key_base64")
-    @JsonProperty(value = "public_key_base64", access = JsonProperty.Access.READ_ONLY)
+    @JsonProperty(value = "public_key_base64")
     private String publicKeyBase64;
 
     @Tolerate
