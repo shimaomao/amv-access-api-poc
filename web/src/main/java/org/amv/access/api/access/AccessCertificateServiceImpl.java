@@ -127,7 +127,7 @@ public class AccessCertificateServiceImpl implements AccessCertificateService {
                 .orElseThrow(() -> new NotFoundException("DeviceEntity not found"));
 
         IssuerEntity issuerEntity = issuerService.findIssuerById(vehicleEntity.getIssuerId())
-                .orElseThrow(() -> new NotFoundException("DeviceEntity not found"));
+                .orElseThrow(() -> new NotFoundException("IssuerEntity not found"));
 
         boolean hasSameAppId = deviceEntity.getApplicationId() == applicationEntity.getId();
         if (!hasSameAppId) {

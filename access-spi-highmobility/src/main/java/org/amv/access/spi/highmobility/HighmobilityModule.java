@@ -111,17 +111,17 @@ public class HighmobilityModule implements AmvAccessModuleSpi {
                 validFrom,
                 validUntil).block();
 
-        String issuerPrivateKeyInHey = decodeBase64AsHex(issuer.getPrivateKeyBase64());
+        String issuerPrivateKeyInHex = decodeBase64AsHex(issuer.getPrivateKeyBase64());
         String deviceAccessCertificateSignature = Mono.just(deviceAccessCertificate)
                 .map(Cryptotool.AccessCertificate::getAccessCertificate)
-                .flatMapMany(cert -> cryptotool.generateSignature(cert, issuerPrivateKeyInHey))
+                .flatMapMany(cert -> cryptotool.generateSignature(cert, issuerPrivateKeyInHex))
                 .map(Cryptotool.Signature::getSignature)
                 .single()
                 .block();
 
         String vehicleAccessCertificateSignature = Mono.just(vehicleAccessCertificate)
                 .map(Cryptotool.AccessCertificate::getAccessCertificate)
-                .flatMapMany(cert -> cryptotool.generateSignature(cert, issuerPrivateKeyInHey))
+                .flatMapMany(cert -> cryptotool.generateSignature(cert, issuerPrivateKeyInHex))
                 .map(Cryptotool.Signature::getSignature)
                 .single()
                 .block();
