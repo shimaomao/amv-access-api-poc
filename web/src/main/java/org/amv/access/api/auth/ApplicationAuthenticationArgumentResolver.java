@@ -51,7 +51,7 @@ public class ApplicationAuthenticationArgumentResolver implements HandlerMethodA
                 .orElseThrow(() -> new BadRequestException(HEADER_NAME + " header is invalid or missing"));
 
         Application application = Optional.of(apiKeyResolver.findByApiKey(apiKey))
-                .map(app -> app.onErrorMap(e -> new UnauthorizedException("", e)))
+                .map(app -> app.onErrorMap(e -> new UnauthorizedException(e.getMessage(), e)))
                 .map(Mono::block)
                 .orElseThrow(() -> new UnauthorizedException("ApplicationEntity not found"));
 

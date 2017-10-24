@@ -7,6 +7,40 @@ amv-access-api
 This is a proof of concept application.
 amv-access-api requires Java version 1.8 or greater.
 
+# Client
+## Setup
+### gradle
+```groovy
+compile 'org.amv.access:client:${amvAccessVersion}'
+```
+### maven
+```xml
+<dependency>
+  <groupId>org.amv.access</groupId>
+  <artifactId>client</artifactId>
+  <version>${amvAccessVersion}</version>
+</dependency>
+```
+
+## Device Certificate Client
+```java
+String baseUrl = "https://www.example.com";
+DeviceCertClient deviceCertClient = Clients.deviceCertClient(Clients.simpleFeign(), baseUrl);
+```
+### Create Device Certificates
+```
+String apiKey = "...";
+String publicKeyBase64 = "...";
+
+CreateDeviceCertificateRequestDto body = CreateDeviceCertificateRequestDto.builder()
+        .devicePublicKey(publicKeyBase64)
+        .build();
+
+CreateDeviceCertificateResponseDto response = deviceCertClient
+        .createDeviceCertificate(apiKey, body)
+        .execute();
+```
+
 # Build
 Build a snapshot from a clean working directory
 ```bash
