@@ -56,18 +56,35 @@ public final class Clients {
 
         return simpleFeign().newInstance(deviceCertClientTarget(baseUrl));
     }
-
     public static DeviceCertClient deviceCertClient(Feign feign, String baseUrl) {
         checkArgument(feign != null);
         checkArgument(baseUrl != null);
 
         return feign.newInstance(deviceCertClientTarget(baseUrl));
     }
-
     private static Target<DeviceCertClient> deviceCertClientTarget(String baseUrl) {
         checkArgument(StringUtils.isNotBlank(baseUrl));
 
-        return new Target.HardCodedTarget<DeviceCertClient>(DeviceCertClient.class, baseUrl);
+        return hardCodedTarget(DeviceCertClient.class, baseUrl);
+    }
+
+    public static AccessCertClient simpleAccessCertClient(String baseUrl) {
+        checkArgument(baseUrl != null);
+
+        return simpleFeign().newInstance(accessCertClientTarget(baseUrl));
+    }
+
+    public static AccessCertClient accessCertClient(Feign feign, String baseUrl) {
+        checkArgument(feign != null);
+        checkArgument(baseUrl != null);
+
+        return feign.newInstance(accessCertClientTarget(baseUrl));
+    }
+
+    private static Target<AccessCertClient> accessCertClientTarget(String baseUrl) {
+        checkArgument(StringUtils.isNotBlank(baseUrl));
+
+        return hardCodedTarget(AccessCertClient.class, baseUrl);
     }
 
     private static <T> Target<T> hardCodedTarget(Class<T> clazz, String baseUrl) {
