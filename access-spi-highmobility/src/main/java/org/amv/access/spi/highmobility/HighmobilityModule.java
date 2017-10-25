@@ -10,6 +10,7 @@ import org.amv.access.spi.CreateAccessCertificateRequest;
 import org.amv.access.spi.CreateDeviceCertificateRequest;
 import org.amv.highmobility.cryptotool.Cryptotool;
 import org.amv.highmobility.cryptotool.CryptotoolUtils;
+import org.amv.highmobility.cryptotool.PermissionsImpl;
 import reactor.core.publisher.Mono;
 
 import java.time.LocalDateTime;
@@ -90,6 +91,7 @@ public class HighmobilityModule implements AmvAccessModuleSpi {
         Application application = requireNonNull(accessCertificateRequest.getApplication());
         Device device = requireNonNull(accessCertificateRequest.getDevice());
         Vehicle vehicle = requireNonNull(accessCertificateRequest.getVehicle());
+        Permissions permissions = requireNonNull(accessCertificateRequest.getPermissions());
 
         LocalDateTime validFrom = requireNonNull(accessCertificateRequest.getValidFrom());
         LocalDateTime validUntil = requireNonNull(accessCertificateRequest.getValidUntil());
@@ -102,14 +104,16 @@ public class HighmobilityModule implements AmvAccessModuleSpi {
                 vehiclePublicKey,
                 device.getSerialNumber(),
                 validFrom,
-                validUntil).block();
+                validUntil,
+                permissions.getPermissions()).block();
 
         Cryptotool.AccessCertificate vehicleAccessCertificate = cryptotool.createAccessCertificate(
                 device.getSerialNumber(),
                 devicePublicKey,
                 vehicle.getSerialNumber(),
                 validFrom,
-                validUntil).block();
+                validUntil,
+                permissions.getPermissions()).block();
 
         String issuerPrivateKeyInHex = decodeBase64AsHex(issuer.getPrivateKeyBase64());
         String deviceAccessCertificateSignature = Mono.just(deviceAccessCertificate)

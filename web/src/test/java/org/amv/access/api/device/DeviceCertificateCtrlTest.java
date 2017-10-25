@@ -1,8 +1,6 @@
 package org.amv.access.api.device;
 
 import org.amv.access.AmvAccessApplication;
-import org.amv.access.exception.UnauthorizedException;
-import org.amv.access.util.MoreHex;
 import org.amv.access.api.ErrorResponseDto;
 import org.amv.access.client.model.CreateDeviceCertificateRequestDto;
 import org.amv.access.client.model.CreateDeviceCertificateResponseDto;
@@ -11,7 +9,7 @@ import org.amv.access.config.TestDbConfig;
 import org.amv.access.core.Issuer;
 import org.amv.access.demo.DemoService;
 import org.amv.access.exception.BadRequestException;
-import org.amv.access.exception.NotFoundException;
+import org.amv.access.exception.UnauthorizedException;
 import org.amv.access.model.ApplicationEntity;
 import org.amv.highmobility.cryptotool.Cryptotool;
 import org.amv.highmobility.cryptotool.CryptotoolUtils;
@@ -165,17 +163,6 @@ public class DeviceCertificateCtrlTest {
                 .orElseThrow(IllegalStateException::new);
 
         assertThat(validity, is(Cryptotool.Validity.VALID));
-
-        String issuerNameInHex = deviceCertificate.substring(0, 8);
-        String applicationIdInHex = deviceCertificate.substring(8, 32);
-        String deviceSerialNumberInHex = deviceCertificate.substring(32, 50);
-        String devicePublicKeyInHex = deviceCertificate.substring(50, deviceCertificate.length());
-
-        assertThat(issuerNameInHex, is(issuer.getNameInHex()));
-        assertThat(applicationIdInHex, is(application.getAppId()));
-        assertThat(MoreHex.isHex(deviceSerialNumberInHex), is(true));
-        assertThat(devicePublicKeyInHex, is(equalToIgnoringCase(keys.getPublicKey())));
-
     }
 
     @Test

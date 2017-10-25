@@ -1,6 +1,6 @@
 package org.amv.access.api.internal;
 
-import org.amv.highmobility.cryptotool.CryptotoolUtils;
+import org.amv.highmobility.cryptotool.CryptotoolUtils.SecureRandomUtils;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -15,17 +15,17 @@ public class CryptotoolUtilsCtrl {
 
     @PostMapping("/app_id")
     public ResponseEntity<String> generateRandomAppId() {
-        return ResponseEntity.ok(CryptotoolUtils.TestUtils.generateRandomAppId());
+        return ResponseEntity.ok(SecureRandomUtils.generateRandomAppId());
     }
 
     @PostMapping("/serial")
     public ResponseEntity<String> generateRandomSerial() {
-        return ResponseEntity.ok(CryptotoolUtils.TestUtils.generateRandomSerial());
+        return ResponseEntity.ok(SecureRandomUtils.generateRandomSerial());
     }
 
     @PostMapping("/issuer_name")
     public ResponseEntity<String> generateRandomIssuerInHex() {
-        return ResponseEntity.ok(CryptotoolUtils.TestUtils.generateRandomIssuerInHex());
+        return ResponseEntity.ok(SecureRandomUtils.generateRandomIssuerInHex());
     }
 
     @PostMapping("/hex")
@@ -36,7 +36,7 @@ public class CryptotoolUtilsCtrl {
                 .filter(i -> i > 0)
                 .orElse(16);
 
-        return ResponseEntity.ok(CryptotoolUtils.TestUtils.generateRandomHexString(byteCount));
+        return ResponseEntity.ok(SecureRandomUtils.generateRandomHexString(byteCount));
     }
 
 }

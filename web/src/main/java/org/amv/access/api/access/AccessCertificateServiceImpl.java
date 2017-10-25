@@ -11,7 +11,10 @@ import org.amv.access.exception.UnauthorizedException;
 import org.amv.access.issuer.IssuerService;
 import org.amv.access.model.*;
 import org.amv.access.spi.AmvAccessModuleSpi;
+import org.amv.access.spi.highmobility.AmvPermissionsAdapter;
 import org.amv.access.spi.model.CreateAccessCertificateRequestImpl;
+import org.amv.highmobility.cryptotool.Cryptotool;
+import org.amv.highmobility.cryptotool.PermissionsImpl;
 import org.springframework.transaction.annotation.Transactional;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -26,6 +29,17 @@ import static java.util.Objects.requireNonNull;
 
 @Slf4j
 public class AccessCertificateServiceImpl implements AccessCertificateService {
+
+    // TODO: move to a better place; do not hardcode
+    private final static Cryptotool.Permissions amvStandardPermissions = PermissionsImpl.builder()
+            .diagnosticsRead(true)
+            .doorLocksRead(true)
+            .doorLocksWrite(true)
+            .keyfobPositionRead(true)
+            .capabilitiesRead(true)
+            .vehicleStatusRead(true)
+            .chargeRead(true)
+            .build();
 
     private final AmvAccessModuleSpi amvAccessModule;
     private final IssuerService issuerService;
@@ -143,6 +157,9 @@ public class AccessCertificateServiceImpl implements AccessCertificateService {
                 .vehicle(vehicleEntity)
                 .validFrom(request.getValidityStart())
                 .validUntil(request.getValidityEnd())
+                .permissions(AmvPermissionsAdapter.builder()
+                        .cryptotoolPermissions(amvStandardPermissions)
+                        .build())
                 .build();
 
         AccessCertificate accessCertificate = Optional.of(amvAccessModule.createAccessCertificate(r))

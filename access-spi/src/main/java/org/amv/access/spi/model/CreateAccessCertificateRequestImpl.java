@@ -3,10 +3,7 @@ package org.amv.access.spi.model;
 import lombok.Builder;
 import lombok.NonNull;
 import lombok.Value;
-import org.amv.access.core.Application;
-import org.amv.access.core.Device;
-import org.amv.access.core.Issuer;
-import org.amv.access.core.Vehicle;
+import org.amv.access.core.*;
 import org.amv.access.spi.CreateAccessCertificateRequest;
 
 import java.time.LocalDateTime;
@@ -32,6 +29,9 @@ public class CreateAccessCertificateRequestImpl implements CreateAccessCertifica
 
     @NonNull
     private LocalDateTime validUntil;
+
+    @NonNull
+    private Permissions permissions;
 
     @Override
     public String toString() {

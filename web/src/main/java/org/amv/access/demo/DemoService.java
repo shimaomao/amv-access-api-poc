@@ -8,7 +8,7 @@ import lombok.Value;
 import lombok.extern.slf4j.Slf4j;
 import org.amv.access.AmvAccessApplication;
 import org.amv.access.model.*;
-import org.amv.access.util.SecureRandomUtils;
+import org.amv.highmobility.cryptotool.CryptotoolUtils.SecureRandomUtils;
 import org.amv.highmobility.cryptotool.Cryptotool;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.StringUtils;

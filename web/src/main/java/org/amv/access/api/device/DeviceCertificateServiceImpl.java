@@ -9,7 +9,7 @@ import org.amv.access.issuer.IssuerService;
 import org.amv.access.model.*;
 import org.amv.access.spi.AmvAccessModuleSpi;
 import org.amv.access.spi.model.CreateDeviceCertificateRequestImpl;
-import org.amv.access.util.SecureRandomUtils;
+import org.amv.highmobility.cryptotool.CryptotoolUtils.SecureRandomUtils;
 import org.springframework.transaction.annotation.Transactional;
 import reactor.core.publisher.Mono;
 

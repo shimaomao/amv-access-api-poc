@@ -308,8 +308,8 @@ public class AccessCertificateCtrlTest {
 
         final String signedDeviceAccessCertificateInHex = CryptotoolUtils.decodeBase64AsHex(accessCertificateDto.getDeviceAccessCertificate());
 
-        String deviceAccessCertificateInHex = signedDeviceAccessCertificateInHex.substring(0, 184);
-        String deviceAccessSignatureInHex = signedDeviceAccessCertificateInHex.substring(184, signedDeviceAccessCertificateInHex.length());
+        String deviceAccessCertificateInHex = signedDeviceAccessCertificateInHex.substring(0, 200);
+        String deviceAccessSignatureInHex = signedDeviceAccessCertificateInHex.substring(200, signedDeviceAccessCertificateInHex.length());
 
         String issuerPublicKeyInHex = CryptotoolUtils.decodeBase64AsHex(demoIssuer.getPublicKeyBase64());
         Cryptotool.Validity validity = Optional.of(cryptotool.verifySignature(deviceAccessCertificateInHex, deviceAccessSignatureInHex, issuerPublicKeyInHex))
@@ -318,24 +318,6 @@ public class AccessCertificateCtrlTest {
                 .orElseThrow(IllegalStateException::new);
 
         assertThat(validity, is(Cryptotool.Validity.VALID));
-
-        final String datePattern = "yyMMddHHmm";
-        final DateTimeFormatter dateTimeFormatter = new DateTimeFormatterBuilder()
-                .appendPattern(datePattern)
-                .toFormatter();
-
-        String vehicleSerialNumber = deviceAccessCertificateInHex.substring(0, 18);
-        String vehiclePublicKey = deviceAccessCertificateInHex.substring(18, 146);
-        String deviceSerialNumber = deviceAccessCertificateInHex.substring(146, 164);
-        String validFromValue = deviceAccessCertificateInHex.substring(164, 164 + datePattern.length());
-        String validUntilValue = deviceAccessCertificateInHex.substring(164 + datePattern.length(), deviceAccessCertificateInHex.length());
-
-        assertThat(deviceSerialNumber, is(device.getSerialNumber()));
-        assertThat(vehiclePublicKey, is(CryptotoolUtils.decodeBase64AsHex(vehicle.getPublicKeyBase64())));
-        assertThat(vehicleSerialNumber, is(vehicle.getSerialNumber()));
-
-        assertThat(validFromValue, is(validFrom.format(dateTimeFormatter)));
-        assertThat(validUntilValue, is(validUntil.format(dateTimeFormatter)));
     }
 
 
