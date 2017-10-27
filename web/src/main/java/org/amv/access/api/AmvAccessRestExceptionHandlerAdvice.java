@@ -1,7 +1,8 @@
 package org.amv.access.api;
 
 import lombok.extern.slf4j.Slf4j;
-import org.amv.access.api.ErrorResponseDto.ErrorInfoDto;
+import org.amv.access.client.model.ErrorResponseDto;
+import org.amv.access.client.model.ErrorResponseDto.ErrorInfoDto;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;

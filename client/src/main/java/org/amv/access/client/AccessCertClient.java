@@ -12,7 +12,7 @@ import org.amv.access.client.model.GetAccessCertificatesResponseDto;
  *
  * @author Alois Leitner
  */
-public interface AccessCertClient extends AmvAccessClient {
+public interface AccessCertClient extends AccessApiClient {
 
     @Headers({
             MoreHttpHeaders.AMV_NONCE + ": " + "{nonce}",

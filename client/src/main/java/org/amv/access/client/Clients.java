@@ -8,18 +8,22 @@ import com.fasterxml.jackson.module.paramnames.ParameterNamesModule;
 import com.google.common.annotations.VisibleForTesting;
 import com.netflix.hystrix.*;
 import feign.*;
+import feign.codec.Decoder;
+import feign.codec.ErrorDecoder;
 import feign.hystrix.HystrixFeign;
 import feign.hystrix.SetterFactory;
 import feign.jackson.JacksonDecoder;
 import feign.jackson.JacksonEncoder;
 import feign.okhttp.OkHttpClient;
 import feign.slf4j.Slf4jLogger;
+import org.amv.access.client.model.ErrorResponseDto;
 import org.apache.commons.lang3.StringUtils;
 
 import java.lang.reflect.Method;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.netflix.hystrix.HystrixCommandProperties.ExecutionIsolationStrategy.THREAD;
+import static feign.FeignException.errorStatus;
 import static java.util.concurrent.TimeUnit.SECONDS;
 
 public final class Clients {
@@ -35,6 +39,7 @@ public final class Clients {
     }
 
     public static HystrixFeign.Builder simpleFeignBuilder() {
+        JacksonDecoder decoder = new JacksonDecoder(defaultObjectMapper);
         return HystrixFeign.builder()
                 .setterFactory(new DefaultSetterFactory())
                 .logger(new Slf4jLogger())
@@ -44,7 +49,8 @@ public final class Clients {
                 .client(new OkHttpClient())
                 .options(new Request.Options())
                 .encoder(new JacksonEncoder(defaultObjectMapper))
-                .decoder(new JacksonDecoder(defaultObjectMapper));
+                .decoder(decoder)
+                .errorDecoder(new AccessApiErrorDecoder(decoder));
     }
 
     public static Feign simpleFeign() {
@@ -56,12 +62,14 @@ public final class Clients {
 
         return simpleFeign().newInstance(deviceCertClientTarget(baseUrl));
     }
+
     public static DeviceCertClient deviceCertClient(Feign feign, String baseUrl) {
         checkArgument(feign != null);
         checkArgument(baseUrl != null);
 
         return feign.newInstance(deviceCertClientTarget(baseUrl));
     }
+
     private static Target<DeviceCertClient> deviceCertClientTarget(String baseUrl) {
         checkArgument(StringUtils.isNotBlank(baseUrl));
 
@@ -118,6 +126,36 @@ public final class Clients {
                     .andCommandKey(HystrixCommandKey.Factory.asKey(commandKey))
                     .andThreadPoolPropertiesDefaults(threadPoolProperties)
                     .andCommandPropertiesDefaults(commandProperties);
+        }
+    }
+
+    static class AccessApiErrorDecoder implements ErrorDecoder {
+
+        private final Decoder jsonDecoder;
+
+        AccessApiErrorDecoder(Decoder jsonDecoder) {
+            checkArgument(jsonDecoder != null, "`jsonDecoder` must not be null");
+            this.jsonDecoder = jsonDecoder;
+        }
+
+        @Override
+        public Exception decode(String methodKey, Response response) {
+            FeignException feignException = errorStatus(methodKey, response);
+
+            ErrorResponseDto errorResponseDtoOrNull = parseErrorInfoOrNull(response);
+            if (errorResponseDtoOrNull == null) {
+                return feignException;
+            }
+
+            return new AccessApiException(errorResponseDtoOrNull, feignException);
+        }
+
+        private ErrorResponseDto parseErrorInfoOrNull(Response response) {
+            try {
+                return (ErrorResponseDto) this.jsonDecoder.decode(response, ErrorResponseDto.class);
+            } catch (Exception e) {
+                return null;
+            }
         }
     }
 }

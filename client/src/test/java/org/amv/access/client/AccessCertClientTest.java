@@ -26,7 +26,7 @@ public class AccessCertClientTest {
     private static final String RANDOM_DEVICE_SERIAL = RandomStringUtils.randomAlphanumeric(10);
 
     @Test
-    public void fetchAccessCertificates() throws JsonProcessingException {
+    public void itShouldFetchAccessCertificatesSuccessfully() throws JsonProcessingException {
         GetAccessCertificatesResponseDto accessCertificatesResponseDto = GetAccessCertificatesResponseDtoObjectMother.random();
         String accessCertificatesResponseDtoAsJson = Clients.defaultObjectMapper.writeValueAsString(accessCertificatesResponseDto);
 
@@ -50,6 +50,7 @@ public class AccessCertClientTest {
         GetAccessCertificatesResponseDto accessCertificatesResponse = accessCertificatesRequest.execute();
 
         assertThat(accessCertificatesResponse, is(notNullValue()));
+        assertThat(accessCertificatesResponse, is(accessCertificatesResponseDto));
         assertThat(accessCertificatesResponse.getAccessCertificates(), hasSize(accessCertificatesResponseDto.getAccessCertificates().size()));
     }
 }

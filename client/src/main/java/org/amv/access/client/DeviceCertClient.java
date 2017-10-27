@@ -16,7 +16,7 @@ import static com.google.common.net.HttpHeaders.CONTENT_TYPE;
  *
  * @author Alois Leitner
  */
-public interface DeviceCertClient extends AmvAccessClient {
+public interface DeviceCertClient extends AccessApiClient {
 
     @Headers({
             CONTENT_TYPE + ": " + "application/json;charset=UTF-8",

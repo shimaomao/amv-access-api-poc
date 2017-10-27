@@ -4,7 +4,7 @@ import com.google.common.net.HttpHeaders;
 import io.prometheus.client.spring.web.PrometheusTimeMethod;
 import io.swagger.annotations.*;
 import lombok.extern.slf4j.Slf4j;
-import org.amv.access.api.ErrorResponseDto;
+import org.amv.access.client.model.ErrorResponseDto;
 import org.amv.access.api.device.DeviceCertificateService.CreateDeviceCertificateRequest;
 import org.amv.access.auth.ApplicationAuthentication;
 import org.amv.access.client.model.CreateDeviceCertificateRequestDto;

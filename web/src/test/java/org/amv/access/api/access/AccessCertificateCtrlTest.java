@@ -1,7 +1,7 @@
 package org.amv.access.api.access;
 
 import org.amv.access.AmvAccessApplication;
-import org.amv.access.api.ErrorResponseDto;
+import org.amv.access.client.model.ErrorResponseDto;
 import org.amv.access.api.access.model.CreateAccessCertificateRequestDto;
 import org.amv.access.api.access.model.CreateAccessCertificateResponseDto;
 import org.amv.access.client.MoreHttpHeaders;
@@ -32,8 +32,6 @@ import reactor.core.publisher.Mono;
 
 import java.security.SecureRandom;
 import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
-import java.time.format.DateTimeFormatterBuilder;
 import java.util.List;
 import java.util.Optional;
 
