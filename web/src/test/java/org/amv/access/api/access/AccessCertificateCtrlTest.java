@@ -1,12 +1,12 @@
 package org.amv.access.api.access;
 
 import org.amv.access.AmvAccessApplication;
-import org.amv.access.client.model.ErrorResponseDto;
 import org.amv.access.api.access.model.CreateAccessCertificateRequestDto;
 import org.amv.access.api.access.model.CreateAccessCertificateResponseDto;
 import org.amv.access.client.MoreHttpHeaders;
 import org.amv.access.client.model.AccessCertificateDto;
 import org.amv.access.client.model.CreateDeviceCertificateRequestDto;
+import org.amv.access.client.model.ErrorResponseDto;
 import org.amv.access.client.model.GetAccessCertificatesResponseDto;
 import org.amv.access.config.TestDbConfig;
 import org.amv.access.demo.DemoService;

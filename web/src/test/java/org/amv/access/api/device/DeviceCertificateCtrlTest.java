@@ -1,10 +1,10 @@
 package org.amv.access.api.device;
 
 import org.amv.access.AmvAccessApplication;
-import org.amv.access.client.model.ErrorResponseDto;
 import org.amv.access.client.model.CreateDeviceCertificateRequestDto;
 import org.amv.access.client.model.CreateDeviceCertificateResponseDto;
 import org.amv.access.client.model.DeviceCertificateDto;
+import org.amv.access.client.model.ErrorResponseDto;
 import org.amv.access.config.TestDbConfig;
 import org.amv.access.core.Issuer;
 import org.amv.access.demo.DemoService;

@@ -8,7 +8,8 @@ import feign.Target;
 import feign.mock.HttpMethod;
 import feign.mock.MockClient;
 import feign.mock.MockTarget;
-import org.amv.access.client.model.*;
+import org.amv.access.client.model.GetAccessCertificatesResponseDto;
+import org.amv.access.client.model.GetAccessCertificatesResponseDtoObjectMother;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.junit.Test;
 import org.springframework.http.HttpStatus;
@@ -16,9 +17,7 @@ import org.springframework.http.HttpStatus;
 import java.util.Collection;
 import java.util.Collections;
 
-import static org.hamcrest.Matchers.hasSize;
-import static org.hamcrest.Matchers.is;
-import static org.hamcrest.Matchers.notNullValue;
+import static org.hamcrest.Matchers.*;
 import static org.junit.Assert.assertThat;
 
 public class AccessCertClientTest {

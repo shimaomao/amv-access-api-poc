@@ -1,7 +1,6 @@
 package org.amv.access.api.access;
 
 import lombok.extern.slf4j.Slf4j;
-import org.amv.access.api.access.model.CreateAccessCertificateRequestDto;
 import org.amv.access.auth.NonceAuthentication;
 import org.amv.access.core.AccessCertificate;
 import org.amv.access.core.impl.AccessCertificateImpl;
