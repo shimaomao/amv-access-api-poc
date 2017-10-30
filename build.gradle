@@ -8,6 +8,7 @@ buildscript {
         prometheusVersion = '0.0.26'
         jacksonVersion = '2.8.10'
         jettyVersion = '9.4.7.v20170914'
+        vertxVersion = '3.5.0'
     }
     repositories {
         jcenter()

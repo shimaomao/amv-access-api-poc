@@ -15,10 +15,10 @@ public class JettyConfiguration {
     }
 
     @Bean
-    public JettyStatisticsCollector jettyStatisticsCollector(CollectorRegistry metricRegistry,
+    public JettyStatisticsCollector jettyStatisticsCollector(CollectorRegistry collectorRegistry,
                                                              StatisticsHandler statisticsHandler) {
         return new JettyStatisticsCollector(statisticsHandler)
-                .register(metricRegistry);
+                .register(collectorRegistry);
     }
 
     @Bean

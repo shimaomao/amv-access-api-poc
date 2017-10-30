@@ -1,5 +1,7 @@
 package org.amv.access.api.device;
 
+import io.vertx.core.json.Json;
+import io.vertx.rxjava.core.eventbus.EventBus;
 import lombok.extern.slf4j.Slf4j;
 import org.amv.access.auth.ApplicationAuthentication;
 import org.amv.access.core.DeviceCertificate;
@@ -21,6 +23,7 @@ import static java.util.Objects.requireNonNull;
 @Slf4j
 public class DeviceCertificateServiceImpl implements DeviceCertificateService {
     private final AmvAccessModuleSpi amvAccessModule;
+    private final EventBus eventBus;
     private final IssuerService issuerService;
     private final ApplicationRepository applicationRepository;
     private final DeviceRepository deviceRepository;
@@ -28,12 +31,14 @@ public class DeviceCertificateServiceImpl implements DeviceCertificateService {
     private final DeviceCertificateRequestRepository deviceCertificateRequestRepository;
 
     public DeviceCertificateServiceImpl(AmvAccessModuleSpi amvAccessModule,
+                                        EventBus eventBus,
                                         IssuerService issuerService,
                                         ApplicationRepository applicationRepository,
                                         DeviceRepository deviceRepository,
                                         DeviceCertificateRepository deviceCertificateRepository,
                                         DeviceCertificateRequestRepository deviceCertificateRequestRepository) {
         this.amvAccessModule = requireNonNull(amvAccessModule);
+        this.eventBus = requireNonNull(eventBus);
         this.issuerService = requireNonNull(issuerService);
         this.applicationRepository = requireNonNull(applicationRepository);
         this.deviceRepository = requireNonNull(deviceRepository);
@@ -79,6 +84,9 @@ public class DeviceCertificateServiceImpl implements DeviceCertificateService {
 
         deviceCertificateRepository.save(deviceCertificateEntity);
 
+        this.eventBus.publisher(deviceCertificateEntity.getClass().getName())
+                .end(Json.encode(deviceCertificateEntity));
+
         return Mono.justOrEmpty(deviceCertificate);
     }
 
@@ -92,7 +100,6 @@ public class DeviceCertificateServiceImpl implements DeviceCertificateService {
 
         return application;
     }
-
 
     private DeviceCertificateRequestEntity saveCreateDeviceCertificateRequest(CreateDeviceCertificateRequest request) {
         requireNonNull(request);

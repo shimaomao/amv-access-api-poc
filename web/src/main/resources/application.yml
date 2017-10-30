@@ -1,6 +1,8 @@
 app.name: AMV Access API
 app.description: AMV Access API Gateway
 
+debug: true
+
 spring.profiles.active: production
 spring.application.name: ${app.name} (${spring.profiles.active})
 
@@ -58,7 +60,7 @@ amv.access.demo:
   applications:
    - name: 'DEMO-APP-1'
      appId: '9ff545aa4d4e662e636ca9a4'
-     apiKey: 'demodemodemo'
+     apiKey: 'demo-app-1-api-key'
    - name: 'DEMO-APP-2'
      appId: '00000e542a7a7a110f856b88'
      apiKey: 'demo-app-2-api-key'

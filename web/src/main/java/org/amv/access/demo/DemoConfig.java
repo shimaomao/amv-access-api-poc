@@ -1,5 +1,7 @@
 package org.amv.access.demo;
 
+import io.vertx.rxjava.core.eventbus.EventBus;
+import org.amv.access.api.access.AccessCertificateService;
 import org.amv.access.model.*;
 import org.amv.highmobility.cryptotool.Cryptotool;
 import org.springframework.beans.factory.InitializingBean;
@@ -52,5 +54,18 @@ public class DemoConfig {
                 }
             }
         };
+    }
+
+
+    @Bean
+    public DemoAccessCertificateVerticle demoAccessCertificateVerticle(EventBus eventBus,
+                                                                       DemoService demoService,
+                                                                       DeviceRepository deviceRepository,
+                                                                       AccessCertificateService accessCertificateService) {
+        return new DemoAccessCertificateVerticle(
+                eventBus,
+                demoService,
+                deviceRepository,
+                accessCertificateService);
     }
 }

@@ -25,7 +25,7 @@ import static org.amv.highmobility.cryptotool.CryptotoolUtils.encodeHexAsBase64;
 @Slf4j
 @Transactional
 public class DemoServiceImpl implements DemoService {
-    private static final String DEMO_ISSUER_NAME = "access-demo-issuer";
+    private static final String DEMO_ISSUER_NAME = "demo";
     private static final String DEMO_USER_NAME = "access-demo-user";
     private static final String DEMO_USER_PASSWORD = "demodemodemo";
     private static final String DEMO_APP_NAME = "access-demo-application";

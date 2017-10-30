@@ -36,6 +36,14 @@ dependencies {
     compile project(':client-model')
     compile project(':swagger')
 
+    compile "io.vertx:vertx-core:${vertxVersion}"
+    compile "io.vertx:vertx-rx-java:${vertxVersion}"
+    compile "io.vertx:vertx-reactive-streams:${vertxVersion}"
+    compile "io.vertx:vertx-dropwizard-metrics:${vertxVersion}"
+    compile "io.vertx:vertx-maven-service-factory:${vertxVersion}"
+    compile "io.vertx:vertx-health-check:${vertxVersion}"
+    compile 'org.amv.vertx:amv-vertx-spring-boot-starter:0.0.1'
+
     // tag::jetty[]
     compile('org.springframework.boot:spring-boot-starter-web') {
         exclude module: 'spring-boot-starter-tomcat'

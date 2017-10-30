@@ -22,12 +22,12 @@ public class PrometheusConfiguration {
 
     @Bean
     @ConditionalOnMissingBean
-    public CollectorRegistry metricRegistry() {
+    public CollectorRegistry collectorRegistry() {
         return CollectorRegistry.defaultRegistry;
     }
 
     @Bean
-    public CacheMetricsCollector cacheMetricsCollector(CollectorRegistry metricRegistry) {
-        return new CacheMetricsCollector().register(metricRegistry);
+    public CacheMetricsCollector cacheMetricsCollector(CollectorRegistry collectorRegistry) {
+        return new CacheMetricsCollector().register(collectorRegistry);
     }
 }
