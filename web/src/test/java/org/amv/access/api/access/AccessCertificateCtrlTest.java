@@ -10,6 +10,7 @@ import org.amv.access.client.model.ErrorResponseDto;
 import org.amv.access.client.model.GetAccessCertificatesResponseDto;
 import org.amv.access.config.TestDbConfig;
 import org.amv.access.demo.DemoService;
+import org.amv.access.demo.DeviceWithKeys;
 import org.amv.access.exception.BadRequestException;
 import org.amv.access.exception.UnauthorizedException;
 import org.amv.access.model.ApplicationEntity;
@@ -58,7 +59,7 @@ public class AccessCertificateCtrlTest {
 
     private ApplicationEntity application;
 
-    private DemoService.DeviceWithKeys deviceWithKeys;
+    private DeviceWithKeys deviceWithKeys;
     private IssuerEntity demoIssuer;
 
     @Before
@@ -213,8 +214,8 @@ public class AccessCertificateCtrlTest {
 
     @Test
     public void itShouldCreateAccessCertificate() throws Exception {
-        VehicleEntity vehicle = demoService.createDemoVehicle();
-        DeviceEntity device = demoService.createDemoDevice(application);
+        VehicleEntity vehicle = demoService.getOrCreateDemoVehicle();
+        DeviceEntity device = deviceWithKeys.getDevice();
 
         CreateAccessCertificateRequestDto request = CreateAccessCertificateRequestDto.builder()
                 .appId(application.getAppId())
@@ -243,7 +244,7 @@ public class AccessCertificateCtrlTest {
 
     @Test
     public void itShouldCreateAndThenFetchAllAccessCertificates() throws Exception {
-        VehicleEntity vehicle = demoService.createDemoVehicle();
+        VehicleEntity vehicle = demoService.getOrCreateDemoVehicle();
         DeviceEntity device = deviceWithKeys.getDevice();
 
         LocalDateTime validFrom = LocalDateTime.now();

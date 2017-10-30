@@ -6,7 +6,6 @@ import org.springframework.boot.builder.SpringApplicationBuilder;
 import org.springframework.boot.system.ApplicationPidFileWriter;
 import org.springframework.boot.system.EmbeddedServerPortFileWriter;
 import org.springframework.context.ApplicationListener;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.data.jpa.convert.threeten.Jsr310JpaConverters;
 
 @EntityScan(
@@ -17,7 +16,6 @@ import org.springframework.data.jpa.convert.threeten.Jsr310JpaConverters;
 )
 @SpringBootApplication
 public class AmvAccessApplication {
-    public static final PageRequest standardPageRequest = new PageRequest(0, 10);
 
     public static void main(String[] args) {
         new SpringApplicationBuilder()

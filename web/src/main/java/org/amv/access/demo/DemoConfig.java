@@ -31,7 +31,7 @@ public class DemoConfig {
                                    UserRepository userRepository,
                                    VehicleRepository vehicleRepository,
                                    DeviceRepository deviceRepository) {
-        return new DemoService(
+        return new DemoServiceImpl(
                 cryptotool,
                 passwordEncoder,
                 issuerRepository,

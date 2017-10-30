@@ -4,6 +4,7 @@ import org.amv.access.AmvAccessApplication;
 import org.amv.access.model.UserEntity;
 import org.amv.access.model.UserRepository;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -25,7 +26,7 @@ public class FakeUserDetailsService implements UserDetailsService {
 
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-        final Page<UserEntity> byName = userRepository.findByName(username, AmvAccessApplication.standardPageRequest);
+        final Page<UserEntity> byName = userRepository.findByName(username, new PageRequest(0, 1));
 
         return byName.getContent().stream().findFirst()
                 .map(this::toUserDetails)

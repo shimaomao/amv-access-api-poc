@@ -7,7 +7,7 @@ buildscript {
         springBootVersion = '1.5.8.RELEASE'
         prometheusVersion = '0.0.26'
         jacksonVersion = '2.8.10'
-        jettyVersion = '9.4.6.v20170531'
+        jettyVersion = '9.4.7.v20170914'
     }
     repositories {
         jcenter()
