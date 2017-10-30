@@ -4,12 +4,12 @@ import com.google.common.net.HttpHeaders;
 import io.prometheus.client.spring.web.PrometheusTimeMethod;
 import io.swagger.annotations.*;
 import lombok.extern.slf4j.Slf4j;
-import org.amv.access.client.model.ErrorResponseDto;
 import org.amv.access.api.device.DeviceCertificateService.CreateDeviceCertificateRequest;
 import org.amv.access.auth.ApplicationAuthentication;
 import org.amv.access.client.model.CreateDeviceCertificateRequestDto;
 import org.amv.access.client.model.CreateDeviceCertificateResponseDto;
 import org.amv.access.client.model.DeviceCertificateDto;
+import org.amv.access.client.model.ErrorResponseDto;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -58,6 +58,7 @@ public class DeviceCertificateCtrl {
             @ApiParam(required = true) @RequestBody CreateDeviceCertificateRequestDto requestBody) {
         requireNonNull(auth);
         requireNonNull(requestBody);
+        requireNonNull(requestBody.getDevicePublicKey());
 
         CreateDeviceCertificateRequest createDeviceCertificateRequest = CreateDeviceCertificateRequest.builder()
                 .appId(auth.getApplication().getAppId())
@@ -84,38 +85,4 @@ public class DeviceCertificateCtrl {
 
         return response;
     }
-
-    /*
-    @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "Success", response = CreateDeviceCertificateResponse.class)
-    })
-    @DeleteMapping
-    public DeferredResult<ResponseEntity<Void>> revokeDeviceCertificate(
-            @RequestBody RevokeDeviceCertificateRequest request) {
-        requireNonNull(request);
-
-        DeferredResult<ResponseEntity<Void>> deferred = new DeferredResult<>();
-
-        Consumer<ResponseEntity<Void>> onNext = response -> {
-            boolean canBeSent = !deferred.isSetOrExpired();
-            if (!canBeSent) {
-                log.error("Deferred result is already set or expired.");
-            } else {
-                deferred.setResult(response);
-            }
-        };
-
-        Consumer<Throwable> onError = e -> {
-            log.error("", e);
-            deferred.setErrorResult(e);
-        };
-
-        deviceCertificateService.revokeDeviceCertificate(request)
-                .map(foo -> ResponseEntity.noContent().<Void>build())
-                .subscribeOn(Schedulers.parallel())
-                .subscribe(onNext, onError);
-
-        return deferred;
-    }*/
-
 }

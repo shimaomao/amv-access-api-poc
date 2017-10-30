@@ -128,7 +128,7 @@ public class AccessCertificateServiceImpl implements AccessCertificateService {
 
     @Override
     @Transactional
-    public Mono<AccessCertificate> createAccessCertificate(CreateAccessCertificateRequestDto request) {
+    public Mono<AccessCertificate> createAccessCertificate(CreateAccessCertificateRequest request) {
         requireNonNull(request, "`request` must not be null");
 
         ApplicationEntity applicationEntity = applicationRepository.findOneByAppId(request.getAppId())
@@ -205,7 +205,7 @@ public class AccessCertificateServiceImpl implements AccessCertificateService {
 
         if (accessCertificate.getDeviceId() != device.getId()) {
             // do not expose information about existing access certs - hence: NotFoundException
-            throw new NotFoundException("Access Certificate not found");
+            throw new NotFoundException("AccessCertificateEntity not found");
         }
 
         accessCertificateRepository.delete(accessCertificate);
@@ -223,10 +223,10 @@ public class AccessCertificateServiceImpl implements AccessCertificateService {
         }
     }
 
-    private Mono<AccessCertificateRequestEntity> saveAccessCertificateRequest(CreateAccessCertificateRequestDto request) {
+    private Mono<AccessCertificateRequestEntity> saveAccessCertificateRequest(CreateAccessCertificateRequest request) {
         requireNonNull(request, "`request` must not be null");
 
-        AccessCertificateRequestEntity accessCertificateRequestEntityEntity = AccessCertificateRequestEntity.builder()
+        AccessCertificateRequestEntity accessCertificateRequestEntity = AccessCertificateRequestEntity.builder()
                 .appId(request.getAppId())
                 .deviceSerialNumber(request.getDeviceSerialNumber())
                 .vehicleSerialNumber(request.getVehicleSerialNumber())
@@ -234,7 +234,7 @@ public class AccessCertificateServiceImpl implements AccessCertificateService {
                 .validUntil(request.getValidityEnd())
                 .build();
 
-        AccessCertificateRequestEntity savedEntity = accessCertificateRequestRepository.save(accessCertificateRequestEntityEntity);
+        AccessCertificateRequestEntity savedEntity = accessCertificateRequestRepository.save(accessCertificateRequestEntity);
 
         return Mono.just(savedEntity);
     }

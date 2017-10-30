@@ -96,37 +96,3 @@ public class AmvAccessRestExceptionHandlerAdvice extends ResponseEntityException
         return e;
     }
 }
-
-        /*extends DefaultHandlerExceptionResolver {
-
-    public static class AmvException extends Exception {
-
-    }
-
-    @Override
-    protected ModelAndView doResolveException(HttpServletRequest request, HttpServletResponse response,
-                                              Object handler, Exception ex) {
-        try {
-            Throwable t = unwrapUndeclaredThrowableExceptionIfNecessary(ex);
-            boolean isAmvException = t.getClass().isAssignableFrom(AmvException.class);
-
-            if (isAmvException) {
-                ModelAndView mv = new ModelAndView();
-                mv.setView(new MappingJackson2JsonView());
-
-                mv.addObject("timestamp", System.currentTimeMillis());
-                mv.addObject("dateTime", LocalDateTime.now().format(DateTimeFormatter.ISO_DATE_TIME));
-                mv.addObject("message", StringEscapeUtils.escapeEcmaScript(t.getLocalizedMessage()));
-                mv.addObject("url", request.getRequestURL().toString());
-                mv.addObject("exception", t.getClass());
-
-                return mv;
-            }
-        } catch (Exception e) {
-            log.error("", e);
-        }
-
-        return super.doResolveException(request, response, handler, ex);
-    }
-
-}*/

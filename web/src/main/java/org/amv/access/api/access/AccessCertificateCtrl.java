@@ -3,7 +3,6 @@ package org.amv.access.api.access;
 import io.prometheus.client.spring.web.PrometheusTimeMethod;
 import io.swagger.annotations.*;
 import lombok.extern.slf4j.Slf4j;
-import org.amv.access.client.model.ErrorResponseDto;
 import org.amv.access.api.access.AccessCertificateService.GetAccessCertificateRequest;
 import org.amv.access.api.access.AccessCertificateService.RevokeAccessCertificateRequest;
 import org.amv.access.api.access.model.CreateAccessCertificateRequestDto;
@@ -11,6 +10,7 @@ import org.amv.access.api.access.model.CreateAccessCertificateResponseDto;
 import org.amv.access.auth.NonceAuthentication;
 import org.amv.access.client.MoreHttpHeaders;
 import org.amv.access.client.model.AccessCertificateDto;
+import org.amv.access.client.model.ErrorResponseDto;
 import org.amv.access.client.model.GetAccessCertificatesResponseDto;
 import org.amv.access.exception.BadRequestException;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -68,7 +68,7 @@ public class AccessCertificateCtrl {
         log.info("Fetch access certificates of device {}", deviceSerialNumber);
 
         GetAccessCertificateRequest request = GetAccessCertificateRequest.builder()
-                .deviceSerialNumber(deviceSerialNumber)
+                .deviceSerialNumber(deviceSerialNumber.toLowerCase())
                 .build();
 
         ResponseEntity<GetAccessCertificatesResponseDto> response = accessCertificateService
@@ -116,7 +116,7 @@ public class AccessCertificateCtrl {
         log.info("Revoke access certificate {} of device {}", accessCertificateId.toString(), deviceSerialNumber);
 
         RevokeAccessCertificateRequest revokeAccessCertificateRequest = RevokeAccessCertificateRequest.builder()
-                .deviceSerialNumber(deviceSerialNumber)
+                .deviceSerialNumber(deviceSerialNumber.toLowerCase())
                 .accessCertificateId(accessCertificateId)
                 .build();
 
@@ -145,27 +145,33 @@ public class AccessCertificateCtrl {
     @PrometheusTimeMethod(name = "access_certificate_ctrl_create_access_certificate", help = "")
     public ResponseEntity<CreateAccessCertificateResponseDto> createAccessCertificate(
             @ApiParam(required = true) @PathVariable("deviceSerialNumber") String deviceSerialNumber,
-            @ApiParam(required = true) @RequestBody CreateAccessCertificateRequestDto createAccessCertificateRequest) {
+            @ApiParam(required = true) @RequestBody CreateAccessCertificateRequestDto createAccessCertificateRequestDto) {
         requireNonNull(deviceSerialNumber);
-        requireNonNull(createAccessCertificateRequest);
+        requireNonNull(createAccessCertificateRequestDto);
 
         log.info("Create access certificates with application {} for device {} and vehicle {}",
-                createAccessCertificateRequest.getAppId(),
-                createAccessCertificateRequest.getDeviceSerialNumber(),
-                createAccessCertificateRequest.getVehicleSerialNumber());
+                createAccessCertificateRequestDto.getAppId(),
+                createAccessCertificateRequestDto.getDeviceSerialNumber(),
+                createAccessCertificateRequestDto.getVehicleSerialNumber());
 
-        if (!deviceSerialNumber.equals(createAccessCertificateRequest.getDeviceSerialNumber())) {
+        if (!deviceSerialNumber.equalsIgnoreCase(createAccessCertificateRequestDto.getDeviceSerialNumber())) {
             throw new BadRequestException("Device Serial Numbers do not match");
         }
 
-        BindException errors = new BindException(createAccessCertificateRequest, "createAccessCertificateRequest");
-        createAccessCertificateRequestValidator.validate(createAccessCertificateRequest, errors);
+        BindException errors = new BindException(createAccessCertificateRequestDto, "createAccessCertificateRequest");
+        createAccessCertificateRequestValidator.validate(createAccessCertificateRequestDto, errors);
         if (errors.hasErrors()) {
             throw new BadRequestException(errors.getMessage());
         }
 
         ResponseEntity<CreateAccessCertificateResponseDto> response = accessCertificateService
-                .createAccessCertificate(createAccessCertificateRequest)
+                .createAccessCertificate(AccessCertificateService.CreateAccessCertificateRequest.builder()
+                        .appId(createAccessCertificateRequestDto.getAppId().toLowerCase())
+                        .deviceSerialNumber(createAccessCertificateRequestDto.getDeviceSerialNumber().toLowerCase())
+                        .vehicleSerialNumber(createAccessCertificateRequestDto.getVehicleSerialNumber().toLowerCase())
+                        .validityStart(createAccessCertificateRequestDto.getValidityStart())
+                        .validityEnd(createAccessCertificateRequestDto.getValidityEnd())
+                        .build())
                 .map(accessCertificate -> CreateAccessCertificateResponseDto.builder()
                         .accessCertificate(AccessCertificateDto.builder()
                                 .deviceAccessCertificate(accessCertificate.getSignedDeviceAccessCertificateBase64())

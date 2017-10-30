@@ -127,7 +127,8 @@ public class DeviceCertificateServiceImpl implements DeviceCertificateService {
         int numberOfTries = 25;
 
         for (int i = 0; i < numberOfTries; i++) {
-            String deviceSerialNumber = SecureRandomUtils.generateRandomSerial();
+            String deviceSerialNumber = SecureRandomUtils.generateRandomSerial()
+                    .toLowerCase();
 
             Optional<DeviceEntity> bySerialNumber = deviceRepository.findBySerialNumber(deviceSerialNumber);
             boolean deviceWithSerialNumberAlreadyExists = bySerialNumber.isPresent();
