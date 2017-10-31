@@ -10,7 +10,6 @@ import org.amv.access.api.access.AccessCertificateService;
 import org.amv.access.model.*;
 
 import java.time.LocalDateTime;
-import java.util.concurrent.TimeUnit;
 
 import static java.util.Objects.requireNonNull;
 
@@ -45,21 +44,19 @@ public class DemoAccessCertificateVerticle extends AbstractVerticle {
                 if (!isDeviceCertificateForDemoApplication) {
                     future.complete();
                 } else {
-                    vertx.setTimer(TimeUnit.SECONDS.toMillis(1), event1 -> {
-                        VehicleEntity demoVehicle = demoService.getOrCreateDemoVehicle();
-                        DeviceEntity device = deviceRepository.findOne(deviceCertificateEntity.getDeviceId());
+                    VehicleEntity demoVehicle = demoService.getOrCreateDemoVehicle();
+                    DeviceEntity device = deviceRepository.findOne(deviceCertificateEntity.getDeviceId());
 
-                        log.info("Creating demo access certificate for device {} and vehicle {}", device.getSerialNumber(), demoVehicle.getSerialNumber());
+                    log.info("Creating demo access certificate for device {} and vehicle {}", device.getSerialNumber(), demoVehicle.getSerialNumber());
 
-                        accessCertificateService.createAccessCertificate(AccessCertificateService.CreateAccessCertificateRequest.builder()
-                                .appId(demoApplication.getAppId())
-                                .deviceSerialNumber(device.getSerialNumber())
-                                .vehicleSerialNumber(demoVehicle.getSerialNumber())
-                                .validityStart(LocalDateTime.now().minusMinutes(1))
-                                .validityEnd(LocalDateTime.now().plusYears(1))
-                                .build())
-                                .subscribe(future::complete, future::fail);
-                    });
+                    accessCertificateService.createAccessCertificate(AccessCertificateService.CreateAccessCertificateRequest.builder()
+                            .appId(demoApplication.getAppId())
+                            .deviceSerialNumber(device.getSerialNumber())
+                            .vehicleSerialNumber(demoVehicle.getSerialNumber())
+                            .validityStart(LocalDateTime.now().minusMinutes(1))
+                            .validityEnd(LocalDateTime.now().plusYears(1))
+                            .build())
+                            .subscribe(future::complete, future::fail);
                 }
             }, result -> {
                 if (result.succeeded()) {

@@ -84,10 +84,13 @@ public class DeviceCertificateServiceImpl implements DeviceCertificateService {
 
         deviceCertificateRepository.save(deviceCertificateEntity);
 
-        this.eventBus.publisher(deviceCertificateEntity.getClass().getName())
-                .end(Json.encode(deviceCertificateEntity));
-
-        return Mono.justOrEmpty(deviceCertificate);
+        return Mono.justOrEmpty(deviceCertificate)
+                .doOnSuccess(entity -> {
+                    String eventName = entity.getClass().getName();
+                    log.debug("Sending event {}", eventName);
+                    this.eventBus.publisher(eventName)
+                            .end(Json.encode(entity));
+                });
     }
 
     private ApplicationEntity findApplicationOrThrow(ApplicationAuthentication auth) {
