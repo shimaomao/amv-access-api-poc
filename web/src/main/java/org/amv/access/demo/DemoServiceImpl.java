@@ -4,12 +4,9 @@ import com.google.common.base.Supplier;
 import com.google.common.base.Suppliers;
 import com.google.common.collect.Lists;
 import lombok.extern.slf4j.Slf4j;
-import org.amv.access.AmvAccessApplication;
 import org.amv.access.model.*;
 import org.amv.highmobility.cryptotool.Cryptotool;
 import org.amv.highmobility.cryptotool.CryptotoolUtils.SecureRandomUtils;
-import org.apache.commons.lang3.RandomStringUtils;
-import org.apache.commons.lang3.StringUtils;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.transaction.annotation.Transactional;
@@ -74,7 +71,10 @@ public class DemoServiceImpl implements DemoService {
                     }
                     return issuer;
                 })
-                .map(issuer -> issuerRepository.findByName(issuer.getName()).stream().findFirst()
+                .map(issuer -> issuerRepository.findByName(issuer.getName(), new PageRequest(0, 1))
+                        .getContent()
+                        .stream()
+                        .findFirst()
                         .orElseGet(() -> this.createDemoIssuer(issuer)))
                 .orElseThrow(() -> new IllegalStateException("Could not find or create demo issuer from properties file"));
 
@@ -126,7 +126,8 @@ public class DemoServiceImpl implements DemoService {
 
     @Override
     public IssuerEntity getOrCreateDemoIssuer() {
-        return issuerRepository.findByName(DEMO_ISSUER_NAME)
+        return issuerRepository.findByName(DEMO_ISSUER_NAME, new PageRequest(0, 1))
+                .getContent()
                 .stream()
                 .findFirst()
                 .orElseGet(this::createDemoIssuer);
@@ -142,7 +143,8 @@ public class DemoServiceImpl implements DemoService {
 
     @Override
     public VehicleEntity getOrCreateDemoVehicle() {
-        return vehicleRepository.findByName(DEMO_VEHICLE_NAME, new PageRequest(0, 1)).getContent()
+        return vehicleRepository.findByName(DEMO_VEHICLE_NAME, new PageRequest(0, 1))
+                .getContent()
                 .stream()
                 .findFirst()
                 .orElseGet(this::createDemoVehicle);
@@ -150,7 +152,8 @@ public class DemoServiceImpl implements DemoService {
 
     @Override
     public DeviceEntity getOrCreateDemoDevice() {
-        return deviceRepository.findByName(DEMO_DEVICE_NAME, new PageRequest(0, 1)).getContent()
+        return deviceRepository.findByName(DEMO_DEVICE_NAME, new PageRequest(0, 1))
+                .getContent()
                 .stream()
                 .findFirst()
                 .orElseGet(this::createDemoDevice);

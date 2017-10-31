@@ -6,12 +6,15 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.repository.query.Param;
 import org.springframework.data.rest.core.annotation.RepositoryRestResource;
 
+import java.util.List;
 import java.util.Optional;
 
 @RepositoryRestResource(collectionResourceRel = "device", path = "model-device")
 public interface DeviceRepository extends JpaRepository<DeviceEntity, Long> {
 
-    Optional<DeviceEntity> findBySerialNumber(String serialNumber);
+    Page<DeviceEntity> findByApplicationId(@Param("applicationId") long applicationId, Pageable page);
+
+    Optional<DeviceEntity> findBySerialNumber(@Param("serialNumber") String serialNumber);
 
     Page<DeviceEntity> findByName(@Param("name") String name, Pageable page);
 }

@@ -14,6 +14,7 @@ import org.amv.access.spi.highmobility.AmvPermissionsAdapter;
 import org.amv.access.spi.model.CreateAccessCertificateRequestImpl;
 import org.amv.highmobility.cryptotool.Cryptotool;
 import org.amv.highmobility.cryptotool.PermissionsImpl;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.transaction.annotation.Transactional;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -78,7 +79,8 @@ public class AccessCertificateServiceImpl implements AccessCertificateService {
         verifyNonceAuthOrThrow(nonceAuthentication, device);
 
         List<AccessCertificateEntity> accessCertificates = accessCertificateRepository
-                .findByDeviceId(device.getId());
+                .findByDeviceId(device.getId(), new PageRequest(0, Integer.MAX_VALUE))
+                .getContent();
 
         Map<Long, ApplicationEntity> applications = accessCertificates.stream()
                 .map(AccessCertificateEntity::getApplicationId)
