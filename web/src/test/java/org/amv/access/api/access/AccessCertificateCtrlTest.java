@@ -319,18 +319,12 @@ public class AccessCertificateCtrlTest {
         assertThat(validity, is(Cryptotool.Validity.VALID));
     }
 
-
     private String generateNonceWithRandomLengthBase64() {
         return generateNonceBase64(RandomUtils.nextInt(8, 32));
     }
 
     private String generateNonceBase64(int numberOfBytes) {
-        checkArgument(numberOfBytes > 0);
-        SecureRandom random = new SecureRandom();
-        byte nonceBytes[] = new byte[numberOfBytes];
-        random.nextBytes(nonceBytes);
-
-        return toBase64OrThrow(new String(nonceBytes));
+        return CryptotoolUtils.SecureRandomUtils.generateRandomHexString(numberOfBytes);
     }
 
     private String createNonceSignatureBase64(Cryptotool.Keys keys, String nonce) {

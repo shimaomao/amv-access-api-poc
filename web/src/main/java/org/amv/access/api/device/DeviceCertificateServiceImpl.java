@@ -5,6 +5,7 @@ import io.vertx.rxjava.core.eventbus.EventBus;
 import lombok.extern.slf4j.Slf4j;
 import org.amv.access.auth.ApplicationAuthentication;
 import org.amv.access.core.DeviceCertificate;
+import org.amv.access.demo.DemoAccessCertificateVerticle;
 import org.amv.access.exception.BadRequestException;
 import org.amv.access.exception.NotFoundException;
 import org.amv.access.issuer.IssuerService;
@@ -12,6 +13,7 @@ import org.amv.access.model.*;
 import org.amv.access.spi.AmvAccessModuleSpi;
 import org.amv.access.spi.model.CreateDeviceCertificateRequestImpl;
 import org.amv.highmobility.cryptotool.CryptotoolUtils.SecureRandomUtils;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
 import reactor.core.publisher.Mono;
 
@@ -22,6 +24,7 @@ import static java.util.Objects.requireNonNull;
 
 @Slf4j
 public class DeviceCertificateServiceImpl implements DeviceCertificateService {
+
     private final AmvAccessModuleSpi amvAccessModule;
     private final EventBus eventBus;
     private final IssuerService issuerService;
@@ -86,6 +89,7 @@ public class DeviceCertificateServiceImpl implements DeviceCertificateService {
 
         return Mono.justOrEmpty(deviceCertificate)
                 .doOnSuccess(entity -> {
+                    // TODO: not working correctly - event is sent asynchronously and does not work in tests atm
                     String eventName = entity.getClass().getName();
                     log.debug("Sending event {}", eventName);
                     this.eventBus.publisher(eventName)

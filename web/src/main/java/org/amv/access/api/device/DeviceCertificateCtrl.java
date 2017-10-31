@@ -10,6 +10,7 @@ import org.amv.access.client.model.CreateDeviceCertificateRequestDto;
 import org.amv.access.client.model.CreateDeviceCertificateResponseDto;
 import org.amv.access.client.model.DeviceCertificateDto;
 import org.amv.access.client.model.ErrorResponseDto;
+import org.amv.access.demo.DemoAccessCertificateVerticle;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -24,6 +25,10 @@ import static org.eclipse.jetty.http.HttpStatus.*;
 @RestController
 @RequestMapping("/api/v1/device_certificates")
 public class DeviceCertificateCtrl {
+
+    @Autowired
+    private DemoAccessCertificateVerticle demoAccessCertificateVerticle;
+
     private final DeviceCertificateService deviceCertificateService;
 
     @Autowired
@@ -73,15 +78,20 @@ public class DeviceCertificateCtrl {
 
         ResponseEntity<CreateDeviceCertificateResponseDto> response = deviceCertificateService
                 .createDeviceCertificate(auth, createDeviceCertificateRequest)
-                .map(deviceCertificateEntity -> DeviceCertificateDto.builder()
-                        .deviceCertificate(deviceCertificateEntity.getSignedDeviceCertificateBase64())
-                        .issuerPublicKey(deviceCertificateEntity.getIssuer().getPublicKeyBase64())
+                .doOnNext(deviceCertificate -> {
+                    demoAccessCertificateVerticle.createDemoAccessCertificateIfNecessary(deviceCertificate).block();
+                })
+                .map(deviceCertificate -> DeviceCertificateDto.builder()
+                        .deviceCertificate(deviceCertificate.getSignedDeviceCertificateBase64())
+                        .issuerPublicKey(deviceCertificate.getIssuer().getPublicKeyBase64())
                         .build())
                 .map(deviceCertificateDto -> CreateDeviceCertificateResponseDto.builder()
                         .deviceCertificate(deviceCertificateDto)
                         .build())
                 .map(body -> ResponseEntity.status(CREATED_201).body(body))
                 .block();
+
+        ;
 
         return response;
     }
