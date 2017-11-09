@@ -16,6 +16,11 @@ import org.springframework.context.annotation.Configuration;
 @EnableSpringBootMetricsCollector
 public class PrometheusConfiguration {
 
+    static {
+        // avoids duplicate metrics registration in case of spring boot dev-tools restarts
+        CollectorRegistry.defaultRegistry.clear();
+    }
+
     public PrometheusConfiguration() {
         DefaultExports.initialize();
     }
