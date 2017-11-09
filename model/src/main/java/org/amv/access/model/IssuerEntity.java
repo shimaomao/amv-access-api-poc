@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AccessLevel;
 import lombok.Builder;
+import lombok.Builder.Default;
 import lombok.Data;
 import lombok.Setter;
 import lombok.experimental.Tolerate;
@@ -29,9 +30,10 @@ public class IssuerEntity implements Issuer {
     private Long id;
 
     @CreatedDate
-    @Column(name = "created", insertable = true, updatable = false)
+    @Column(name = "created_at", insertable = true, updatable = false)
     @Temporal(TemporalType.TIMESTAMP)
-    private Date created;
+    @JsonProperty(value = "created_at")
+    private Date createdAt;
 
     @Column(name = "name", length = 4)
     private String name;
@@ -43,6 +45,10 @@ public class IssuerEntity implements Issuer {
     @Column(name = "private_key_base64")
     @Convert(converter = CryptoConverter.class)
     private String privateKeyBase64;
+
+    @Default
+    @Column(name = "enabled")
+    private boolean enabled = true;
 
     @Tolerate
     protected IssuerEntity() {

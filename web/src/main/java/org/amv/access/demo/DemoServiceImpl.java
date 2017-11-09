@@ -214,7 +214,7 @@ public class DemoServiceImpl implements DemoService {
     private IssuerEntity createDemoIssuer(DemoProperties.DemoIssuer demoIssuer) {
         IssuerEntity issuerEntity = IssuerEntity.builder()
                 .name(demoIssuer.getName())
-                .created(Date.from(Instant.EPOCH))
+                .createdAt(Date.from(Instant.EPOCH))
                 .publicKeyBase64(encodeHexAsBase64(decodeBase64AsHex(demoIssuer.getPublicKeyBase64())))
                 .privateKeyBase64(encodeHexAsBase64(decodeBase64AsHex(demoIssuer.getPrivateKeyBase64())))
                 .build();

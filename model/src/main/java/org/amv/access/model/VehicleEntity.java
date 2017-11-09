@@ -32,10 +32,10 @@ public class VehicleEntity implements Vehicle {
     private Long id;
 
     @CreatedDate
-    @Column(name = "created", insertable = true, updatable = false)
+    @Column(name = "created_at", insertable = true, updatable = false)
     @Temporal(TemporalType.TIMESTAMP)
-    @JsonProperty(value = "created")
-    private Date created;
+    @JsonProperty(value = "created_at")
+    private Date createdAt;
 
     @Column(name = "issuer_id")
     @JsonProperty(value = "issuer_id")

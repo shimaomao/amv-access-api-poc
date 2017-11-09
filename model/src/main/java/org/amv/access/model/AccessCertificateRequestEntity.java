@@ -27,9 +27,10 @@ public class AccessCertificateRequestEntity {
     private Long id;
 
     @CreatedDate
-    @Column(name = "created", updatable = false)
+    @Column(name = "created_at", insertable = true, updatable = false)
     @Temporal(TemporalType.TIMESTAMP)
-    private Date created;
+    @JsonProperty(value = "created_at")
+    private Date createdAt;
 
     @Column(name = "valid_from", updatable = false)
     private LocalDateTime validFrom;

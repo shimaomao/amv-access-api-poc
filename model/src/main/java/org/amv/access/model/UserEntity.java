@@ -8,8 +8,10 @@ import lombok.Builder.Default;
 import lombok.Data;
 import lombok.Setter;
 import lombok.experimental.Tolerate;
+import org.springframework.data.annotation.CreatedDate;
 
 import javax.persistence.*;
+import java.util.Date;
 import java.util.List;
 
 
@@ -24,6 +26,12 @@ public class UserEntity {
     @Column(name = "user_id", columnDefinition = "bigint")
     @JsonProperty(value = "id", access = JsonProperty.Access.READ_ONLY)
     private Long id;
+
+    @CreatedDate
+    @Column(name = "created_at", insertable = true, updatable = false)
+    @Temporal(TemporalType.TIMESTAMP)
+    @JsonProperty(value = "created_at")
+    private Date createdAt;
 
     @Column(name = "name")
     private String name;

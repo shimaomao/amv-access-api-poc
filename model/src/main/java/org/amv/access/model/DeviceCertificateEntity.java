@@ -38,15 +38,10 @@ public class DeviceCertificateEntity {
     private String uuid;
 
     @CreatedDate
-    @Column(name = "created", insertable = true, updatable = false)
+    @Column(name = "created_at", insertable = true, updatable = false)
     @Temporal(TemporalType.TIMESTAMP)
-    private Date created;
-
-    @Column(name = "issuer_id")
-    private long issuerId;
-
-    @Column(name = "application_id")
-    private long applicationId;
+    @JsonProperty(value = "created_at")
+    private Date createdAt;
 
     @Column(name = "device_id")
     private long deviceId;

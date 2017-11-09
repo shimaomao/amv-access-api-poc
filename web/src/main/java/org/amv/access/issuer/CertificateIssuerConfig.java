@@ -73,7 +73,7 @@ public class CertificateIssuerConfig {
 
             issuerRepository.save(IssuerEntity.builder()
                     .name(issuer.getName())
-                    .created(Date.from(Instant.now()))
+                    .createdAt(Date.from(Instant.now()))
                     .publicKeyBase64(issuer.getPublicKeyBase64())
                     .privateKeyBase64(issuer.getPrivateKeyBase64())
                     .build());

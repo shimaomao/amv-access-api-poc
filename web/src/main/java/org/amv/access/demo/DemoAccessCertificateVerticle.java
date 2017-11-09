@@ -43,13 +43,16 @@ public class DemoAccessCertificateVerticle extends AbstractVerticle {
                 log.info("Got event {}: {}", event.address(), deviceCertificateEntity);
 
                 ApplicationEntity demoApplication = demoService.getOrCreateDemoApplication();
+                DeviceEntity device = deviceRepository.findOne(deviceCertificateEntity.getDeviceId());
+                if (device == null) {
+                    log.error("Could not find device of device certificate with id {}", deviceCertificateEntity.getDeviceId());
+                }
 
-                boolean isDeviceCertificateForDemoApplication = deviceCertificateEntity.getApplicationId() == demoApplication.getId();
+                boolean isDeviceCertificateForDemoApplication = device.getApplicationId() == demoApplication.getId();
                 if (!isDeviceCertificateForDemoApplication) {
                     future.complete();
                 } else {
                     VehicleEntity demoVehicle = demoService.getOrCreateDemoVehicle();
-                    DeviceEntity device = deviceRepository.findOne(deviceCertificateEntity.getDeviceId());
 
                     log.info("Creating demo access certificate for device {} and vehicle {}", device.getSerialNumber(), demoVehicle.getSerialNumber());
 

@@ -35,9 +35,10 @@ public class AccessCertificateEntity {
     private String uuid;
 
     @CreatedDate
-    @Column(name = "created", insertable = true, updatable = false)
+    @Column(name = "created_at", insertable = true, updatable = false)
     @Temporal(TemporalType.TIMESTAMP)
-    private Date created;
+    @JsonProperty(value = "created_at")
+    private Date createdAt;
 
     @Column(name = "issuer_id")
     private long issuerId;

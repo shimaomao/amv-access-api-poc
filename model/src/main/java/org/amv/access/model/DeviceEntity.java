@@ -32,9 +32,10 @@ public class DeviceEntity implements Device {
     private Long id;
 
     @CreatedDate
-    @Column(name = "created", insertable = true, updatable = false)
+    @Column(name = "created_at", insertable = true, updatable = false)
     @Temporal(TemporalType.TIMESTAMP)
-    private Date created;
+    @JsonProperty(value = "created_at")
+    private Date createdAt;
 
     @Column(name = "issuer_id")
     private long issuerId;
@@ -42,7 +43,7 @@ public class DeviceEntity implements Device {
     @Column(name = "application_id")
     private long applicationId;
 
-    @Column(name = "device_name", length = 63)
+    @Column(name = "name", length = 63)
     private String name;
 
     @Column(name = "serial_number"/*, length = 18*/)

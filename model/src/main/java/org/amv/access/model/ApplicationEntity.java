@@ -8,8 +8,10 @@ import lombok.Data;
 import lombok.Setter;
 import lombok.experimental.Tolerate;
 import org.amv.access.core.Application;
+import org.springframework.data.annotation.CreatedDate;
 
 import javax.persistence.*;
+import java.util.Date;
 
 
 @Data
@@ -29,6 +31,12 @@ public class ApplicationEntity implements Application {
     @Column(name = "id", columnDefinition = "bigint")
     @JsonProperty(value = "id", access = JsonProperty.Access.READ_ONLY)
     private Long id;
+
+    @CreatedDate
+    @Column(name = "created_at", insertable = true, updatable = false)
+    @Temporal(TemporalType.TIMESTAMP)
+    @JsonProperty(value = "created_at")
+    private Date createdAt;
 
     @Column(name = "name", length = 63)
     private String name;
