@@ -8,4 +8,5 @@ include 'web'
 include 'client'
 include 'client-model'
 include 'core'
+include 'client-java6'
 
