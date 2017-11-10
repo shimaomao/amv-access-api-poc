@@ -1,19 +1,19 @@
 package org.amv.access.client.java6;
 
 import com.google.common.base.Preconditions;
-import com.netflix.hystrix.HystrixCommand;
-import com.netflix.hystrix.HystrixCommandGroupKey;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
 import okhttp3.ResponseBody;
 import okhttp3.internal.Util;
 import org.amv.access.client.MoreHttpHeaders;
-import org.amv.access.client.model.GetAccessCertificatesResponseDto;
+import org.amv.access.client.model.java6.GetAccessCertificatesResponseDto;
+import rx.Observable;
+
+import java.util.concurrent.Callable;
+
 
 public class SimpleAccessCertClient implements AccessCertClient {
-    private static final HystrixCommandGroupKey get = HystrixCommandGroupKey.Factory.asKey("GET-access-cert");
-    private static final HystrixCommandGroupKey delete = HystrixCommandGroupKey.Factory.asKey("DELETE-access-cert");
 
     private final OkHttpClient client = new OkHttpClient();
 
@@ -24,12 +24,12 @@ public class SimpleAccessCertClient implements AccessCertClient {
     }
 
     @Override
-    public HystrixCommand<GetAccessCertificatesResponseDto> fetchAccessCertificates(final String nonce,
-                                                                                    final String signedNonce,
-                                                                                    final String deviceSerialNumber) {
-        return new HystrixCommand<GetAccessCertificatesResponseDto>(get) {
+    public Observable<GetAccessCertificatesResponseDto> fetchAccessCertificates(final String nonce,
+                                                                                final String signedNonce,
+                                                                                final String deviceSerialNumber) {
+        return Observable.fromCallable(new Callable<GetAccessCertificatesResponseDto>() {
             @Override
-            protected GetAccessCertificatesResponseDto run() throws Exception {
+            public GetAccessCertificatesResponseDto call() throws Exception {
                 String url = String.format("%s/api/v1/device/%s/access_certificates", baseUrl, deviceSerialNumber);
 
                 Request request = new Request.Builder()
@@ -43,29 +43,29 @@ public class SimpleAccessCertClient implements AccessCertClient {
                     response = client.newCall(request).execute();
                     final ResponseBody responseBody = response.body();
 
-                    return Clients.defaultObjectMapper.readerFor(GetAccessCertificatesResponseDto.class)
-                            .readValue(responseBody.bytes());
+                    return Clients.defaultObjectMapper.fromJson(responseBody.charStream(), GetAccessCertificatesResponseDto.class);
                 } finally {
                     Util.closeQuietly(response);
                 }
             }
-        };
+        });
     }
 
     @Override
-    public HystrixCommand<Void> revokeAccessCertificate(final String nonce,
-                                                        final String signedNonce,
-                                                        final String deviceSerialNumber,
-                                                        final String accessCertificateId) {
-        return new HystrixCommand<Void>(delete) {
+    public Observable<Void> revokeAccessCertificate(final String nonce,
+                                                    final String signedNonce,
+                                                    final String deviceSerialNumber,
+                                                    final String accessCertificateId) {
+        return Observable.fromCallable(new Callable<Void>() {
             @Override
-            protected Void run() throws Exception {
+            public Void call() throws Exception {
                 String url = String.format("%s/api/v1/device/%s/access_certificates/%s", baseUrl, deviceSerialNumber, accessCertificateId);
 
                 Request request = new Request.Builder()
                         .addHeader(MoreHttpHeaders.AMV_NONCE, nonce)
                         .addHeader(MoreHttpHeaders.AMV_SIGNATURE, signedNonce)
                         .url(url)
+                        .delete()
                         .build();
 
                 Response response = null;
@@ -76,6 +76,6 @@ public class SimpleAccessCertClient implements AccessCertClient {
                     Util.closeQuietly(response);
                 }
             }
-        };
+        });
     }
 }

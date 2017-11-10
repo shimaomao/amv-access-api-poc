@@ -1,17 +1,17 @@
 package org.amv.access.client.java6;
 
 import com.google.common.base.Preconditions;
-import com.netflix.hystrix.HystrixCommand;
-import com.netflix.hystrix.HystrixCommandGroupKey;
 import okhttp3.*;
 import okhttp3.internal.Util;
-import org.amv.access.client.model.CreateDeviceCertificateRequestDto;
-import org.amv.access.client.model.CreateDeviceCertificateResponseDto;
+import org.amv.access.client.model.java6.CreateDeviceCertificateRequestDto;
+import org.amv.access.client.model.java6.CreateDeviceCertificateResponseDto;
+import rx.Observable;
+
+import java.util.concurrent.Callable;
 
 import static com.google.common.net.HttpHeaders.AUTHORIZATION;
 
 public class SimpleDeviceCertClient implements DeviceCertClient {
-    private static final HystrixCommandGroupKey post = HystrixCommandGroupKey.Factory.asKey("post-create-device-cert");
 
     private final OkHttpClient client = new OkHttpClient();
 
@@ -22,15 +22,16 @@ public class SimpleDeviceCertClient implements DeviceCertClient {
     }
 
     @Override
-    public HystrixCommand<CreateDeviceCertificateResponseDto> createDeviceCertificate(final String apiKey,
-                                                                                      final CreateDeviceCertificateRequestDto createDeviceCertificateRequest) {
+    public Observable<CreateDeviceCertificateResponseDto> createDeviceCertificate(final String apiKey,
+                                                                                  final CreateDeviceCertificateRequestDto createDeviceCertificateRequest) {
 
-        return new HystrixCommand<CreateDeviceCertificateResponseDto>(post) {
+        return Observable.fromCallable(new Callable<CreateDeviceCertificateResponseDto>() {
             @Override
-            protected CreateDeviceCertificateResponseDto run() throws Exception {
+            public CreateDeviceCertificateResponseDto call() throws Exception {
+
                 String url = String.format("%s/api/v1/device_certificates", baseUrl);
 
-                String json = Clients.defaultObjectMapper.writeValueAsString(createDeviceCertificateRequest);
+                String json = Clients.defaultObjectMapper.toJson(createDeviceCertificateRequest);
                 RequestBody requestBody = RequestBody.create(Clients.JSON, json);
 
                 Request request = new Request.Builder()
@@ -45,14 +46,11 @@ public class SimpleDeviceCertClient implements DeviceCertClient {
 
                     final ResponseBody responseBody = response.body();
 
-                    final CreateDeviceCertificateResponseDto result = Clients.defaultObjectMapper.readerFor(CreateDeviceCertificateResponseDto.class)
-                            .readValue(responseBody.bytes());
-
-                    return result;
+                    return Clients.defaultObjectMapper.fromJson(responseBody.charStream(), CreateDeviceCertificateResponseDto.class);
                 } finally {
                     Util.closeQuietly(response);
                 }
             }
-        };
+        });
     }
 }

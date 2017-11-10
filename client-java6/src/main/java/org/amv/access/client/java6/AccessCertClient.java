@@ -1,7 +1,8 @@
 package org.amv.access.client.java6;
 
-import com.netflix.hystrix.HystrixCommand;
-import org.amv.access.client.model.GetAccessCertificatesResponseDto;
+
+import org.amv.access.client.model.java6.GetAccessCertificatesResponseDto;
+import rx.Observable;
 
 
 /**
@@ -9,14 +10,12 @@ import org.amv.access.client.model.GetAccessCertificatesResponseDto;
  */
 public interface AccessCertClient extends AccessApiClient {
 
-    HystrixCommand<GetAccessCertificatesResponseDto> fetchAccessCertificates(String nonce,
-                                                                             String signedNonce,
-                                                                             String deviceSerialNumber);
+    Observable<GetAccessCertificatesResponseDto> fetchAccessCertificates(String nonce,
+                                                                         String signedNonce,
+                                                                         String deviceSerialNumber);
 
-    HystrixCommand<Void> revokeAccessCertificate(String nonce,
-                                                 String signedNonce,
-                                                 String deviceSerialNumber,
-                                                 String accessCertificateId);
-
-
+    Observable<Void> revokeAccessCertificate(String nonce,
+                                             String signedNonce,
+                                             String deviceSerialNumber,
+                                             String accessCertificateId);
 }
