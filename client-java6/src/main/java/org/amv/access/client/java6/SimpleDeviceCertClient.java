@@ -4,6 +4,7 @@ import com.google.common.base.Preconditions;
 import com.netflix.hystrix.HystrixCommand;
 import com.netflix.hystrix.HystrixCommandGroupKey;
 import okhttp3.*;
+import okhttp3.internal.Util;
 import org.amv.access.client.model.CreateDeviceCertificateRequestDto;
 import org.amv.access.client.model.CreateDeviceCertificateResponseDto;
 
@@ -38,14 +39,19 @@ public class SimpleDeviceCertClient implements DeviceCertClient {
                         .post(requestBody)
                         .build();
 
-                Response response = client.newCall(request).execute();
+                Response response = null;
+                try {
+                    response = client.newCall(request).execute();
 
-                final ResponseBody responseBody = response.body();
+                    final ResponseBody responseBody = response.body();
 
-                final CreateDeviceCertificateResponseDto result = Clients.defaultObjectMapper.readerFor(CreateDeviceCertificateResponseDto.class)
-                        .readValue(responseBody.bytes());
+                    final CreateDeviceCertificateResponseDto result = Clients.defaultObjectMapper.readerFor(CreateDeviceCertificateResponseDto.class)
+                            .readValue(responseBody.bytes());
 
-                return result;
+                    return result;
+                } finally {
+                    Util.closeQuietly(response);
+                }
             }
         };
     }

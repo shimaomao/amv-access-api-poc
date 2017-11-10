@@ -7,6 +7,7 @@ import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
 import okhttp3.ResponseBody;
+import okhttp3.internal.Util;
 import org.amv.access.client.MoreHttpHeaders;
 import org.amv.access.client.model.GetAccessCertificatesResponseDto;
 
@@ -37,12 +38,16 @@ public class SimpleAccessCertClient implements AccessCertClient {
                         .url(url)
                         .build();
 
-                Response response = client.newCall(request).execute();
+                Response response = null;
+                try {
+                    response = client.newCall(request).execute();
+                    final ResponseBody responseBody = response.body();
 
-                final ResponseBody responseBody = response.body();
-
-                return Clients.defaultObjectMapper.readerFor(GetAccessCertificatesResponseDto.class)
-                        .readValue(responseBody.bytes());
+                    return Clients.defaultObjectMapper.readerFor(GetAccessCertificatesResponseDto.class)
+                            .readValue(responseBody.bytes());
+                } finally {
+                    Util.closeQuietly(response);
+                }
             }
         };
     }
@@ -63,11 +68,13 @@ public class SimpleAccessCertClient implements AccessCertClient {
                         .url(url)
                         .build();
 
-                Response response = client.newCall(request).execute();
-
-                response.close();
-
-                return null;
+                Response response = null;
+                try {
+                    response = client.newCall(request).execute();
+                    return null;
+                } finally {
+                    Util.closeQuietly(response);
+                }
             }
         };
     }
