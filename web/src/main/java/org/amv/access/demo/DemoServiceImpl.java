@@ -88,13 +88,12 @@ public class DemoServiceImpl implements DemoService {
     }
 
     @Override
-    public DeviceWithKeys createDemoDeviceWithKeys(IssuerEntity issuerEntity, ApplicationEntity applicationEntity) {
+    public DeviceWithKeys createDemoDeviceWithKeys(ApplicationEntity applicationEntity) {
         Cryptotool.Keys keys = cryptotool.generateKeys().block();
 
         String publicKeyBase64 = encodeHexAsBase64(keys.getPublicKey());
 
         DeviceEntity demoDevice = DeviceEntity.builder()
-                .issuerId(issuerEntity.getId())
                 .applicationId(applicationEntity.getId())
                 .name(DEMO_DEVICE_NAME)
                 .serialNumber(SecureRandomUtils.generateRandomSerial().toLowerCase())
@@ -164,7 +163,7 @@ public class DemoServiceImpl implements DemoService {
     }
 
     private DeviceEntity createDemoDevice() {
-        return createDemoDevice(getOrCreateDemoIssuer(), getOrCreateDemoApplication());
+        return createDemoDevice(getOrCreateDemoApplication());
     }
 
     private ApplicationEntity createDemoApplication(DemoProperties.DemoApplication demoApplication) {
@@ -272,8 +271,8 @@ public class DemoServiceImpl implements DemoService {
         return savedVehicleEntity;
     }
 
-    private DeviceEntity createDemoDevice(IssuerEntity issuerEntity, ApplicationEntity applicationEntity) {
-        DeviceWithKeys demoDeviceWithKeys = createDemoDeviceWithKeys(issuerEntity, applicationEntity);
+    private DeviceEntity createDemoDevice(ApplicationEntity applicationEntity) {
+        DeviceWithKeys demoDeviceWithKeys = createDemoDeviceWithKeys(applicationEntity);
 
         return demoDeviceWithKeys.getDevice();
     }
