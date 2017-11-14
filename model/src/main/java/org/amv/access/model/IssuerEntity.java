@@ -1,6 +1,5 @@
 package org.amv.access.model;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AccessLevel;
 import lombok.Builder;
@@ -39,7 +38,6 @@ public class IssuerEntity implements Issuer {
     @Column(name = "public_key_base64")
     private String publicKeyBase64;
 
-    @JsonIgnore
     @Column(name = "private_key_base64")
     @Convert(converter = CryptoConverter.class)
     private String privateKeyBase64;
@@ -57,6 +55,11 @@ public class IssuerEntity implements Issuer {
     @Override
     public String getPublicKeyBase64() {
         return publicKeyBase64;
+    }
+
+    @Override
+    public String getPrivateKeyBase64() {
+        return privateKeyBase64;
     }
 
     @Override
