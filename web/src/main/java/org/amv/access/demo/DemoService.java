@@ -21,5 +21,5 @@ public interface DemoService {
     DeviceEntity getOrCreateDemoDevice();
 
     @VisibleForTesting
-    DeviceWithKeys createDemoDeviceWithKeys(IssuerEntity issuerEntity, ApplicationEntity applicationEntity);
+    DeviceWithKeys createDemoDeviceWithKeys(ApplicationEntity applicationEntity);
 }

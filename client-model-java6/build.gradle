@@ -1,0 +1,14 @@
+description = 'java6 based models for the AMV access rest interface'
+
+buildscript {
+    ext {
+        gsonVersion = '2.8.2'
+    }
+}
+
+sourceCompatibility = 1.6
+targetCompatibility = 1.6
+
+dependencies {
+    compile "com.google.code.gson:gson:${gsonVersion}"
+}

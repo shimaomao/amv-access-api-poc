@@ -68,7 +68,7 @@ public class AccessCertificateCtrlTest {
 
         this.demoIssuer = demoService.getOrCreateDemoIssuer();
 
-        this.deviceWithKeys = demoService.createDemoDeviceWithKeys(demoIssuer, application);
+        this.deviceWithKeys = demoService.createDemoDeviceWithKeys(application);
     }
 
     @Test

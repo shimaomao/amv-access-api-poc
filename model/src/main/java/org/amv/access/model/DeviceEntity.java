@@ -1,5 +1,6 @@
 package org.amv.access.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AccessLevel;
 import lombok.Builder;
@@ -37,7 +38,10 @@ public class DeviceEntity implements Device {
     @JsonProperty(value = "created_at")
     private Date createdAt;
 
+    // TODO: remove column - not necessary here -> moved to device_certificate!
     @Column(name = "issuer_id")
+    @JsonIgnore
+    @Deprecated
     private long issuerId;
 
     @Column(name = "application_id")
