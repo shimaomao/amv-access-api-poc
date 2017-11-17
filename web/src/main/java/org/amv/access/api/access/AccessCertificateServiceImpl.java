@@ -46,6 +46,7 @@ public class AccessCertificateServiceImpl implements AccessCertificateService {
     private final ApplicationRepository applicationRepository;
     private final VehicleRepository vehicleRepository;
     private final DeviceRepository deviceRepository;
+    private final DeviceCertificateRepository deviceCertificateRepository;
     private final AccessCertificateRepository accessCertificateRepository;
     private final AccessCertificateRequestRepository accessCertificateRequestRepository;
 
@@ -55,6 +56,7 @@ public class AccessCertificateServiceImpl implements AccessCertificateService {
             ApplicationRepository applicationRepository,
             VehicleRepository vehicleRepository,
             DeviceRepository deviceRepository,
+            DeviceCertificateRepository deviceCertificateRepository,
             AccessCertificateRepository accessCertificateRepository,
             AccessCertificateRequestRepository accessCertificateRequestRepository) {
         this.amvAccessModule = requireNonNull(amvAccessModule);
@@ -62,6 +64,7 @@ public class AccessCertificateServiceImpl implements AccessCertificateService {
         this.applicationRepository = requireNonNull(applicationRepository);
         this.vehicleRepository = requireNonNull(vehicleRepository);
         this.deviceRepository = requireNonNull(deviceRepository);
+        this.deviceCertificateRepository = requireNonNull(deviceCertificateRepository);
         this.accessCertificateRepository = requireNonNull(accessCertificateRepository);
         this.accessCertificateRequestRepository = requireNonNull(accessCertificateRequestRepository);
     }
@@ -138,13 +141,17 @@ public class AccessCertificateServiceImpl implements AccessCertificateService {
         VehicleEntity vehicleEntity = vehicleRepository.findOneBySerialNumber(request.getVehicleSerialNumber())
                 .orElseThrow(() -> new NotFoundException("VehicleEntity not found"));
 
-        DeviceEntity deviceEntity = deviceRepository.findBySerialNumber(request.getDeviceSerialNumber())
-                .orElseThrow(() -> new NotFoundException("DeviceEntity not found"));
-
         IssuerEntity issuerEntity = issuerService.findIssuerById(vehicleEntity.getIssuerId())
                 .orElseThrow(() -> new NotFoundException("IssuerEntity not found"));
 
-        boolean hasSameAppId = deviceEntity.getApplicationId() == applicationEntity.getId();
+        DeviceEntity deviceEntity = deviceRepository.findBySerialNumber(request.getDeviceSerialNumber())
+                .orElseThrow(() -> new NotFoundException("DeviceEntity not found"));
+
+        DeviceCertificateEntity deviceCertificateEntity = deviceCertificateRepository
+                .findOneByDeviceIdAndApplicationId(deviceEntity.getId(), applicationEntity.getId())
+                .orElseThrow(() -> new NotFoundException("DeviceCertificateEntity not found"));
+
+        boolean hasSameAppId = deviceCertificateEntity.getApplicationId() == applicationEntity.getId();
         if (!hasSameAppId) {
             throw new BadRequestException("Mismatching `appId`");
         }

@@ -20,6 +20,7 @@ public class AccessCertificateConfig {
                                                              ApplicationRepository applicationRepository,
                                                              VehicleRepository vehicleRepository,
                                                              DeviceRepository deviceRepository,
+                                                             DeviceCertificateRepository deviceCertificateRepository,
                                                              AccessCertificateRepository accessCertificateRepository,
                                                              AccessCertificateRequestRepository accessCertificateRequestRepository) {
         return new AccessCertificateServiceImpl(amvAccessModule,
@@ -27,6 +28,7 @@ public class AccessCertificateConfig {
                 applicationRepository,
                 vehicleRepository,
                 deviceRepository,
+                deviceCertificateRepository,
                 accessCertificateRepository,
                 accessCertificateRequestRepository);
     }

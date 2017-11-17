@@ -4,16 +4,23 @@ import com.google.common.base.Supplier;
 import com.google.common.base.Suppliers;
 import com.google.common.collect.Lists;
 import lombok.extern.slf4j.Slf4j;
+import org.amv.access.api.device.DeviceCertificateService;
+import org.amv.access.api.device.DeviceCertificateService.CreateDeviceCertificateRequest;
+import org.amv.access.auth.ApplicationAuthenticationImpl;
+import org.amv.access.core.Device;
+import org.amv.access.core.DeviceCertificate;
 import org.amv.access.model.*;
 import org.amv.highmobility.cryptotool.Cryptotool;
 import org.amv.highmobility.cryptotool.CryptotoolUtils.SecureRandomUtils;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.transaction.annotation.Transactional;
+import reactor.core.publisher.Mono;
 
 import java.sql.Date;
 import java.time.Instant;
 import java.util.List;
+import java.util.Optional;
 
 import static java.util.Objects.requireNonNull;
 import static org.amv.highmobility.cryptotool.CryptotoolUtils.decodeBase64AsHex;
@@ -37,6 +44,7 @@ public class DemoServiceImpl implements DemoService {
     private final UserRepository userRepository;
     private final VehicleRepository vehicleRepository;
     private final DeviceRepository deviceRepository;
+    private final DeviceCertificateService deviceCertificateService;
 
     private final Supplier<DemoUser.DemoUserBuilder> demoUserBuilderSupplier = Suppliers
             .memoize(this::createDemoUserBuilder);
@@ -47,7 +55,8 @@ public class DemoServiceImpl implements DemoService {
                            ApplicationRepository applicationRepository,
                            UserRepository userRepository,
                            VehicleRepository vehicleRepository,
-                           DeviceRepository deviceRepository) {
+                           DeviceRepository deviceRepository,
+                           DeviceCertificateService deviceCertificateService) {
         this.cryptotool = cryptotool;
         this.passwordEncoder = requireNonNull(passwordEncoder);
         this.issuerRepository = requireNonNull(issuerRepository);
@@ -55,6 +64,7 @@ public class DemoServiceImpl implements DemoService {
         this.userRepository = requireNonNull(userRepository);
         this.vehicleRepository = requireNonNull(vehicleRepository);
         this.deviceRepository = requireNonNull(deviceRepository);
+        this.deviceCertificateService = requireNonNull(deviceCertificateService);
     }
 
     @Override
@@ -93,19 +103,30 @@ public class DemoServiceImpl implements DemoService {
 
         String publicKeyBase64 = encodeHexAsBase64(keys.getPublicKey());
 
-        DeviceEntity demoDevice = DeviceEntity.builder()
-                .applicationId(applicationEntity.getId())
-                .name(DEMO_DEVICE_NAME)
-                .serialNumber(SecureRandomUtils.generateRandomSerial().toLowerCase())
-                .publicKeyBase64(publicKeyBase64)
+        ApplicationAuthenticationImpl appAuth = ApplicationAuthenticationImpl.builder()
+                .application(applicationEntity)
                 .build();
 
-        DeviceEntity savedDemoDevice = deviceRepository.save(demoDevice);
+        CreateDeviceCertificateRequest deviceCertificateRequest = CreateDeviceCertificateRequest.builder()
+                .appId(applicationEntity.getAppId())
+                .deviceName("DEMO")
+                .devicePublicKeyBase64(publicKeyBase64)
+                .build();
 
-        log.info("Created demo device: {}", savedDemoDevice);
+        DeviceCertificate deviceCertificate = Optional.ofNullable(deviceCertificateService)
+                .map(service -> service.createDeviceCertificate(appAuth, deviceCertificateRequest))
+                .map(Mono::block)
+                .orElseThrow(IllegalStateException::new);
+
+        Device demoDevice = deviceCertificate.getDevice();
+
+        DeviceEntity demoDeviceEntity = deviceRepository.findBySerialNumber(demoDevice.getSerialNumber())
+                .orElseThrow(IllegalStateException::new);
+
+        log.info("Created device certificate for device {}: {}", demoDevice.getSerialNumber(), deviceCertificate);
 
         return DeviceWithKeys.builder()
-                .device(savedDemoDevice)
+                .device(demoDeviceEntity)
                 .keys(keys)
                 .build();
     }

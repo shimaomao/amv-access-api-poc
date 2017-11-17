@@ -39,32 +39,38 @@ public class DemoAccessCertificateVerticle extends AbstractVerticle {
     public void start() throws Exception {
         eventBus.consumer(DeviceCertificateEntity.class.getName(), (Handler<Message<String>>) event -> {
             vertx.executeBlocking(future -> {
+
                 DeviceCertificateEntity deviceCertificateEntity = Json.decodeValue(event.body(), DeviceCertificateEntity.class);
                 log.info("Got event {}: {}", event.address(), deviceCertificateEntity);
 
                 ApplicationEntity demoApplication = demoService.getOrCreateDemoApplication();
-                DeviceEntity device = deviceRepository.findOne(deviceCertificateEntity.getDeviceId());
-                if (device == null) {
-                    log.error("Could not find device of device certificate with id {}", deviceCertificateEntity.getDeviceId());
-                }
 
-                boolean isDeviceCertificateForDemoApplication = device.getApplicationId() == demoApplication.getId();
+                boolean isDeviceCertificateForDemoApplication = deviceCertificateEntity.getApplicationId() == demoApplication.getId();
                 if (!isDeviceCertificateForDemoApplication) {
                     future.complete();
-                } else {
-                    VehicleEntity demoVehicle = demoService.getOrCreateDemoVehicle();
-
-                    log.info("Creating demo access certificate for device {} and vehicle {}", device.getSerialNumber(), demoVehicle.getSerialNumber());
-
-                    accessCertificateService.createAccessCertificate(AccessCertificateService.CreateAccessCertificateRequest.builder()
-                            .appId(demoApplication.getAppId())
-                            .deviceSerialNumber(device.getSerialNumber())
-                            .vehicleSerialNumber(demoVehicle.getSerialNumber())
-                            .validityStart(LocalDateTime.now().minusMinutes(1))
-                            .validityEnd(LocalDateTime.now().plusYears(1))
-                            .build())
-                            .subscribe(future::complete, future::fail);
+                    return;
                 }
+
+                DeviceEntity device = deviceRepository.findOne(deviceCertificateEntity.getDeviceId());
+                if (device == null) {
+                    String message = String.format("Could not find device %d of device certificate with id %d",
+                            deviceCertificateEntity.getDeviceId(), deviceCertificateEntity.getId());
+                    future.fail(new IllegalStateException(message));
+                    return;
+                }
+
+                VehicleEntity demoVehicle = demoService.getOrCreateDemoVehicle();
+
+                log.info("Creating demo access certificate for device {} and vehicle {}", device.getSerialNumber(), demoVehicle.getSerialNumber());
+
+                accessCertificateService.createAccessCertificate(AccessCertificateService.CreateAccessCertificateRequest.builder()
+                        .appId(demoApplication.getAppId())
+                        .deviceSerialNumber(device.getSerialNumber())
+                        .vehicleSerialNumber(demoVehicle.getSerialNumber())
+                        .validityStart(LocalDateTime.now().minusMinutes(1))
+                        .validityEnd(LocalDateTime.now().plusYears(1))
+                        .build())
+                        .subscribe(future::complete, future::fail);
             }, result -> {
                 if (result.succeeded()) {
                     log.info("Successfully created demo access certificate: {}", result.result());

@@ -57,10 +57,10 @@ public class DeviceCertificateServiceImpl implements DeviceCertificateService {
 
         ApplicationEntity application = findApplicationOrThrow(auth);
 
-        IssuerEntity issuerEntity = issuerService.findActiveIssuerOrThrow();
+        IssuerEntity issuer = issuerService.findActiveIssuerOrThrow();
 
         DeviceCertificateRequestEntity deviceCertificateRequest = saveCreateDeviceCertificateRequest(request);
-        DeviceEntity device = createAndSaveDevice(application, deviceCertificateRequest);
+        DeviceEntity device = createAndSaveDevice(deviceCertificateRequest);
 
         if (log.isDebugEnabled()) {
             log.debug("Issuing device certificate for application {}", application);
@@ -69,7 +69,7 @@ public class DeviceCertificateServiceImpl implements DeviceCertificateService {
 
         DeviceCertificate deviceCertificate = amvAccessModule
                 .createDeviceCertificate(CreateDeviceCertificateRequestImpl.builder()
-                        .issuer(issuerEntity)
+                        .issuer(issuer)
                         .application(application)
                         .device(device)
                         .build())
@@ -77,6 +77,8 @@ public class DeviceCertificateServiceImpl implements DeviceCertificateService {
 
         DeviceCertificateEntity deviceCertificateEntity = DeviceCertificateEntity.builder()
                 .uuid(UUID.randomUUID().toString())
+                .applicationId(application.getId())
+                .issuerId(issuer.getId())
                 .deviceId(device.getId())
                 .certificateBase64(deviceCertificate.getCertificateBase64())
                 .certificateSignatureBase64(deviceCertificate.getCertificateSignatureBase64())
@@ -118,15 +120,13 @@ public class DeviceCertificateServiceImpl implements DeviceCertificateService {
         return deviceCertificateRequestRepository.save(deviceCertificateRequestEntity);
     }
 
-    private DeviceEntity createAndSaveDevice(ApplicationEntity application, DeviceCertificateRequestEntity deviceCertificateRequestEntity) {
-        requireNonNull(application);
+    private DeviceEntity createAndSaveDevice(DeviceCertificateRequestEntity deviceCertificateRequestEntity) {
         requireNonNull(deviceCertificateRequestEntity);
         String publicKeyBase64 = requireNonNull(deviceCertificateRequestEntity.getPublicKeyBase64());
 
         String deviceSerialNumber = generateNewDeviceSerial();
 
         DeviceEntity device = DeviceEntity.builder()
-                .applicationId(application.getId())
                 .name(deviceCertificateRequestEntity.getName())
                 .serialNumber(deviceSerialNumber)
                 .publicKeyBase64(publicKeyBase64)

@@ -2,6 +2,7 @@ package org.amv.access.demo;
 
 import io.vertx.rxjava.core.eventbus.EventBus;
 import org.amv.access.api.access.AccessCertificateService;
+import org.amv.access.api.device.DeviceCertificateService;
 import org.amv.access.model.*;
 import org.amv.highmobility.cryptotool.Cryptotool;
 import org.springframework.beans.factory.InitializingBean;
@@ -32,7 +33,8 @@ public class DemoConfig {
                                    ApplicationRepository applicationRepository,
                                    UserRepository userRepository,
                                    VehicleRepository vehicleRepository,
-                                   DeviceRepository deviceRepository) {
+                                   DeviceRepository deviceRepository,
+                                   DeviceCertificateService deviceCertificateService) {
         return new DemoServiceImpl(
                 cryptotool,
                 passwordEncoder,
@@ -40,7 +42,8 @@ public class DemoConfig {
                 applicationRepository,
                 userRepository,
                 vehicleRepository,
-                deviceRepository);
+                deviceRepository,
+                deviceCertificateService);
     }
 
     @Bean

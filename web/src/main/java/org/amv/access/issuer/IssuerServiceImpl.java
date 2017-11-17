@@ -29,7 +29,7 @@ public class IssuerServiceImpl implements IssuerService {
     @Override
     public IssuerEntity findActiveIssuerOrThrow() {
         return issuerRepository
-                .findFirstByOrderByCreatedDesc()
+                .findFirstByOrderByCreatedAtDesc()
                 .orElseThrow(() -> new IllegalStateException("Could not find active issuer"));
     }
 }

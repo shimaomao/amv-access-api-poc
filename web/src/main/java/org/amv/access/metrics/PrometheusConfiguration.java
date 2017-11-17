@@ -28,7 +28,9 @@ public class PrometheusConfiguration {
     @Bean
     @ConditionalOnMissingBean
     public CollectorRegistry collectorRegistry() {
-        return CollectorRegistry.defaultRegistry;
+        CollectorRegistry defaultRegistry = CollectorRegistry.defaultRegistry;
+        defaultRegistry.clear();
+        return defaultRegistry;
     }
 
     @Bean

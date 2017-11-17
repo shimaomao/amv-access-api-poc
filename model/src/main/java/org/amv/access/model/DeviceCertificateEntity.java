@@ -1,5 +1,6 @@
 package org.amv.access.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AccessLevel;
 import lombok.Builder;
@@ -45,6 +46,12 @@ public class DeviceCertificateEntity {
 
     @Column(name = "device_id")
     private long deviceId;
+
+    @Column(name = "issuer_id")
+    private long issuerId;
+
+    @Column(name = "application_id")
+    private long applicationId;
 
     @Column(name = "certificate_base64")
     private String certificateBase64;

@@ -31,13 +31,10 @@ import org.springframework.http.*;
 import org.springframework.test.context.junit4.SpringRunner;
 import reactor.core.publisher.Mono;
 
-import java.security.SecureRandom;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
-import static com.google.common.base.Preconditions.checkArgument;
-import static org.amv.access.util.MoreBase64.toBase64OrThrow;
 import static org.apache.commons.codec.binary.Base64.isBase64;
 import static org.hamcrest.Matchers.*;
 import static org.junit.Assert.assertThat;
@@ -68,7 +65,7 @@ public class AccessCertificateCtrlTest {
 
         this.demoIssuer = demoService.getOrCreateDemoIssuer();
 
-        this.deviceWithKeys = demoService.createDemoDeviceWithKeys(application);
+        this.deviceWithKeys = demoService.createDemoDeviceWithKeys(this.application);
     }
 
     @Test
@@ -305,7 +302,7 @@ public class AccessCertificateCtrlTest {
         assertThat(accessCertificateDto.getName(), is(notNullValue()));
         assertThat(accessCertificateDto.getDeviceAccessCertificate(), is(notNullValue()));
 
-        final String signedDeviceAccessCertificateInHex = CryptotoolUtils.decodeBase64AsHex(accessCertificateDto.getDeviceAccessCertificate());
+        String signedDeviceAccessCertificateInHex = CryptotoolUtils.decodeBase64AsHex(accessCertificateDto.getDeviceAccessCertificate());
 
         String deviceAccessCertificateInHex = signedDeviceAccessCertificateInHex.substring(0, 200);
         String deviceAccessSignatureInHex = signedDeviceAccessCertificateInHex.substring(200, signedDeviceAccessCertificateInHex.length());
