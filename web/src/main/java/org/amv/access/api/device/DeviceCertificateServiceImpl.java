@@ -31,22 +31,19 @@ public class DeviceCertificateServiceImpl implements DeviceCertificateService {
     private final ApplicationRepository applicationRepository;
     private final DeviceRepository deviceRepository;
     private final DeviceCertificateRepository deviceCertificateRepository;
-    private final DeviceCertificateRequestRepository deviceCertificateRequestRepository;
 
     public DeviceCertificateServiceImpl(AmvAccessModuleSpi amvAccessModule,
                                         EventBus eventBus,
                                         IssuerService issuerService,
                                         ApplicationRepository applicationRepository,
                                         DeviceRepository deviceRepository,
-                                        DeviceCertificateRepository deviceCertificateRepository,
-                                        DeviceCertificateRequestRepository deviceCertificateRequestRepository) {
+                                        DeviceCertificateRepository deviceCertificateRepository) {
         this.amvAccessModule = requireNonNull(amvAccessModule);
         this.eventBus = requireNonNull(eventBus);
         this.issuerService = requireNonNull(issuerService);
         this.applicationRepository = requireNonNull(applicationRepository);
         this.deviceRepository = requireNonNull(deviceRepository);
         this.deviceCertificateRepository = requireNonNull(deviceCertificateRepository);
-        this.deviceCertificateRequestRepository = requireNonNull(deviceCertificateRequestRepository);
     }
 
     @Override
@@ -59,8 +56,7 @@ public class DeviceCertificateServiceImpl implements DeviceCertificateService {
 
         IssuerEntity issuer = issuerService.findActiveIssuerOrThrow();
 
-        DeviceCertificateRequestEntity deviceCertificateRequest = saveCreateDeviceCertificateRequest(request);
-        DeviceEntity device = createAndSaveDevice(deviceCertificateRequest);
+        DeviceEntity device = createAndSaveDevice(request);
 
         if (log.isDebugEnabled()) {
             log.debug("Issuing device certificate for application {}", application);
@@ -80,8 +76,8 @@ public class DeviceCertificateServiceImpl implements DeviceCertificateService {
                 .applicationId(application.getId())
                 .issuerId(issuer.getId())
                 .deviceId(device.getId())
-                .certificateBase64(deviceCertificate.getCertificateBase64())
-                .certificateSignatureBase64(deviceCertificate.getCertificateSignatureBase64())
+                //.certificateBase64(deviceCertificate.getCertificateBase64())
+                //.certificateSignatureBase64(deviceCertificate.getCertificateSignatureBase64())
                 .signedCertificateBase64(deviceCertificate.getSignedDeviceCertificateBase64())
                 .build();
 
@@ -108,26 +104,14 @@ public class DeviceCertificateServiceImpl implements DeviceCertificateService {
         return application;
     }
 
-    private DeviceCertificateRequestEntity saveCreateDeviceCertificateRequest(CreateDeviceCertificateRequest request) {
+    private DeviceEntity createAndSaveDevice(CreateDeviceCertificateRequest request) {
         requireNonNull(request);
-
-        DeviceCertificateRequestEntity deviceCertificateRequestEntity = DeviceCertificateRequestEntity.builder()
-                .appId(request.getAppId())
-                .publicKeyBase64(request.getDevicePublicKeyBase64())
-                .name(request.getDeviceName())
-                .build();
-
-        return deviceCertificateRequestRepository.save(deviceCertificateRequestEntity);
-    }
-
-    private DeviceEntity createAndSaveDevice(DeviceCertificateRequestEntity deviceCertificateRequestEntity) {
-        requireNonNull(deviceCertificateRequestEntity);
-        String publicKeyBase64 = requireNonNull(deviceCertificateRequestEntity.getPublicKeyBase64());
+        String publicKeyBase64 = requireNonNull(request.getDevicePublicKeyBase64());
 
         String deviceSerialNumber = generateNewDeviceSerial();
 
         DeviceEntity device = DeviceEntity.builder()
-                .name(deviceCertificateRequestEntity.getName())
+                .name(request.getDeviceName())
                 .serialNumber(deviceSerialNumber)
                 .publicKeyBase64(publicKeyBase64)
                 .build();

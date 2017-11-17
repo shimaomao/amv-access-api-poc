@@ -5,6 +5,14 @@ sourceSets {
     test.java.srcDir "src/test/java"
 }
 
+sourceSets {
+    main {
+        resources {
+            srcDirs 'src/main/resources',
+                    '../model/src/main/resources'
+        }
+    }
+}
 bootRun {
     systemProperties = project.gradle.startParameter.systemPropertiesArgs
     addResources = true
@@ -76,10 +84,17 @@ dependencies {
     compile "io.prometheus:simpleclient_spring_boot:${prometheusVersion}"
     // end:prometheus
 
+
+    compile('org.flywaydb:flyway-core:4.2.0')
+    compile 'mysql:mysql-connector-java:5.1.43'
+
     compile('com.zaxxer:HikariCP:2.7.2') {
         exclude group: 'org.slf4j', module: 'slf4j-api'
     }
-    compile 'org.xerial:sqlite-jdbc:3.20.1'
+
+    testCompile 'org.xerial:sqlite-jdbc:3.20.1'
+    testCompile 'mysql:mysql-connector-java:5.1.43'
+    testCompile 'com.wix:wix-embedded-mysql:2.2.10'
 
     testCompile project(':client')
     testCompile 'org.springframework.boot:spring-boot-starter-test'

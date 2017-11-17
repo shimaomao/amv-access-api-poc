@@ -1,9 +1,9 @@
 package org.amv.access.model;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AccessLevel;
 import lombok.Builder;
+import lombok.Builder.Default;
 import lombok.Data;
 import lombok.Setter;
 import lombok.experimental.Tolerate;
@@ -27,8 +27,8 @@ import java.util.Date;
 @EntityListeners(AuditingEntityListener.class)
 public class DeviceEntity implements Device {
     @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
-    @Column(name = "id", columnDefinition = "bigint")
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "id", columnDefinition = "bigint", updatable = false, nullable = false)
     @JsonProperty(value = "id", access = JsonProperty.Access.READ_ONLY)
     private Long id;
 
@@ -41,11 +41,18 @@ public class DeviceEntity implements Device {
     @Column(name = "name", length = 63)
     private String name;
 
+    @Column(name = "description", length = 1023)
+    private String description;
+
     @Column(name = "serial_number"/*, length = 18*/)
     private String serialNumber;
 
     @Column(name = "public_key_base64")
     private String publicKeyBase64;
+
+    @Default
+    @Column(name = "enabled", columnDefinition = "integer DEFAULT 1")
+    private boolean enabled = true;
 
     @Tolerate
     protected DeviceEntity() {

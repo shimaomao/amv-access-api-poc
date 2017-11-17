@@ -22,8 +22,8 @@ import java.util.List;
 @Table(name = "user")
 public class UserEntity {
     @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
-    @Column(name = "user_id", columnDefinition = "bigint")
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "id", columnDefinition = "bigint", updatable = false, nullable = false)
     @JsonProperty(value = "id", access = JsonProperty.Access.READ_ONLY)
     private Long id;
 
@@ -36,19 +36,21 @@ public class UserEntity {
     @Column(name = "name")
     private String name;
 
+    @Column(name = "description", length = 1023)
+    private String description;
+
     @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
     @Column(name = "password")
     @Convert(converter = CryptoConverter.class)
     private String password;
 
-    @Default
-    @Column(name = "enabled")
-    private boolean enabled = true;
+    @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
+    @Column(name = "salt")
+    private String salt;
 
     @Default
-    @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
-    @ElementCollection(fetch = FetchType.EAGER)
-    private List<String> authorities = Lists.newArrayList();
+    @Column(name = "enabled", columnDefinition = "integer DEFAULT 1")
+    private boolean enabled = true;
 
     @Tolerate
     protected UserEntity() {

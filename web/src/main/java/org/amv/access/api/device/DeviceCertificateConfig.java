@@ -4,7 +4,6 @@ import io.vertx.rxjava.core.eventbus.EventBus;
 import org.amv.access.issuer.IssuerService;
 import org.amv.access.model.ApplicationRepository;
 import org.amv.access.model.DeviceCertificateRepository;
-import org.amv.access.model.DeviceCertificateRequestRepository;
 import org.amv.access.model.DeviceRepository;
 import org.amv.access.spi.AmvAccessModuleSpi;
 import org.springframework.context.annotation.Bean;
@@ -19,14 +18,12 @@ public class DeviceCertificateConfig {
                                                              IssuerService issuerService,
                                                              ApplicationRepository applicationRepository,
                                                              DeviceRepository deviceRepository,
-                                                             DeviceCertificateRepository deviceCertificateRepository,
-                                                             DeviceCertificateRequestRepository deviceCertificateRequestRepository) {
+                                                             DeviceCertificateRepository deviceCertificateRepository) {
         return new DeviceCertificateServiceImpl(amvAccessModule,
                 eventBus,
                 issuerService,
                 applicationRepository,
                 deviceRepository,
-                deviceCertificateRepository,
-                deviceCertificateRequestRepository);
+                deviceCertificateRepository);
     }
 }

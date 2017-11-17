@@ -2,7 +2,6 @@ package org.amv.access.demo;
 
 import com.google.common.base.Supplier;
 import com.google.common.base.Suppliers;
-import com.google.common.collect.Lists;
 import lombok.extern.slf4j.Slf4j;
 import org.amv.access.api.device.DeviceCertificateService;
 import org.amv.access.api.device.DeviceCertificateService.CreateDeviceCertificateRequest;
@@ -19,8 +18,8 @@ import reactor.core.publisher.Mono;
 
 import java.sql.Date;
 import java.time.Instant;
-import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.TimeUnit;
 
 import static java.util.Objects.requireNonNull;
 import static org.amv.highmobility.cryptotool.CryptotoolUtils.decodeBase64AsHex;
@@ -68,12 +67,8 @@ public class DemoServiceImpl implements DemoService {
     }
 
     @Override
+    @Transactional
     public void createDemoDataFromProperties(DemoProperties demoProperties) {
-        this.getOrCreateDemoUser();
-        this.getOrCreateDemoApplication();
-        this.getOrCreateDemoDevice();
-        this.getOrCreateDemoVehicle();
-
         IssuerEntity demoIssuer = demoProperties.getIssuer()
                 .map(issuer -> {
                     if (DEMO_ISSUER_NAME.equals(issuer.getName())) {
@@ -87,6 +82,11 @@ public class DemoServiceImpl implements DemoService {
                         .findFirst()
                         .orElseGet(() -> this.createDemoIssuer(issuer)))
                 .orElseThrow(() -> new IllegalStateException("Could not find or create demo issuer from properties file"));
+
+        this.getOrCreateDemoUser();
+        this.getOrCreateDemoApplication();
+        this.getOrCreateDemoDevice();
+        this.getOrCreateDemoVehicle();
 
         demoProperties.getVehicles().stream()
                 .filter(v -> !vehicleRepository.findOneBySerialNumber(v.getSerialNumber()).isPresent())
@@ -204,12 +204,11 @@ public class DemoServiceImpl implements DemoService {
 
     private DemoUser createDemoUser() {
         DemoUser.DemoUserBuilder demoUserBuilder = demoUserBuilderSupplier.get();
-        List<String> authorities = Lists.newArrayList("ROLE_ADMIN", "ROLE_USER");
 
         UserEntity demoUser = UserEntity.builder()
                 .name(demoUserBuilder.name())
                 .password(demoUserBuilder.encryptedPassword())
-                .authorities(authorities)
+                .salt("")
                 .build();
 
         userRepository.save(demoUser);
@@ -234,7 +233,7 @@ public class DemoServiceImpl implements DemoService {
     private IssuerEntity createDemoIssuer(DemoProperties.DemoIssuer demoIssuer) {
         IssuerEntity issuerEntity = IssuerEntity.builder()
                 .name(demoIssuer.getName())
-                .createdAt(Date.from(Instant.EPOCH))
+                .createdAt(Date.from(Instant.EPOCH.plusSeconds(TimeUnit.DAYS.toSeconds(1))))
                 .publicKeyBase64(encodeHexAsBase64(decodeBase64AsHex(demoIssuer.getPublicKeyBase64())))
                 .privateKeyBase64(encodeHexAsBase64(decodeBase64AsHex(demoIssuer.getPrivateKeyBase64())))
                 .build();

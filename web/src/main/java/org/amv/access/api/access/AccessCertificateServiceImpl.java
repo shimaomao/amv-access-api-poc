@@ -48,7 +48,6 @@ public class AccessCertificateServiceImpl implements AccessCertificateService {
     private final DeviceRepository deviceRepository;
     private final DeviceCertificateRepository deviceCertificateRepository;
     private final AccessCertificateRepository accessCertificateRepository;
-    private final AccessCertificateRequestRepository accessCertificateRequestRepository;
 
     public AccessCertificateServiceImpl(
             AmvAccessModuleSpi amvAccessModule,
@@ -57,8 +56,7 @@ public class AccessCertificateServiceImpl implements AccessCertificateService {
             VehicleRepository vehicleRepository,
             DeviceRepository deviceRepository,
             DeviceCertificateRepository deviceCertificateRepository,
-            AccessCertificateRepository accessCertificateRepository,
-            AccessCertificateRequestRepository accessCertificateRequestRepository) {
+            AccessCertificateRepository accessCertificateRepository) {
         this.amvAccessModule = requireNonNull(amvAccessModule);
         this.issuerService = requireNonNull(issuerService);
         this.applicationRepository = requireNonNull(applicationRepository);
@@ -66,7 +64,6 @@ public class AccessCertificateServiceImpl implements AccessCertificateService {
         this.deviceRepository = requireNonNull(deviceRepository);
         this.deviceCertificateRepository = requireNonNull(deviceCertificateRepository);
         this.accessCertificateRepository = requireNonNull(accessCertificateRepository);
-        this.accessCertificateRequestRepository = requireNonNull(accessCertificateRequestRepository);
     }
 
     @Override
@@ -120,10 +117,10 @@ public class AccessCertificateServiceImpl implements AccessCertificateService {
                             .vehicle(vehicle)
                             .validFrom(accessCertificate.getValidFrom())
                             .validUntil(accessCertificate.getValidUntil())
-                            .deviceAccessCertificateBase64(accessCertificate.getDeviceAccessCertificateBase64())
-                            .deviceAccessCertificateSignatureBase64(accessCertificate.getDeviceAccessCertificateSignatureBase64())
-                            .vehicleAccessCertificateBase64(accessCertificate.getVehicleAccessCertificateBase64())
-                            .vehicleAccessCertificateSignatureBase64(accessCertificate.getVehicleAccessCertificateSignatureBase64())
+                            //.deviceAccessCertificateBase64(accessCertificate.getDeviceAccessCertificateBase64())
+                            //.deviceAccessCertificateSignatureBase64(accessCertificate.getDeviceAccessCertificateSignatureBase64())
+                            //.vehicleAccessCertificateBase64(accessCertificate.getVehicleAccessCertificateBase64())
+                            //.vehicleAccessCertificateSignatureBase64(accessCertificate.getVehicleAccessCertificateSignatureBase64())
                             .signedDeviceAccessCertificateBase64(accessCertificate.getSignedDeviceAccessCertificateBase64())
                             .signedVehicleAccessCertificateBase64(accessCertificate.getSignedVehicleAccessCertificateBase64())
                             .build();
@@ -156,8 +153,6 @@ public class AccessCertificateServiceImpl implements AccessCertificateService {
             throw new BadRequestException("Mismatching `appId`");
         }
 
-        saveAccessCertificateRequest(request).block();
-
         CreateAccessCertificateRequestImpl r = CreateAccessCertificateRequestImpl.builder()
                 .issuer(issuerEntity)
                 .application(applicationEntity)
@@ -182,10 +177,10 @@ public class AccessCertificateServiceImpl implements AccessCertificateService {
                 .deviceId(deviceEntity.getId())
                 .validFrom(r.getValidFrom())
                 .validUntil(r.getValidUntil())
-                .deviceAccessCertificateBase64(accessCertificate.getDeviceAccessCertificateBase64())
-                .deviceAccessCertificateSignatureBase64(accessCertificate.getDeviceAccessCertificateSignatureBase64())
-                .vehicleAccessCertificateBase64(accessCertificate.getVehicleAccessCertificateBase64())
-                .vehicleAccessCertificateSignatureBase64(accessCertificate.getVehicleAccessCertificateSignatureBase64())
+                //.deviceAccessCertificateBase64(accessCertificate.getDeviceAccessCertificateBase64())
+                //.deviceAccessCertificateSignatureBase64(accessCertificate.getDeviceAccessCertificateSignatureBase64())
+                //.vehicleAccessCertificateBase64(accessCertificate.getVehicleAccessCertificateBase64())
+                //.vehicleAccessCertificateSignatureBase64(accessCertificate.getVehicleAccessCertificateSignatureBase64())
                 .signedDeviceAccessCertificateBase64(accessCertificate.getSignedDeviceAccessCertificateBase64())
                 .signedVehicleAccessCertificateBase64(accessCertificate.getSignedVehicleAccessCertificateBase64())
                 .build();
@@ -229,21 +224,5 @@ public class AccessCertificateServiceImpl implements AccessCertificateService {
         if (!isValidNonce) {
             throw new UnauthorizedException("Signature is invalid");
         }
-    }
-
-    private Mono<AccessCertificateRequestEntity> saveAccessCertificateRequest(CreateAccessCertificateRequest request) {
-        requireNonNull(request, "`request` must not be null");
-
-        AccessCertificateRequestEntity accessCertificateRequestEntity = AccessCertificateRequestEntity.builder()
-                .appId(request.getAppId())
-                .deviceSerialNumber(request.getDeviceSerialNumber())
-                .vehicleSerialNumber(request.getVehicleSerialNumber())
-                .validFrom(request.getValidityStart())
-                .validUntil(request.getValidityEnd())
-                .build();
-
-        AccessCertificateRequestEntity savedEntity = accessCertificateRequestRepository.save(accessCertificateRequestEntity);
-
-        return Mono.just(savedEntity);
     }
 }

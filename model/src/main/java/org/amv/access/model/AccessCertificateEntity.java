@@ -22,8 +22,8 @@ import java.util.Date;
 @EntityListeners(AuditingEntityListener.class)
 public class AccessCertificateEntity {
     @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
-    @Column(name = "id", columnDefinition = "bigint")
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "id", columnDefinition = "bigint", updatable = false, nullable = false)
     @JsonProperty(value = "id", access = JsonProperty.Access.READ_ONLY)
     private Long id;
 
@@ -58,20 +58,20 @@ public class AccessCertificateEntity {
     @Column(name = "valid_until")
     private LocalDateTime validUntil;
 
-    @Column(name = "vehicle_access_certificate_base64")
-    private String vehicleAccessCertificateBase64;
+    //@Column(name = "vehicle_access_certificate_base64")
+    //private String vehicleAccessCertificateBase64;
 
-    @Column(name = "vehicle_access_certificate_signature_base64")
-    private String vehicleAccessCertificateSignatureBase64;
+    //@Column(name = "vehicle_access_certificate_signature_base64")
+    //private String vehicleAccessCertificateSignatureBase64;
 
     @Column(name = "signed_vehicle_access_certificate_base64")
     private String signedVehicleAccessCertificateBase64;
 
-    @Column(name = "device_access_certificate_base64")
-    private String deviceAccessCertificateBase64;
+    //@Column(name = "device_access_certificate_base64")
+    //private String deviceAccessCertificateBase64;
 
-    @Column(name = "device_access_certificate_signature_base64")
-    private String deviceAccessCertificateSignatureBase64;
+    //@Column(name = "device_access_certificate_signature_base64")
+    //private String deviceAccessCertificateSignatureBase64;
 
     @Column(name = "signed_device_access_certificate_base64")
     private String signedDeviceAccessCertificateBase64;

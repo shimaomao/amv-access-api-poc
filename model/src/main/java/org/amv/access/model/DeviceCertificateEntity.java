@@ -26,8 +26,8 @@ import java.util.Date;
 @EntityListeners(AuditingEntityListener.class)
 public class DeviceCertificateEntity {
     @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
-    @Column(name = "id", columnDefinition = "bigint")
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "id", columnDefinition = "bigint", updatable = false, nullable = false)
     @JsonProperty(value = "id", access = JsonProperty.Access.READ_ONLY)
     private Long id;
 
@@ -53,11 +53,11 @@ public class DeviceCertificateEntity {
     @Column(name = "application_id")
     private long applicationId;
 
-    @Column(name = "certificate_base64")
-    private String certificateBase64;
+    //@Column(name = "certificate_base64")
+    //private String certificateBase64;
 
-    @Column(name = "certificate_signature_base64")
-    private String certificateSignatureBase64;
+    //@Column(name = "certificate_signature_base64")
+    //private String certificateSignatureBase64;
 
     @Column(name = "signed_certificate_base64")
     private String signedCertificateBase64;
