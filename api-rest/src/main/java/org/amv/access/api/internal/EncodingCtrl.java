@@ -12,7 +12,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@RequestMapping("/internal/endocding")
+@RequestMapping("/internal/encoding")
 public class EncodingCtrl {
     @GetMapping("/hex/{value}/base64")
     public ResponseEntity<EncodedValueDto> hexAsBase64(@PathVariable("value") String value) {
