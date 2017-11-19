@@ -7,11 +7,7 @@ import io.vertx.rxjava.core.eventbus.EventBus;
 import io.vertx.rxjava.core.eventbus.Message;
 import lombok.extern.slf4j.Slf4j;
 import org.amv.access.certificate.AccessCertificateService;
-import org.amv.access.core.AccessCertificate;
-import org.amv.access.core.Device;
-import org.amv.access.core.DeviceCertificate;
 import org.amv.access.model.*;
-import reactor.core.publisher.Mono;
 
 import java.time.LocalDateTime;
 
@@ -81,27 +77,4 @@ public class DemoAccessCertificateVerticle extends AbstractVerticle {
             });
         });
     }
-
-    public Mono<AccessCertificate> createDemoAccessCertificateIfNecessary(DeviceCertificate deviceCertificate) {
-        ApplicationEntity demoApplication = demoService.getOrCreateDemoApplication();
-
-        boolean isDeviceCertificateForDemoApplication = demoApplication.getAppId().equals(deviceCertificate.getApplication().getAppId());
-        if (!isDeviceCertificateForDemoApplication) {
-            return Mono.empty();
-        } else {
-            VehicleEntity demoVehicle = demoService.getOrCreateDemoVehicle();
-            Device device = deviceCertificate.getDevice();
-
-            log.info("Creating demo access certificate for device {} and vehicle {}", device.getSerialNumber(), demoVehicle.getSerialNumber());
-
-            return accessCertificateService.createAccessCertificate(AccessCertificateService.CreateAccessCertificateContext.builder()
-                    .appId(demoApplication.getAppId())
-                    .deviceSerialNumber(device.getSerialNumber())
-                    .vehicleSerialNumber(demoVehicle.getSerialNumber())
-                    .validityStart(LocalDateTime.now().minusMinutes(1))
-                    .validityEnd(LocalDateTime.now().plusYears(1))
-                    .build());
-        }
-    }
-
 }

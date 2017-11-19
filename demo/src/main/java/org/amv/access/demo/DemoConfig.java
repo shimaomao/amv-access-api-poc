@@ -34,7 +34,8 @@ public class DemoConfig {
                                    UserRepository userRepository,
                                    VehicleRepository vehicleRepository,
                                    DeviceRepository deviceRepository,
-                                   DeviceCertificateService deviceCertificateService) {
+                                   DeviceCertificateService deviceCertificateService,
+                                   AccessCertificateService accessCertificateService) {
         return new DemoServiceImpl(
                 cryptotool,
                 passwordEncoder,
@@ -43,7 +44,8 @@ public class DemoConfig {
                 userRepository,
                 vehicleRepository,
                 deviceRepository,
-                deviceCertificateService);
+                deviceCertificateService,
+                accessCertificateService);
     }
 
     @Bean

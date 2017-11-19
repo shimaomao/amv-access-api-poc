@@ -5,12 +5,12 @@ import io.prometheus.client.spring.web.PrometheusTimeMethod;
 import io.swagger.annotations.*;
 import lombok.extern.slf4j.Slf4j;
 import org.amv.access.auth.ApplicationAuthentication;
+import org.amv.access.certificate.DeviceCertificateService;
 import org.amv.access.client.model.CreateDeviceCertificateRequestDto;
 import org.amv.access.client.model.CreateDeviceCertificateResponseDto;
 import org.amv.access.client.model.DeviceCertificateDto;
 import org.amv.access.client.model.ErrorResponseDto;
-import org.amv.access.demo.DemoAccessCertificateVerticle;
-import org.amv.access.certificate.DeviceCertificateService;
+import org.amv.access.demo.DemoService;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -27,7 +27,7 @@ import static org.eclipse.jetty.http.HttpStatus.*;
 public class DeviceCertificateCtrl {
 
     @Autowired
-    private DemoAccessCertificateVerticle demoAccessCertificateVerticle;
+    private DemoService demoService;
 
     private final DeviceCertificateService deviceCertificateService;
 
@@ -79,7 +79,7 @@ public class DeviceCertificateCtrl {
         ResponseEntity<CreateDeviceCertificateResponseDto> response = deviceCertificateService
                 .createDeviceCertificate(auth, createDeviceCertificateContext)
                 .doOnNext(deviceCertificate -> {
-                    demoAccessCertificateVerticle.createDemoAccessCertificateIfNecessary(deviceCertificate).block();
+                    demoService.createDemoAccessCertificateIfNecessary(deviceCertificate).block();
                 })
                 .map(deviceCertificate -> DeviceCertificateDto.builder()
                         .deviceCertificate(deviceCertificate.getSignedDeviceCertificateBase64())

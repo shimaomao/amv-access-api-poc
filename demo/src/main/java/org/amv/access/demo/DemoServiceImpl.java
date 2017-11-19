@@ -4,10 +4,12 @@ import com.google.common.base.Supplier;
 import com.google.common.base.Suppliers;
 import lombok.extern.slf4j.Slf4j;
 import org.amv.access.auth.ApplicationAuthenticationImpl;
-import org.amv.access.core.Device;
-import org.amv.access.core.DeviceCertificate;
+import org.amv.access.certificate.AccessCertificateService;
 import org.amv.access.certificate.DeviceCertificateService;
 import org.amv.access.certificate.DeviceCertificateService.CreateDeviceCertificateContext;
+import org.amv.access.core.AccessCertificate;
+import org.amv.access.core.Device;
+import org.amv.access.core.DeviceCertificate;
 import org.amv.access.model.*;
 import org.amv.highmobility.cryptotool.Cryptotool;
 import org.amv.highmobility.cryptotool.CryptotoolUtils.SecureRandomUtils;
@@ -18,6 +20,7 @@ import reactor.core.publisher.Mono;
 
 import java.sql.Date;
 import java.time.Instant;
+import java.time.LocalDateTime;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 
@@ -44,6 +47,7 @@ public class DemoServiceImpl implements DemoService {
     private final VehicleRepository vehicleRepository;
     private final DeviceRepository deviceRepository;
     private final DeviceCertificateService deviceCertificateService;
+    private final AccessCertificateService accessCertificateService;
 
     private final Supplier<DemoUser.DemoUserBuilder> demoUserBuilderSupplier = Suppliers
             .memoize(this::createDemoUserBuilder);
@@ -55,7 +59,8 @@ public class DemoServiceImpl implements DemoService {
                            UserRepository userRepository,
                            VehicleRepository vehicleRepository,
                            DeviceRepository deviceRepository,
-                           DeviceCertificateService deviceCertificateService) {
+                           DeviceCertificateService deviceCertificateService,
+                           AccessCertificateService accessCertificateService) {
         this.cryptotool = cryptotool;
         this.passwordEncoder = requireNonNull(passwordEncoder);
         this.issuerRepository = requireNonNull(issuerRepository);
@@ -64,11 +69,21 @@ public class DemoServiceImpl implements DemoService {
         this.vehicleRepository = requireNonNull(vehicleRepository);
         this.deviceRepository = requireNonNull(deviceRepository);
         this.deviceCertificateService = requireNonNull(deviceCertificateService);
+        this.accessCertificateService = requireNonNull(accessCertificateService);
+    }
+
+    private void createDefaultDemoData() {
+        this.getOrCreateDemoUser();
+        this.getOrCreateDemoApplication();
+        this.getOrCreateDemoDevice();
+        this.getOrCreateDemoVehicle();
     }
 
     @Override
     @Transactional
     public void createDemoDataFromProperties(DemoProperties demoProperties) {
+        createDefaultDemoData();
+
         IssuerEntity demoIssuer = demoProperties.getIssuer()
                 .map(issuer -> {
                     if (DEMO_ISSUER_NAME.equals(issuer.getName())) {
@@ -82,11 +97,6 @@ public class DemoServiceImpl implements DemoService {
                         .findFirst()
                         .orElseGet(() -> this.createDemoIssuer(issuer)))
                 .orElseThrow(() -> new IllegalStateException("Could not find or create demo issuer from properties file"));
-
-        this.getOrCreateDemoUser();
-        this.getOrCreateDemoApplication();
-        this.getOrCreateDemoDevice();
-        this.getOrCreateDemoVehicle();
 
         demoProperties.getVehicles().stream()
                 .filter(v -> !vehicleRepository.findOneBySerialNumber(v.getSerialNumber()).isPresent())
@@ -129,6 +139,34 @@ public class DemoServiceImpl implements DemoService {
                 .device(demoDeviceEntity)
                 .keys(keys)
                 .build();
+    }
+
+    @Override
+    public Mono<AccessCertificate> createDemoAccessCertificateIfNecessary(DeviceCertificate deviceCertificate) {
+        ApplicationEntity demoApplication = this.getOrCreateDemoApplication();
+
+        boolean isDeviceCertificateForDemoApplication = demoApplication.getAppId().equals(deviceCertificate.getApplication().getAppId());
+        if (!isDeviceCertificateForDemoApplication) {
+            log.debug("Skip creating demo access certificate for device {}: Device Certificate is not issued for demo application",
+                    deviceCertificate.getDevice().getSerialNumber());
+
+            return Mono.empty();
+        } else {
+            VehicleEntity demoVehicle = this.getOrCreateDemoVehicle();
+            Device device = deviceCertificate.getDevice();
+
+            log.info("Creating demo access certificate for device {} and vehicle {}",
+                    device.getSerialNumber(),
+                    demoVehicle.getSerialNumber());
+
+            return accessCertificateService.createAccessCertificate(AccessCertificateService.CreateAccessCertificateContext.builder()
+                    .appId(demoApplication.getAppId())
+                    .deviceSerialNumber(device.getSerialNumber())
+                    .vehicleSerialNumber(demoVehicle.getSerialNumber())
+                    .validityStart(LocalDateTime.now().minusMinutes(1))
+                    .validityEnd(LocalDateTime.now().plusYears(1))
+                    .build());
+        }
     }
 
     @Override
