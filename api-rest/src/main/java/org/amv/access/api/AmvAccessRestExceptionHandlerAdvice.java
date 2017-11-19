@@ -74,7 +74,7 @@ public class AmvAccessRestExceptionHandlerAdvice extends ResponseEntityException
      * exception which is not declared in its method declaration.
      * <p>
      * If such an exception is thrown it will be wrapped in an
-     * {@link java.lang.reflect.UndeclaredThrowableException}.
+     * {@link UndeclaredThrowableException}.
      * <p>
      * This method will unwrap such exceptions and return the original culprit.
      *

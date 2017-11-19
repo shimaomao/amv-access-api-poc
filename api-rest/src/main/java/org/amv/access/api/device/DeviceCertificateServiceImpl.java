@@ -5,7 +5,7 @@ import io.vertx.rxjava.core.eventbus.EventBus;
 import lombok.extern.slf4j.Slf4j;
 import org.amv.access.auth.ApplicationAuthentication;
 import org.amv.access.core.DeviceCertificate;
-import org.amv.access.demo.DemoAccessCertificateVerticle;
+import org.amv.access.certificate.DeviceCertificateService;
 import org.amv.access.exception.BadRequestException;
 import org.amv.access.exception.NotFoundException;
 import org.amv.access.issuer.IssuerService;
@@ -13,7 +13,6 @@ import org.amv.access.model.*;
 import org.amv.access.spi.AmvAccessModuleSpi;
 import org.amv.access.spi.model.CreateDeviceCertificateRequestImpl;
 import org.amv.highmobility.cryptotool.CryptotoolUtils.SecureRandomUtils;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
 import reactor.core.publisher.Mono;
 
@@ -48,7 +47,7 @@ public class DeviceCertificateServiceImpl implements DeviceCertificateService {
 
     @Override
     @Transactional
-    public Mono<DeviceCertificate> createDeviceCertificate(ApplicationAuthentication auth, CreateDeviceCertificateRequest request) {
+    public Mono<DeviceCertificate> createDeviceCertificate(ApplicationAuthentication auth, CreateDeviceCertificateContext request) {
         requireNonNull(auth, "`auth` must not be null");
         requireNonNull(request, "`request` must not be null");
 
@@ -104,7 +103,7 @@ public class DeviceCertificateServiceImpl implements DeviceCertificateService {
         return application;
     }
 
-    private DeviceEntity createAndSaveDevice(CreateDeviceCertificateRequest request) {
+    private DeviceEntity createAndSaveDevice(CreateDeviceCertificateContext request) {
         requireNonNull(request);
         String publicKeyBase64 = requireNonNull(request.getDevicePublicKeyBase64());
 

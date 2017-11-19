@@ -39,10 +39,9 @@ test {
 
 
 dependencies {
-    compile project(':access-spi-highmobility')
-    compile project(':model')
-    compile project(':client-model')
+    compile project(':api-rest')
     compile project(':swagger')
+    compile project(':demo')
 
     compile "io.vertx:vertx-core:${vertxVersion}"
     compile "io.vertx:vertx-rx-java:${vertxVersion}"

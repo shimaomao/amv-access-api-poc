@@ -1,4 +1,4 @@
-package org.amv.access.api.device;
+package org.amv.access.certificate;
 
 import lombok.Builder;
 import lombok.Value;
@@ -10,7 +10,7 @@ public interface DeviceCertificateService {
 
     @Value
     @Builder(builderClassName = "Builder")
-    class CreateDeviceCertificateRequest {
+    class CreateDeviceCertificateContext {
 
         private String appId;
 
@@ -19,7 +19,7 @@ public interface DeviceCertificateService {
         private String deviceName;
     }
 
-    Mono<DeviceCertificate> createDeviceCertificate(ApplicationAuthentication auth, CreateDeviceCertificateRequest request);
+    Mono<DeviceCertificate> createDeviceCertificate(ApplicationAuthentication auth, CreateDeviceCertificateContext request);
 
     //Mono<Void> revokeDeviceCertificate(RevokeDeviceCertificateRequest request);
 }

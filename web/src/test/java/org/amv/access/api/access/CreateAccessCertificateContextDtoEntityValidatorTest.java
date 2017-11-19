@@ -10,7 +10,7 @@ import static org.amv.highmobility.cryptotool.CryptotoolUtils.SecureRandomUtils.
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertThat;
 
-public class CreateAccessCertificateRequestDtoEntityValidatorTest {
+public class CreateAccessCertificateContextDtoEntityValidatorTest {
 
     private CreateAccessCertificateRequestValidator sut;
 

@@ -10,4 +10,7 @@ include 'client-model'
 include 'core'
 include 'client-java6'
 include 'client-model-java6'
+include 'demo'
+include 'api-rest'
+include 'service-spi'
 

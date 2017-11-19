@@ -1,8 +1,8 @@
 package org.amv.access.demo;
 
 import io.vertx.rxjava.core.eventbus.EventBus;
-import org.amv.access.api.access.AccessCertificateService;
-import org.amv.access.api.device.DeviceCertificateService;
+import org.amv.access.certificate.AccessCertificateService;
+import org.amv.access.certificate.DeviceCertificateService;
 import org.amv.access.model.*;
 import org.amv.highmobility.cryptotool.Cryptotool;
 import org.springframework.beans.factory.InitializingBean;

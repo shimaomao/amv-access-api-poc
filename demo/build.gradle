@@ -1,0 +1,16 @@
+description = 'module with classes useful in a demo environment'
+
+dependencies {
+    compile project(':model')
+    compile project(':service-spi')
+    compile project(':access-spi-highmobility')
+
+    compile "io.vertx:vertx-core:${vertxVersion}"
+    compile "io.vertx:vertx-rx-java:${vertxVersion}"
+
+    compile('org.springframework.boot:spring-boot-starter-web') {
+        exclude module: 'spring-boot-starter-tomcat'
+    }
+    compile 'org.springframework.boot:spring-boot-starter-security'
+    compile 'org.springframework.boot:spring-boot-starter-data-jpa'
+}

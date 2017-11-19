@@ -3,8 +3,9 @@ package org.amv.access.api.access;
 import io.prometheus.client.spring.web.PrometheusTimeMethod;
 import io.swagger.annotations.*;
 import lombok.extern.slf4j.Slf4j;
-import org.amv.access.api.access.AccessCertificateService.GetAccessCertificateRequest;
-import org.amv.access.api.access.AccessCertificateService.RevokeAccessCertificateRequest;
+import org.amv.access.certificate.AccessCertificateService;
+import org.amv.access.certificate.AccessCertificateService.GetAccessCertificateContext;
+import org.amv.access.certificate.AccessCertificateService.RevokeAccessCertificateContext;
 import org.amv.access.api.access.model.CreateAccessCertificateRequestDto;
 import org.amv.access.api.access.model.CreateAccessCertificateResponseDto;
 import org.amv.access.auth.NonceAuthentication;
@@ -67,7 +68,7 @@ public class AccessCertificateCtrl {
 
         log.info("Fetch access certificates of device {}", deviceSerialNumber);
 
-        GetAccessCertificateRequest request = GetAccessCertificateRequest.builder()
+        GetAccessCertificateContext request = GetAccessCertificateContext.builder()
                 .deviceSerialNumber(deviceSerialNumber.toLowerCase())
                 .build();
 
@@ -115,13 +116,13 @@ public class AccessCertificateCtrl {
 
         log.info("Revoke access certificate {} of device {}", accessCertificateId.toString(), deviceSerialNumber);
 
-        RevokeAccessCertificateRequest revokeAccessCertificateRequest = RevokeAccessCertificateRequest.builder()
+        RevokeAccessCertificateContext revokeAccessCertificateContext = RevokeAccessCertificateContext.builder()
                 .deviceSerialNumber(deviceSerialNumber.toLowerCase())
                 .accessCertificateId(accessCertificateId)
                 .build();
 
         ResponseEntity<Void> response = accessCertificateService
-                .revokeAccessCertificate(nonceAuthentication, revokeAccessCertificateRequest)
+                .revokeAccessCertificate(nonceAuthentication, revokeAccessCertificateContext)
                 .map(foo -> ResponseEntity.noContent().<Void>build())
                 .defaultIfEmpty(ResponseEntity.noContent().build())
                 .block();
@@ -165,7 +166,7 @@ public class AccessCertificateCtrl {
         }
 
         ResponseEntity<CreateAccessCertificateResponseDto> response = accessCertificateService
-                .createAccessCertificate(AccessCertificateService.CreateAccessCertificateRequest.builder()
+                .createAccessCertificate(AccessCertificateService.CreateAccessCertificateContext.builder()
                         .appId(createAccessCertificateRequestDto.getAppId().toLowerCase())
                         .deviceSerialNumber(createAccessCertificateRequestDto.getDeviceSerialNumber().toLowerCase())
                         .vehicleSerialNumber(createAccessCertificateRequestDto.getVehicleSerialNumber().toLowerCase())

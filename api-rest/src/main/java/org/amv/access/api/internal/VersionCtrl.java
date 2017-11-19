@@ -2,7 +2,7 @@ package org.amv.access.api.internal;
 
 import lombok.Builder;
 import lombok.Value;
-import org.amv.access.AmvAccessApplication;
+import org.amv.access.core.Issuer;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.env.Environment;
 import org.springframework.http.ResponseEntity;
@@ -30,7 +30,7 @@ public class VersionCtrl {
     @GetMapping
     public ResponseEntity<VersionInfoDto> version() {
         return ResponseEntity.ok(VersionInfoDto.builder()
-                .version(AmvAccessApplication.class.getPackage().getImplementationVersion())
+                .version(Issuer.class.getPackage().getImplementationVersion())
                 .profiles(Arrays.asList(environment.getActiveProfiles()))
                 .build());
     }

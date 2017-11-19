@@ -6,7 +6,7 @@ import io.vertx.rxjava.core.AbstractVerticle;
 import io.vertx.rxjava.core.eventbus.EventBus;
 import io.vertx.rxjava.core.eventbus.Message;
 import lombok.extern.slf4j.Slf4j;
-import org.amv.access.api.access.AccessCertificateService;
+import org.amv.access.certificate.AccessCertificateService;
 import org.amv.access.core.AccessCertificate;
 import org.amv.access.core.Device;
 import org.amv.access.core.DeviceCertificate;
@@ -63,7 +63,7 @@ public class DemoAccessCertificateVerticle extends AbstractVerticle {
 
                 log.info("Creating demo access certificate for device {} and vehicle {}", device.getSerialNumber(), demoVehicle.getSerialNumber());
 
-                accessCertificateService.createAccessCertificate(AccessCertificateService.CreateAccessCertificateRequest.builder()
+                accessCertificateService.createAccessCertificate(AccessCertificateService.CreateAccessCertificateContext.builder()
                         .appId(demoApplication.getAppId())
                         .deviceSerialNumber(device.getSerialNumber())
                         .vehicleSerialNumber(demoVehicle.getSerialNumber())
@@ -94,7 +94,7 @@ public class DemoAccessCertificateVerticle extends AbstractVerticle {
 
             log.info("Creating demo access certificate for device {} and vehicle {}", device.getSerialNumber(), demoVehicle.getSerialNumber());
 
-            return accessCertificateService.createAccessCertificate(AccessCertificateService.CreateAccessCertificateRequest.builder()
+            return accessCertificateService.createAccessCertificate(AccessCertificateService.CreateAccessCertificateContext.builder()
                     .appId(demoApplication.getAppId())
                     .deviceSerialNumber(device.getSerialNumber())
                     .vehicleSerialNumber(demoVehicle.getSerialNumber())

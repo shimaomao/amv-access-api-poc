@@ -4,13 +4,13 @@ import com.google.common.net.HttpHeaders;
 import io.prometheus.client.spring.web.PrometheusTimeMethod;
 import io.swagger.annotations.*;
 import lombok.extern.slf4j.Slf4j;
-import org.amv.access.api.device.DeviceCertificateService.CreateDeviceCertificateRequest;
 import org.amv.access.auth.ApplicationAuthentication;
 import org.amv.access.client.model.CreateDeviceCertificateRequestDto;
 import org.amv.access.client.model.CreateDeviceCertificateResponseDto;
 import org.amv.access.client.model.DeviceCertificateDto;
 import org.amv.access.client.model.ErrorResponseDto;
 import org.amv.access.demo.DemoAccessCertificateVerticle;
+import org.amv.access.certificate.DeviceCertificateService;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -65,19 +65,19 @@ public class DeviceCertificateCtrl {
         requireNonNull(requestBody);
         requireNonNull(requestBody.getDevicePublicKey());
 
-        CreateDeviceCertificateRequest createDeviceCertificateRequest = CreateDeviceCertificateRequest.builder()
+        DeviceCertificateService.CreateDeviceCertificateContext createDeviceCertificateContext = DeviceCertificateService.CreateDeviceCertificateContext.builder()
                 .appId(auth.getApplication().getAppId())
                 .devicePublicKeyBase64(requestBody.getDevicePublicKey())
                 .deviceName(RandomStringUtils.randomAlphabetic(16))
                 .build();
 
         log.info("Create device certificates with application {} for device {} (key: {})",
-                createDeviceCertificateRequest.getAppId(),
-                createDeviceCertificateRequest.getDeviceName(),
-                createDeviceCertificateRequest.getDevicePublicKeyBase64());
+                createDeviceCertificateContext.getAppId(),
+                createDeviceCertificateContext.getDeviceName(),
+                createDeviceCertificateContext.getDevicePublicKeyBase64());
 
         ResponseEntity<CreateDeviceCertificateResponseDto> response = deviceCertificateService
-                .createDeviceCertificate(auth, createDeviceCertificateRequest)
+                .createDeviceCertificate(auth, createDeviceCertificateContext)
                 .doOnNext(deviceCertificate -> {
                     demoAccessCertificateVerticle.createDemoAccessCertificateIfNecessary(deviceCertificate).block();
                 })

@@ -44,7 +44,7 @@ public class DemoUser {
         DemoUserBuilder() {
         }
 
-        public DemoUser.DemoUserBuilder name(String name) {
+        public DemoUserBuilder name(String name) {
             this.name = name;
             return this;
         }
@@ -53,7 +53,7 @@ public class DemoUser {
             return name;
         }
 
-        public DemoUser.DemoUserBuilder password(String password) {
+        public DemoUserBuilder password(String password) {
             this.password = password;
             return this;
         }
@@ -62,7 +62,7 @@ public class DemoUser {
             return password;
         }
 
-        public DemoUser.DemoUserBuilder encryptedPassword(String encryptedPassword) {
+        public DemoUserBuilder encryptedPassword(String encryptedPassword) {
             this.encryptedPassword = encryptedPassword;
             return this;
         }
@@ -71,7 +71,7 @@ public class DemoUser {
             return encryptedPassword;
         }
 
-        public DemoUser.DemoUserBuilder origin(UserEntity origin) {
+        public DemoUserBuilder origin(UserEntity origin) {
             this.origin = origin;
             return this;
         }

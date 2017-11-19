@@ -1,6 +1,7 @@
 package org.amv.access.api.access;
 
 import lombok.extern.slf4j.Slf4j;
+import org.amv.access.certificate.AccessCertificateService;
 import org.amv.access.auth.NonceAuthentication;
 import org.amv.access.core.AccessCertificate;
 import org.amv.access.core.impl.AccessCertificateImpl;
@@ -69,7 +70,7 @@ public class AccessCertificateServiceImpl implements AccessCertificateService {
     @Override
     @Transactional
     public Flux<AccessCertificate> getAccessCertificates(NonceAuthentication nonceAuthentication,
-                                                         GetAccessCertificateRequest request) {
+                                                         GetAccessCertificateContext request) {
         requireNonNull(nonceAuthentication, "`nonceAuthentication` must not be null");
         requireNonNull(request, "`request` must not be null");
 
@@ -129,7 +130,7 @@ public class AccessCertificateServiceImpl implements AccessCertificateService {
 
     @Override
     @Transactional
-    public Mono<AccessCertificate> createAccessCertificate(CreateAccessCertificateRequest request) {
+    public Mono<AccessCertificate> createAccessCertificate(CreateAccessCertificateContext request) {
         requireNonNull(request, "`request` must not be null");
 
         ApplicationEntity applicationEntity = applicationRepository.findOneByAppId(request.getAppId())
@@ -193,7 +194,7 @@ public class AccessCertificateServiceImpl implements AccessCertificateService {
     @Override
     @Transactional
     public Mono<Void> revokeAccessCertificate(NonceAuthentication nonceAuthentication,
-                                              RevokeAccessCertificateRequest request) {
+                                              RevokeAccessCertificateContext request) {
         requireNonNull(nonceAuthentication, "`nonceAuthentication` must not be null");
         requireNonNull(request, "`request` must not be null");
 

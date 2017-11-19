@@ -3,11 +3,11 @@ package org.amv.access.demo;
 import com.google.common.base.Supplier;
 import com.google.common.base.Suppliers;
 import lombok.extern.slf4j.Slf4j;
-import org.amv.access.api.device.DeviceCertificateService;
-import org.amv.access.api.device.DeviceCertificateService.CreateDeviceCertificateRequest;
 import org.amv.access.auth.ApplicationAuthenticationImpl;
 import org.amv.access.core.Device;
 import org.amv.access.core.DeviceCertificate;
+import org.amv.access.certificate.DeviceCertificateService;
+import org.amv.access.certificate.DeviceCertificateService.CreateDeviceCertificateContext;
 import org.amv.access.model.*;
 import org.amv.highmobility.cryptotool.Cryptotool;
 import org.amv.highmobility.cryptotool.CryptotoolUtils.SecureRandomUtils;
@@ -107,7 +107,7 @@ public class DemoServiceImpl implements DemoService {
                 .application(applicationEntity)
                 .build();
 
-        CreateDeviceCertificateRequest deviceCertificateRequest = CreateDeviceCertificateRequest.builder()
+        CreateDeviceCertificateContext deviceCertificateRequest = CreateDeviceCertificateContext.builder()
                 .appId(applicationEntity.getAppId())
                 .deviceName("DEMO")
                 .devicePublicKeyBase64(publicKeyBase64)

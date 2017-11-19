@@ -1,6 +1,7 @@
 package org.amv.access.api.device;
 
 import io.vertx.rxjava.core.eventbus.EventBus;
+import org.amv.access.certificate.DeviceCertificateService;
 import org.amv.access.issuer.IssuerService;
 import org.amv.access.model.ApplicationRepository;
 import org.amv.access.model.DeviceCertificateRepository;

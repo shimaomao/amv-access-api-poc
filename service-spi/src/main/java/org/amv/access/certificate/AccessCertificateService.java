@@ -1,4 +1,4 @@
-package org.amv.access.api.access;
+package org.amv.access.certificate;
 
 import lombok.Builder;
 import lombok.NonNull;
@@ -12,22 +12,22 @@ import java.time.LocalDateTime;
 import java.util.UUID;
 
 public interface AccessCertificateService {
-    Flux<AccessCertificate> getAccessCertificates(NonceAuthentication auth, GetAccessCertificateRequest request);
+    Flux<AccessCertificate> getAccessCertificates(NonceAuthentication auth, GetAccessCertificateContext request);
 
-    Mono<AccessCertificate> createAccessCertificate(CreateAccessCertificateRequest request);
+    Mono<AccessCertificate> createAccessCertificate(CreateAccessCertificateContext request);
 
-    Mono<Void> revokeAccessCertificate(NonceAuthentication nonceAuthentication, RevokeAccessCertificateRequest request);
+    Mono<Void> revokeAccessCertificate(NonceAuthentication nonceAuthentication, RevokeAccessCertificateContext request);
 
     @Value
     @Builder(builderClassName = "Builder")
-    class GetAccessCertificateRequest {
+    class GetAccessCertificateContext {
         @NonNull
         private String deviceSerialNumber;
     }
 
     @Value
     @Builder(builderClassName = "Builder")
-    class RevokeAccessCertificateRequest {
+    class RevokeAccessCertificateContext {
         @NonNull
         private String deviceSerialNumber;
         @NonNull
@@ -36,7 +36,7 @@ public interface AccessCertificateService {
 
     @Value
     @Builder(builderClassName = "Builder")
-    class CreateAccessCertificateRequest {
+    class CreateAccessCertificateContext {
         @NonNull
         private String appId;
 

@@ -1,5 +1,6 @@
 package org.amv.access.api.access;
 
+import org.amv.access.certificate.AccessCertificateService;
 import org.amv.access.issuer.IssuerService;
 import org.amv.access.model.*;
 import org.amv.access.spi.AmvAccessModuleSpi;
