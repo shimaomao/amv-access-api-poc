@@ -1,16 +1,18 @@
 package org.amv.access.api.access;
 
 import lombok.extern.slf4j.Slf4j;
-import org.amv.access.certificate.AccessCertificateService;
 import org.amv.access.auth.NonceAuthentication;
+import org.amv.access.certificate.AccessCertificateService;
 import org.amv.access.core.AccessCertificate;
 import org.amv.access.core.impl.AccessCertificateImpl;
 import org.amv.access.exception.BadRequestException;
 import org.amv.access.exception.NotFoundException;
 import org.amv.access.exception.UnauthorizedException;
+import org.amv.access.exception.UnprocessableEntityException;
 import org.amv.access.issuer.IssuerService;
 import org.amv.access.model.*;
 import org.amv.access.spi.AmvAccessModuleSpi;
+import org.amv.access.spi.CreateAccessCertificateRequest;
 import org.amv.access.spi.highmobility.AmvPermissionsAdapter;
 import org.amv.access.spi.model.CreateAccessCertificateRequestImpl;
 import org.amv.highmobility.cryptotool.Cryptotool;
@@ -79,6 +81,10 @@ public class AccessCertificateServiceImpl implements AccessCertificateService {
 
         verifyNonceAuthOrThrow(nonceAuthentication, device);
 
+        if (!device.isEnabled()) {
+            throw new UnprocessableEntityException("DeviceEntity is disabled");
+        }
+
         List<AccessCertificateEntity> accessCertificates = accessCertificateRepository
                 .findByDeviceId(device.getId(), new PageRequest(0, Integer.MAX_VALUE))
                 .getContent();
@@ -118,10 +124,6 @@ public class AccessCertificateServiceImpl implements AccessCertificateService {
                             .vehicle(vehicle)
                             .validFrom(accessCertificate.getValidFrom())
                             .validUntil(accessCertificate.getValidUntil())
-                            //.deviceAccessCertificateBase64(accessCertificate.getDeviceAccessCertificateBase64())
-                            //.deviceAccessCertificateSignatureBase64(accessCertificate.getDeviceAccessCertificateSignatureBase64())
-                            //.vehicleAccessCertificateBase64(accessCertificate.getVehicleAccessCertificateBase64())
-                            //.vehicleAccessCertificateSignatureBase64(accessCertificate.getVehicleAccessCertificateSignatureBase64())
                             .signedDeviceAccessCertificateBase64(accessCertificate.getSignedDeviceAccessCertificateBase64())
                             .signedVehicleAccessCertificateBase64(accessCertificate.getSignedVehicleAccessCertificateBase64())
                             .build();
@@ -130,19 +132,19 @@ public class AccessCertificateServiceImpl implements AccessCertificateService {
 
     @Override
     @Transactional
-    public Mono<AccessCertificate> createAccessCertificate(CreateAccessCertificateContext request) {
-        requireNonNull(request, "`request` must not be null");
+    public Mono<AccessCertificate> createAccessCertificate(CreateAccessCertificateContext context) {
+        requireNonNull(context, "`context` must not be null");
 
-        ApplicationEntity applicationEntity = applicationRepository.findOneByAppId(request.getAppId())
+        ApplicationEntity applicationEntity = applicationRepository.findOneByAppId(context.getAppId())
                 .orElseThrow(() -> new NotFoundException("ApplicationEntity not found"));
 
-        VehicleEntity vehicleEntity = vehicleRepository.findOneBySerialNumber(request.getVehicleSerialNumber())
+        VehicleEntity vehicleEntity = vehicleRepository.findOneBySerialNumber(context.getVehicleSerialNumber())
                 .orElseThrow(() -> new NotFoundException("VehicleEntity not found"));
 
         IssuerEntity issuerEntity = issuerService.findIssuerById(vehicleEntity.getIssuerId())
                 .orElseThrow(() -> new NotFoundException("IssuerEntity not found"));
 
-        DeviceEntity deviceEntity = deviceRepository.findBySerialNumber(request.getDeviceSerialNumber())
+        DeviceEntity deviceEntity = deviceRepository.findBySerialNumber(context.getDeviceSerialNumber())
                 .orElseThrow(() -> new NotFoundException("DeviceEntity not found"));
 
         DeviceCertificateEntity deviceCertificateEntity = deviceCertificateRepository
@@ -153,14 +155,20 @@ public class AccessCertificateServiceImpl implements AccessCertificateService {
         if (!hasSameAppId) {
             throw new BadRequestException("Mismatching `appId`");
         }
+        if (!applicationEntity.isEnabled()) {
+            throw new UnprocessableEntityException("ApplicationEntity is disabled");
+        }
+        if (!deviceEntity.isEnabled()) {
+            throw new UnprocessableEntityException("DeviceEntity is disabled");
+        }
 
-        CreateAccessCertificateRequestImpl r = CreateAccessCertificateRequestImpl.builder()
+        CreateAccessCertificateRequest r = CreateAccessCertificateRequestImpl.builder()
                 .issuer(issuerEntity)
                 .application(applicationEntity)
                 .device(deviceEntity)
                 .vehicle(vehicleEntity)
-                .validFrom(request.getValidityStart())
-                .validUntil(request.getValidityEnd())
+                .validFrom(context.getValidityStart())
+                .validUntil(context.getValidityEnd())
                 .permissions(AmvPermissionsAdapter.builder()
                         .cryptotoolPermissions(amvStandardPermissions)
                         .build())
@@ -168,7 +176,7 @@ public class AccessCertificateServiceImpl implements AccessCertificateService {
 
         AccessCertificate accessCertificate = Optional.of(amvAccessModule.createAccessCertificate(r))
                 .map(Mono::block)
-                .orElseThrow(() -> new IllegalStateException("Could not create access certificate for " + request));
+                .orElseThrow(() -> new IllegalStateException("Could not create access certificate for " + context));
 
         AccessCertificateEntity accessCertificateEntity = AccessCertificateEntity.builder()
                 .uuid(accessCertificate.getUuid())
@@ -178,10 +186,6 @@ public class AccessCertificateServiceImpl implements AccessCertificateService {
                 .deviceId(deviceEntity.getId())
                 .validFrom(r.getValidFrom())
                 .validUntil(r.getValidUntil())
-                //.deviceAccessCertificateBase64(accessCertificate.getDeviceAccessCertificateBase64())
-                //.deviceAccessCertificateSignatureBase64(accessCertificate.getDeviceAccessCertificateSignatureBase64())
-                //.vehicleAccessCertificateBase64(accessCertificate.getVehicleAccessCertificateBase64())
-                //.vehicleAccessCertificateSignatureBase64(accessCertificate.getVehicleAccessCertificateSignatureBase64())
                 .signedDeviceAccessCertificateBase64(accessCertificate.getSignedDeviceAccessCertificateBase64())
                 .signedVehicleAccessCertificateBase64(accessCertificate.getSignedVehicleAccessCertificateBase64())
                 .build();
@@ -194,17 +198,22 @@ public class AccessCertificateServiceImpl implements AccessCertificateService {
     @Override
     @Transactional
     public Mono<Void> revokeAccessCertificate(NonceAuthentication nonceAuthentication,
-                                              RevokeAccessCertificateContext request) {
+                                              RevokeAccessCertificateContext context) {
         requireNonNull(nonceAuthentication, "`nonceAuthentication` must not be null");
-        requireNonNull(request, "`request` must not be null");
+        requireNonNull(context, "`context` must not be null");
 
-        DeviceEntity device = deviceRepository.findBySerialNumber(request.getDeviceSerialNumber())
+        DeviceEntity device = deviceRepository.findBySerialNumber(context.getDeviceSerialNumber())
                 .orElseThrow(() -> new NotFoundException("DeviceEntity not found"));
 
         verifyNonceAuthOrThrow(nonceAuthentication, device);
 
+        if (!device.isEnabled()) {
+            log.warn("Allowing disabled device {} to revoke access certificate {}", device.getId(),
+                    context.getAccessCertificateId());
+        }
+
         AccessCertificateEntity accessCertificate = accessCertificateRepository
-                .findByUuid(request.getAccessCertificateId().toString())
+                .findByUuid(context.getAccessCertificateId().toString())
                 .orElseThrow(() -> new NotFoundException("AccessCertificateEntity not found"));
 
         if (accessCertificate.getDeviceId() != device.getId()) {

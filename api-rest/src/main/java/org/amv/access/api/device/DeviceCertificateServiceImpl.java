@@ -4,10 +4,11 @@ import io.vertx.core.json.Json;
 import io.vertx.rxjava.core.eventbus.EventBus;
 import lombok.extern.slf4j.Slf4j;
 import org.amv.access.auth.ApplicationAuthentication;
-import org.amv.access.core.DeviceCertificate;
 import org.amv.access.certificate.DeviceCertificateService;
+import org.amv.access.core.DeviceCertificate;
 import org.amv.access.exception.BadRequestException;
 import org.amv.access.exception.NotFoundException;
+import org.amv.access.exception.UnprocessableEntityException;
 import org.amv.access.issuer.IssuerService;
 import org.amv.access.model.*;
 import org.amv.access.spi.AmvAccessModuleSpi;
@@ -95,7 +96,7 @@ public class DeviceCertificateServiceImpl implements DeviceCertificateService {
                 .orElseThrow(() -> new NotFoundException("ApplicationEntity with given appId not found"));
 
         if (!application.isEnabled()) {
-            throw new BadRequestException("ApplicationEntity with given appId is disabled");
+            throw new BadRequestException("ApplicationEntity is disabled");
         }
 
         return application;
