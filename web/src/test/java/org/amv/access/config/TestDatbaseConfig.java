@@ -11,13 +11,13 @@ import java.net.URISyntaxException;
 import java.util.Properties;
 
 @Configuration
-public class TestDbConfig {
+public class TestDatbaseConfig {
     @Bean
     @Primary
     public DataSource dataSource() {
         DataSourceBuilder dataSourceBuilder = DataSourceBuilder.create();
         dataSourceBuilder.driverClassName(org.sqlite.JDBC.class.getName());
-        dataSourceBuilder.url("jdbc:sqlite:build/tmp/~amv-access-test.db?journal_mode=wal");
+        dataSourceBuilder.url("jdbc:sqlite:~amv-access-test.db?journal_mode=wal");
         return dataSourceBuilder.build();
     }
 

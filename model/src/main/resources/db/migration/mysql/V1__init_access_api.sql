@@ -62,8 +62,8 @@ create table if not exists `vehicle` (
     primary key (`ID`),
     unique key `INDEX_VEHICLE_SERIAL_NUMBER_UNIQUE` (`SERIAL_NUMBER`),
     foreign key (`ISSUER_ID`)
-    references issuer(`ID`)
-    on update cascade on delete restrict
+      references issuer(`ID`)
+      on update cascade on delete restrict
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 create table if not exists `application_vehicle` (

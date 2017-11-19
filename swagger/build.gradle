@@ -1,5 +1,11 @@
 description = 'Swagger'
 
+buildscript {
+    ext {
+        springfoxVersion = '2.7.0'
+    }
+}
+
 test {
     // * enable on demand
     // testLogging.showStandardStreams = true
@@ -10,7 +16,7 @@ dependencies {
         exclude module: 'spring-boot-starter-tomcat'
     }
 
-    compile 'io.springfox:springfox-swagger2:2.7.0'
-    compile 'io.springfox:springfox-data-rest:2.7.0'
-    compile 'io.springfox:springfox-swagger-ui:2.7.0'
+    compile "io.springfox:springfox-swagger2:${springfoxVersion}"
+    compile "io.springfox:springfox-data-rest:${springfoxVersion}"
+    compile "io.springfox:springfox-swagger-ui:${springfoxVersion}"
 }

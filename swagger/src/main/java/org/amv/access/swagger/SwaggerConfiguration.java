@@ -1,6 +1,5 @@
 package org.amv.access.swagger;
 
-import com.fasterxml.classmate.TypeResolver;
 import com.google.common.base.Predicate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -38,8 +37,6 @@ import static springfox.documentation.builders.RequestHandlerSelectors.withClass
         SpringDataRestConfiguration.class
 })
 public class SwaggerConfiguration extends WebMvcConfigurerAdapter {
-    private static final TypeResolver typeResolver = new TypeResolver();
-
     private SwaggerProperties swaggerProperties;
 
     @Autowired
@@ -56,10 +53,6 @@ public class SwaggerConfiguration extends WebMvcConfigurerAdapter {
                     .addResourceLocations("classpath:/META-INF/resources/webjars/")
                     .setCachePeriod(cachePeriodInSeconds);
         }
-
-        registry.addResourceHandler("/swagger.html")
-                .addResourceLocations("classpath:/static/swagger-ui.html")
-                .setCachePeriod(cachePeriodInSeconds);
     }
 
     @Bean
@@ -129,12 +122,16 @@ public class SwaggerConfiguration extends WebMvcConfigurerAdapter {
                 properties.getDescription(),
                 version,
                 properties.getTermsOfServiceUrl(),
-                new Contact(properties.getContactName(),
-                        properties.getContactUrl(),
-                        properties.getContactEmail()),
+                contact(properties),
                 properties.getLicense(),
                 properties.getLicenseUrl(),
                 Collections.emptyList()
         );
+    }
+
+    private Contact contact(SwaggerProperties properties) {
+        return new Contact(properties.getContactName(),
+                properties.getContactUrl(),
+                properties.getContactEmail());
     }
 }
