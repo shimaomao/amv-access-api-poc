@@ -26,14 +26,14 @@ import static org.eclipse.jetty.http.HttpStatus.*;
 @RequestMapping("/api/v1/device_certificates")
 public class DeviceCertificateCtrl {
 
-    @Autowired
-    private DemoService demoService;
-
     private final DeviceCertificateService deviceCertificateService;
+    private final DemoService demoService;
 
     @Autowired
-    public DeviceCertificateCtrl(DeviceCertificateService deviceCertificateService) {
+    public DeviceCertificateCtrl(DeviceCertificateService deviceCertificateService,
+                                 DemoService demoService) {
         this.deviceCertificateService = requireNonNull(deviceCertificateService);
+        this.demoService = requireNonNull(demoService);
     }
 
     @PostMapping
