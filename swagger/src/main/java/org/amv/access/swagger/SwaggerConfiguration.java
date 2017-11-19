@@ -124,8 +124,8 @@ public class SwaggerConfiguration extends WebMvcConfigurerAdapter {
                 properties.getTermsOfServiceUrl(),
                 contact(properties),
                 properties.getLicense(),
-                properties.getLicenseUrl(),
-                Collections.emptyList()
+                properties.getLicenseUrl()
+                //,Collections.emptyList()
         );
     }
 

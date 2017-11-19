@@ -3,7 +3,7 @@ buildscript {
         asciiDocOutputDir = file("${buildDir}/asciidoc/generated")
         swaggerOutputDir = file("${buildDir}/swagger")
         snippetsOutputDir = file("${buildDir}/asciidoc/snippets")
-        springfoxVersion = '2.7.0'
+        springfoxVersion = '2.6.1'
     }
     repositories {
         jcenter()
@@ -28,21 +28,34 @@ test {
     systemProperty 'io.springfox.staticdocs.snippetsOutputDir', snippetsOutputDir
 }
 
+sourceSets {
+    test {
+        resources {
+            srcDirs 'src/test/resources',
+                    '../model/src/main/resources'
+        }
+    }
+}
+
 dependencies {
     compile project(':api-rest')
 
-    compile('org.springframework.boot:spring-boot-starter-web') {
-        exclude module: 'spring-boot-starter-tomcat'
-    }
+    compile('org.springframework.boot:spring-boot-starter-web')
 
     compile "io.springfox:springfox-swagger2:${springfoxVersion}"
     compile "io.springfox:springfox-data-rest:${springfoxVersion}"
     compile "io.springfox:springfox-swagger-ui:${springfoxVersion}"
 
-    testCompile "io.springfox:springfox-staticdocs:${springfoxVersion}"
+    testCompile 'org.xerial:sqlite-jdbc:3.20.1'
+    testCompile 'org.springframework.boot:spring-boot-starter-test'
+    testCompile "io.springfox:springfox-staticdocs:2.6.1"
     testCompile 'org.springframework.restdocs:spring-restdocs-core:1.2.2.RELEASE'
     testCompile 'org.springframework.restdocs:spring-restdocs-mockmvc:1.2.2.RELEASE'
     testCompile 'com.jayway.jsonpath:json-path:2.2.0' //mock testing REST services
+
+
+    testCompile "io.vertx:vertx-rx-java:${vertxVersion}"
+    testCompile 'org.amv.vertx:amv-vertx-spring-boot-starter:0.0.1'
 }
 
 asciidoctorj {
