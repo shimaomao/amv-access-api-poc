@@ -27,25 +27,11 @@ public class AccessCertificateImpl implements AccessCertificate {
     @NonNull
     private LocalDateTime validUntil;
 
-    // TODO: this value is just for human inspection - not really needed.
-    //@NonNull
-    //private String vehicleAccessCertificateBase64;
-    // TODO: this value is just for human inspection - not really needed.
-    //@NonNull
-    //private String vehicleAccessCertificateSignatureBase64;
-
     /**
      * base64(vehicleCert + sign(vehicleCert, issuerPrivateKey))
      */
     @NonNull
     private String signedVehicleAccessCertificateBase64;
-
-    // TODO: this value is just for human inspection - not really needed.
-    //@NonNull
-    //private String deviceAccessCertificateBase64;
-    // TODO: this value is just for human inspection - not really needed.
-    //@NonNull
-    //private String deviceAccessCertificateSignatureBase64;
 
     /**
      * base64(deviceCert + sign(deviceCert, issuerPrivateKey))

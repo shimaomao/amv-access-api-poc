@@ -49,37 +49,29 @@ public class HighmobilityModule implements AmvAccessModuleSpi {
         Application application = requireNonNull(deviceCertificateRequest.getApplication());
         Device device = requireNonNull(deviceCertificateRequest.getDevice());
 
-        Cryptotool.DeviceCertificate deviceCertificate = cryptotool
+        Cryptotool.DeviceCertificate hmDeviceCertificate = cryptotool
                 .createDeviceCertificate(issuer.getNameInHex(),
                         application.getAppId(),
                         device.getSerialNumber(),
                         decodeBase64AsHex(device.getPublicKeyBase64()))
                 .block();
 
-        Cryptotool.Signature signature = cryptotool
-                .generateSignature(deviceCertificate.getDeviceCertificate(), decodeBase64AsHex(issuer.getPrivateKeyBase64()))
+        Cryptotool.Signature hmSignature = cryptotool
+                .generateSignature(hmDeviceCertificate.getDeviceCertificate(), decodeBase64AsHex(issuer.getPrivateKeyBase64()))
                 .block();
 
-        String signedDeviceCertificate = deviceCertificate.getDeviceCertificate() + signature.getSignature();
+        String signedDeviceCertificate = hmDeviceCertificate.getDeviceCertificate() + hmSignature.getSignature();
         String signedDeviceCertificateBase64 = hexToBase64(signedDeviceCertificate)
                 .orElseThrow(() -> new IllegalStateException("Could not convert signed device certificate to base64"));
 
-        String deviceCertificateBase64 = hexToBase64(deviceCertificate.getDeviceCertificate())
-                .orElseThrow(() -> new IllegalStateException("Could not convert device certificate to base64"));
-
-        String deviceCertificateSignatureBase64 = hexToBase64(signature.getSignature())
-                .orElseThrow(() -> new IllegalStateException("Could not convert device certificate signature to base64"));
-
-        DeviceCertificate deviceCertificateEntity = DeviceCertificateImpl.builder()
+        DeviceCertificate deviceCertificate = DeviceCertificateImpl.builder()
                 .issuer(issuer)
                 .application(application)
                 .device(device)
-                .certificateBase64(deviceCertificateBase64)
-                .certificateSignatureBase64(deviceCertificateSignatureBase64)
                 .signedDeviceCertificateBase64(signedDeviceCertificateBase64)
                 .build();
 
-        return Mono.just(deviceCertificateEntity);
+        return Mono.just(deviceCertificate);
     }
 
     @Override
@@ -137,18 +129,6 @@ public class HighmobilityModule implements AmvAccessModuleSpi {
         String signedVehicleAccessCertificateBase64 = hexToBase64(signedVehicleAccessCertificate)
                 .orElseThrow(() -> new IllegalStateException("Could not convert signed vehicle access certificate to base64"));
 
-        String deviceAccessCertificateBase64 = hexToBase64(deviceAccessCertificate.getAccessCertificate())
-                .orElseThrow(() -> new IllegalStateException("Could not convert device access certificate to base64"));
-
-        String deviceAccessCertificateSignatureBase64 = hexToBase64(deviceAccessCertificateSignature)
-                .orElseThrow(() -> new IllegalStateException("Could not convert device access certificate signature to base64"));
-
-        String vehicleAccessCertificateBase64 = hexToBase64(vehicleAccessCertificate.getAccessCertificate())
-                .orElseThrow(() -> new IllegalStateException("Could not convert vehicle access certificate to base64"));
-
-        String vehicleAccessCertificateSignatureBase64 = hexToBase64(vehicleAccessCertificateSignature)
-                .orElseThrow(() -> new IllegalStateException("Could not convert vehicle access certificate signature to base64"));
-
         AccessCertificate accessCertificateEntity = AccessCertificateImpl.builder()
                 .uuid(UUID.randomUUID().toString())
                 .issuer(issuer)
@@ -157,10 +137,6 @@ public class HighmobilityModule implements AmvAccessModuleSpi {
                 .device(device)
                 .validFrom(validFrom)
                 .validUntil(validUntil)
-                //.deviceAccessCertificateBase64(deviceAccessCertificateBase64)
-                //.deviceAccessCertificateSignatureBase64(deviceAccessCertificateSignatureBase64)
-                //.vehicleAccessCertificateBase64(vehicleAccessCertificateBase64)
-                //.vehicleAccessCertificateSignatureBase64(vehicleAccessCertificateSignatureBase64)
                 .signedDeviceAccessCertificateBase64(signedDeviceAccessCertificateBase64)
                 .signedVehicleAccessCertificateBase64(signedVehicleAccessCertificateBase64)
                 .build();

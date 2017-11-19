@@ -61,11 +61,12 @@ public class CertificateIssuerConfig {
         };
     }
 
-
     private void initializeIssuerFromPropertiesIfNecessary(IssuerRepository issuerRepository, Issuer issuer) {
         log.info("Creating issuer from properties file: {}", issuer.getName());
 
-        Optional<IssuerEntity> issuerOptional = issuerRepository.findByNameAndPublicKeyBase64(issuer.getName(), issuer.getPublicKeyBase64());
+        Optional<IssuerEntity> issuerOptional = issuerRepository
+                .findByNameAndPublicKeyBase64(issuer.getName(), issuer.getPublicKeyBase64());
+
         if (issuerOptional.isPresent()) {
             log.info("Issuer '{}' is already present - nothing to do", issuer.getName());
         } else {

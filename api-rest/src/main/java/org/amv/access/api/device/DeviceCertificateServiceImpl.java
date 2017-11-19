@@ -75,8 +75,6 @@ public class DeviceCertificateServiceImpl implements DeviceCertificateService {
                 .applicationId(application.getId())
                 .issuerId(issuer.getId())
                 .deviceId(device.getId())
-                //.certificateBase64(deviceCertificate.getCertificateBase64())
-                //.certificateSignatureBase64(deviceCertificate.getCertificateSignatureBase64())
                 .signedCertificateBase64(deviceCertificate.getSignedDeviceCertificateBase64())
                 .build();
 

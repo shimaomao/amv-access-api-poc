@@ -7,9 +7,5 @@ public interface DeviceCertificate {
 
     Device getDevice();
 
-    String getCertificateBase64();
-
-    String getCertificateSignatureBase64();
-
     String getSignedDeviceCertificateBase64();
 }
