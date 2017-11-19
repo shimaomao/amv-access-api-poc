@@ -5,7 +5,7 @@ import org.amv.access.client.AccessCertClient;
 import org.amv.access.client.Clients;
 import org.amv.access.client.DeviceCertClient;
 import org.amv.access.client.model.*;
-import org.amv.access.config.TestDatbaseConfig;
+import org.amv.access.config.SqliteTestDatabaseConfig;
 import org.amv.access.core.Issuer;
 import org.amv.access.demo.DemoService;
 import org.amv.access.model.ApplicationEntity;
@@ -33,7 +33,10 @@ import static org.junit.Assert.assertThat;
 @RunWith(SpringRunner.class)
 @SpringBootTest(
         webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT,
-        classes = {AmvAccessApplication.class, TestDatbaseConfig.class}
+        classes = {
+                AmvAccessApplication.class,
+                SqliteTestDatabaseConfig.class
+        }
 )
 public class DemoApplicationIT {
 
@@ -121,7 +124,6 @@ public class DemoApplicationIT {
         List<AccessCertificateDto> accessCertificates = accessCertResponse.getAccessCertificates();
         assertThat(accessCertificates, hasSize(1));
     }
-
 
 
     private String generateNonceWithRandomLengthBase64() {

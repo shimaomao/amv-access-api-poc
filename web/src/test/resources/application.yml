@@ -5,9 +5,9 @@ app.name: AMV Access API (test)
 app.description: AMV Access API Gateway
 
 spring.jpa.database-platform: 'org.amv.access.sqlite.SQLiteDialect'
-spring.jpa.hibernate.ddl-auto: 'create-drop'
+spring.jpa.hibernate.ddl-auto: 'validate'
 
-flyway.enabled: false
+flyway.enabled: true
 flyway.locations: 'db/migration/sqlite'
 
 amv.issuer:

@@ -1,0 +1,39 @@
+spring.application.name: 'amv-access-api'
+spring.profiles.active: test
+
+app.name: AMV Access API (test)
+app.description: AMV Access API Gateway
+
+spring.jpa.database-platform: 'org.hibernate.dialect.MySQL5InnoDBDialect'
+spring.jpa.hibernate.ddl-auto: 'validate'
+
+flyway.enabled: true
+flyway.locations: 'db/migration/mysql'
+
+amv.issuer:
+  name: XXXX
+  public-key: A183A2C611811FCA6936B5E212A2A83DC4086090FA3871452D237F244F366D4A82214BB8B214AF82BC1BEFC1261AB66350AB5ED78D805A4AE2D84D1F548D97C5
+  private-key: 957D8D11D6081E91FEF68A05A05EC84ADC81B0089E7E81AC4430F3CE7D4CF798
+
+amv.access.demo:
+  enabled: true
+  issuer:
+     name: 'DEMO'
+     publicKeyBase64: 'qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqg=='
+     privateKeyBase64: 'u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7s='
+  vehicles:
+   - name: 'TEST-VEHICLE-1'
+     serialNumber: '0000073cbc01354c9c'
+     publicKeyBase64: 'HmXjzb0VJXf98p7F6gYiIAs0DHP6UlAKJSwHNBLeGIFNe6pYdW7e7HAXCNWJsI4tIOSnfn8uJ0ERv1CnQjZAww=='
+   - name: 'TEST-VEHICLE-2'
+     serialNumber: '00000fe5ad48c04a1d'
+     publicKeyBase64: 'QJ+HNttBcWryKJfrlkH8EfZkR/7uDCdZgIC0vkthqVNxZ51Q6tsh20mNPPWFlhPGgXau+LZm/O44btkkmLxgSA=='
+  applications:
+   - name: 'DEMO-APP-1'
+     appId: '9ff545aa4d4e662e636ca9a4'
+     apiKey: 'demo-app-1-api-key'
+   - name: 'DEMO-APP-2'
+     appId: '00000e542a7a7a110f856b88'
+     apiKey: 'demo-app-2-api-key'
+
+

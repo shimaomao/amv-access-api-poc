@@ -8,7 +8,7 @@ import org.amv.access.client.DeviceCertClient;
 import org.amv.access.client.model.CreateDeviceCertificateRequestDto;
 import org.amv.access.client.model.CreateDeviceCertificateResponseDto;
 import org.amv.access.client.model.DeviceCertificateDto;
-import org.amv.access.config.TestDatbaseConfig;
+import org.amv.access.config.SqliteTestDatabaseConfig;
 import org.amv.access.core.Issuer;
 import org.amv.access.demo.DemoService;
 import org.amv.access.model.ApplicationEntity;
@@ -37,7 +37,7 @@ import static org.junit.Assert.assertThat;
 @RunWith(SpringRunner.class)
 @SpringBootTest(
         webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT,
-        classes = {AmvAccessApplication.class, TestDatbaseConfig.class}
+        classes = {AmvAccessApplication.class, SqliteTestDatabaseConfig.class}
 )
 public class DeviceCertificateCtrlTestWithRestClient {
 
