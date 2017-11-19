@@ -1,16 +1,108 @@
+buildscript {
+    ext {
+        asciiDocOutputDir = file("${buildDir}/asciidoc/generated")
+        swaggerOutputDir = file("${buildDir}/swagger")
+        snippetsOutputDir = file("${buildDir}/asciidoc/snippets")
+        springfoxVersion = '2.6.1'
+    }
+    repositories {
+        jcenter()
+    }
+    dependencies {
+        classpath 'org.asciidoctor:asciidoctor-gradle-plugin:1.5.3'
+        classpath 'org.asciidoctor:asciidoctorj-pdf:1.5.0-alpha.15'
+    }
+}
+
+plugins {
+    id 'org.asciidoctor.convert' version '1.5.3'
+}
+
 description = 'Swagger'
 
 test {
     // * enable on demand
     // testLogging.showStandardStreams = true
+
+    systemProperty 'io.springfox.staticdocs.outputDir', swaggerOutputDir
+    systemProperty 'io.springfox.staticdocs.snippetsOutputDir', snippetsOutputDir
+}
+
+sourceSets {
+    test {
+        resources {
+            srcDirs 'src/test/resources',
+                    '../model/src/main/resources'
+        }
+    }
 }
 
 dependencies {
-    compile('org.springframework.boot:spring-boot-starter-web') {
-        exclude module: 'spring-boot-starter-tomcat'
-    }
+    compile project(':api-rest')
 
-    compile 'io.springfox:springfox-swagger2:2.7.0'
-    compile 'io.springfox:springfox-data-rest:2.7.0'
-    compile 'io.springfox:springfox-swagger-ui:2.7.0'
+    compile('org.springframework.boot:spring-boot-starter-web')
+
+    compile "io.springfox:springfox-swagger2:${springfoxVersion}"
+    compile "io.springfox:springfox-data-rest:${springfoxVersion}"
+    compile "io.springfox:springfox-swagger-ui:${springfoxVersion}"
+
+    testCompile 'org.xerial:sqlite-jdbc:3.20.1'
+    testCompile 'org.springframework.boot:spring-boot-starter-test'
+    testCompile "io.springfox:springfox-staticdocs:2.6.1"
+    testCompile 'org.springframework.restdocs:spring-restdocs-core:1.2.2.RELEASE'
+    testCompile 'org.springframework.restdocs:spring-restdocs-mockmvc:1.2.2.RELEASE'
+    testCompile 'com.jayway.jsonpath:json-path:2.2.0' //mock testing REST services
+
+
+    testCompile "io.vertx:vertx-rx-java:${vertxVersion}"
+    testCompile 'org.amv.vertx:amv-vertx-spring-boot-starter:0.0.1'
+}
+
+asciidoctorj {
+    version = '1.5.5'
+}
+
+asciidoctor {
+    doFirst {
+        file("${project.buildDir}/docs/swagger/generated").eachDir() { dir ->
+            // copy general manual content valid for all documentations
+            copy {
+                file('src/main/docs/asciidoc').eachFile { file ->
+                    if (file.isFile()) {
+                        from file
+                    }
+                }
+                into dir.getPath()
+            }
+
+            // copy individual manual content if present to each subdirectory accordingly
+            def sourceDir = file("src/main/docs/asciidoc/${dir.getName()}")
+            if (sourceDir.exists()) {
+                copy {
+                    from sourceDir.getPath()
+                    into dir.getPath()
+                }
+            }
+        }
+    }
+    dependsOn test
+    sourceDir = file("${project.buildDir}/docs/swagger/generated")
+    outputDir = file("${project.buildDir}/docs/swagger/api")
+    backends = ['html5', 'pdf']
+    attributes = [
+            version    : project.version.toString(),
+            doctype    : 'book',
+            toc        : 'left',
+            toclevels  : '3',
+            numbered   : '',
+            sectlinks  : '',
+            sectanchors: '',
+    ]
+}
+
+jar {
+    dependsOn asciidoctor
+    from("${project.buildDir}/docs/swagger/api") {
+        into 'static/docs'
+    }
 }

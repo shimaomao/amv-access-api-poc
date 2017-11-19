@@ -1,5 +1,6 @@
 package org.amv.access.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AccessLevel;
 import lombok.Builder;
@@ -25,8 +26,8 @@ import java.util.Date;
 @EntityListeners(AuditingEntityListener.class)
 public class DeviceCertificateEntity {
     @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
-    @Column(name = "id", columnDefinition = "bigint")
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "id", columnDefinition = "bigint", updatable = false, nullable = false)
     @JsonProperty(value = "id", access = JsonProperty.Access.READ_ONLY)
     private Long id;
 
@@ -38,9 +39,13 @@ public class DeviceCertificateEntity {
     private String uuid;
 
     @CreatedDate
-    @Column(name = "created", insertable = true, updatable = false)
+    @Column(name = "created_at", insertable = true, updatable = false)
     @Temporal(TemporalType.TIMESTAMP)
-    private Date created;
+    @JsonProperty(value = "created_at")
+    private Date createdAt;
+
+    @Column(name = "device_id")
+    private long deviceId;
 
     @Column(name = "issuer_id")
     private long issuerId;
@@ -48,14 +53,11 @@ public class DeviceCertificateEntity {
     @Column(name = "application_id")
     private long applicationId;
 
-    @Column(name = "device_id")
-    private long deviceId;
+    //@Column(name = "certificate_base64")
+    //private String certificateBase64;
 
-    @Column(name = "certificate_base64")
-    private String certificateBase64;
-
-    @Column(name = "certificate_signature_base64")
-    private String certificateSignatureBase64;
+    //@Column(name = "certificate_signature_base64")
+    //private String certificateSignatureBase64;
 
     @Column(name = "signed_certificate_base64")
     private String signedCertificateBase64;

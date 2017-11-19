@@ -6,9 +6,9 @@ debug: true
 spring.profiles.active: production
 spring.application.name: ${app.name} (${spring.profiles.active})
 
-spring.jpa.database-platform: 'org.amv.access.sqlite.SQLiteDialect'
-spring.jpa.hibernate.ddl-auto: 'update'
-spring.jpa.show-sql: false
+#spring.jpa.database-platform: 'org.amv.access.sqlite.SQLiteDialect'
+#spring.jpa.hibernate.ddl-auto: 'validate' #'update'
+#spring.jpa.show-sql: false
 
 server.context-path: /amv-access-api
 server.port: 9000
@@ -23,6 +23,15 @@ management.port: 9001
 management.context-path: /manage
 
 logging.config: classpath:logback-spring.xml
+
+flyway.enabled: true
+flyway.locations: 'db/migration/sqlite'
+
+amv.access.database:
+  driverClassName: 'org.sqlite.JDBC'
+  url: 'jdbc:sqlite:amv-access.db?journal_mode=wal'
+  pool-name: 'amv-access-sqlite-connection-pool'
+  maximum-pool-size: 10
 
 amv.issuer:
   name: XXXX

@@ -1,0 +1,19 @@
+description = 'module with classes useful in a demo environment'
+
+dependencies {
+    compile project(':access-spi-highmobility')
+    compile project(':client-model')
+    compile project(':model')
+    compile project(':service-spi')
+    compile project(':demo')
+
+    compile "io.vertx:vertx-core:${vertxVersion}"
+    compile "io.vertx:vertx-rx-java:${vertxVersion}"
+
+    compile('org.springframework.boot:spring-boot-starter-web') {
+        exclude module: 'spring-boot-starter-tomcat'
+    }
+    compile 'org.springframework.boot:spring-boot-starter-jetty'
+
+    compile "io.prometheus:simpleclient_spring_boot:${prometheusVersion}"
+}

@@ -12,8 +12,6 @@ import java.util.Optional;
 @RepositoryRestResource(collectionResourceRel = "device", path = "model-device")
 public interface DeviceRepository extends JpaRepository<DeviceEntity, Long> {
 
-    Page<DeviceEntity> findByApplicationId(@Param("applicationId") long applicationId, Pageable page);
-
     Optional<DeviceEntity> findBySerialNumber(@Param("serialNumber") String serialNumber);
 
     Page<DeviceEntity> findByName(@Param("name") String name, Pageable page);

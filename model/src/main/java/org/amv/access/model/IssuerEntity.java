@@ -3,6 +3,7 @@ package org.amv.access.model;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AccessLevel;
 import lombok.Builder;
+import lombok.Builder.Default;
 import lombok.Data;
 import lombok.Setter;
 import lombok.experimental.Tolerate;
@@ -10,6 +11,7 @@ import org.amv.access.core.Issuer;
 import org.springframework.data.annotation.CreatedDate;
 
 import javax.persistence.*;
+import java.time.Instant;
 import java.util.Date;
 
 
@@ -22,25 +24,34 @@ import java.util.Date;
 )
 public class IssuerEntity implements Issuer {
     @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
-    @Column(name = "id", columnDefinition = "bigint")
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "id", columnDefinition = "bigint", updatable = false, nullable = false)
     @JsonProperty(value = "id", access = JsonProperty.Access.READ_ONLY)
     private Long id;
 
     @CreatedDate
-    @Column(name = "created", insertable = true, updatable = false)
+    @Column(name = "created_at", insertable = true, updatable = false)
     @Temporal(TemporalType.TIMESTAMP)
-    private Date created;
+    @JsonProperty(value = "created_at")
+    private Date createdAt;
 
     @Column(name = "name", length = 4)
     private String name;
 
+    @Column(name = "description", length = 1023)
+    private String description;
+
     @Column(name = "public_key_base64")
     private String publicKeyBase64;
 
+    @JsonProperty(value = "api_key", access = JsonProperty.Access.WRITE_ONLY)
     @Column(name = "private_key_base64")
     @Convert(converter = CryptoConverter.class)
     private String privateKeyBase64;
+
+    @Default
+    @Column(name = "enabled", columnDefinition = "integer DEFAULT 1")
+    private boolean enabled = true;
 
     @Tolerate
     protected IssuerEntity() {

@@ -15,10 +15,13 @@ import org.springframework.context.annotation.Configuration;
 @EnablePrometheusEndpoint
 @EnableSpringBootMetricsCollector
 public class PrometheusConfiguration {
-
-    static {
+    private static void clearDefaultRegistryToPreventScopeRefreshBugDuringTest() {
         // avoids duplicate metrics registration in case of spring boot dev-tools restarts
         CollectorRegistry.defaultRegistry.clear();
+    }
+
+    static {
+        clearDefaultRegistryToPreventScopeRefreshBugDuringTest();
     }
 
     public PrometheusConfiguration() {
@@ -28,7 +31,9 @@ public class PrometheusConfiguration {
     @Bean
     @ConditionalOnMissingBean
     public CollectorRegistry collectorRegistry() {
-        return CollectorRegistry.defaultRegistry;
+        CollectorRegistry defaultRegistry = CollectorRegistry.defaultRegistry;
+        defaultRegistry.clear();
+        return defaultRegistry;
     }
 
     @Bean

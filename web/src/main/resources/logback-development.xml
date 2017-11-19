@@ -45,6 +45,8 @@
     </root>
 
     <logger name="org.amv.access" level="DEBUG"/>
+    <logger name="org.hibernate" level="DEBUG"/>
+    <logger name="org.hibernate.type" level="TRACE"/>
 
     <logger name="org.eclipse.jetty.server.RequestLog">
         <appender-ref ref="FILE-ACCESS"/>

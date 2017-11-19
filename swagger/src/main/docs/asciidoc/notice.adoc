@@ -1,0 +1,10 @@
+== Notice
+
+We reserve the right for changes to this document without notice.
+The AMV Networks GmbH is not liable for any technical or typographical errors or omissions in this document.
+In addition, the AMV Networks GmbH assumes no liability for damages directly or indirectly resulting from the supply,
+performance or use of this material. We point out that the names and brand names of their respective companies used
+in this document are under trademark or patent protection.
+
+
+
