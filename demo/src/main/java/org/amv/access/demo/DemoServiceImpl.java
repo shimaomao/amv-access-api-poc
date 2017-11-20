@@ -61,7 +61,7 @@ public class DemoServiceImpl implements DemoService {
                            DeviceRepository deviceRepository,
                            DeviceCertificateService deviceCertificateService,
                            AccessCertificateService accessCertificateService) {
-        this.cryptotool = cryptotool;
+        this.cryptotool = requireNonNull(cryptotool);
         this.passwordEncoder = requireNonNull(passwordEncoder);
         this.issuerRepository = requireNonNull(issuerRepository);
         this.applicationRepository = requireNonNull(applicationRepository);

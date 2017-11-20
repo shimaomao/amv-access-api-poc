@@ -8,7 +8,6 @@ import org.amv.access.certificate.DeviceCertificateService;
 import org.amv.access.core.DeviceCertificate;
 import org.amv.access.exception.BadRequestException;
 import org.amv.access.exception.NotFoundException;
-import org.amv.access.exception.UnprocessableEntityException;
 import org.amv.access.issuer.IssuerService;
 import org.amv.access.model.*;
 import org.amv.access.spi.AmvAccessModuleSpi;

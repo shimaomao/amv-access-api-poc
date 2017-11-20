@@ -2,7 +2,6 @@ package org.amv.access;
 
 import com.google.common.base.Charsets;
 import io.github.robwin.markup.builder.MarkupLanguage;
-import org.amv.access.swagger.SwaggerConfiguration;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;

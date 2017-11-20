@@ -8,7 +8,6 @@ import lombok.Data;
 import lombok.Setter;
 import lombok.experimental.Tolerate;
 import org.amv.access.core.Application;
-import org.hibernate.annotations.GenericGenerator;
 import org.springframework.data.annotation.CreatedDate;
 
 import javax.persistence.*;

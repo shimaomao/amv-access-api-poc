@@ -1,6 +1,5 @@
 package org.amv.access.database;
 
-import com.github.springtestdbunit.DbUnitTestExecutionListener;
 import com.github.springtestdbunit.TransactionDbUnitTestExecutionListener;
 import org.amv.access.config.JpaConfig;
 import org.amv.access.util.OperationSystemHelper;

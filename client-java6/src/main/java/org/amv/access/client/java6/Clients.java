@@ -2,7 +2,6 @@ package org.amv.access.client.java6;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-
 import okhttp3.MediaType;
 
 import static com.google.common.base.Preconditions.checkArgument;

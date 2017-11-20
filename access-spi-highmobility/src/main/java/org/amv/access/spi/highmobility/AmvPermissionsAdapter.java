@@ -10,7 +10,7 @@ import org.amv.highmobility.cryptotool.Cryptotool;
 public class AmvPermissionsAdapter implements Permissions {
 
     private Cryptotool.Permissions cryptotoolPermissions;
-    
+
     @Override
     public String getPermissions() {
         return cryptotoolPermissions.getPermissions();

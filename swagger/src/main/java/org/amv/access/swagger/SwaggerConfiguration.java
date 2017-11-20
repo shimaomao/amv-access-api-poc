@@ -21,7 +21,6 @@ import springfox.documentation.spring.data.rest.configuration.SpringDataRestConf
 import springfox.documentation.spring.web.plugins.Docket;
 import springfox.documentation.swagger2.annotations.EnableSwagger2;
 
-import java.util.Collections;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 

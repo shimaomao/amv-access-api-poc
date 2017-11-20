@@ -14,7 +14,7 @@ public final class GetAccessCertificatesResponseDtoObjectMother {
                         .add(AccessCertificateDtoObjectMother.random())
                         .add(AccessCertificateDtoObjectMother.random())
                         .add(AccessCertificateDtoObjectMother.random())
-                .build())
+                        .build())
                 .build();
     }
 }
