@@ -22,6 +22,8 @@ import org.springframework.transaction.annotation.Transactional;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
+import java.time.ZoneOffset;
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -122,8 +124,6 @@ public class AccessCertificateServiceImpl implements AccessCertificateService {
                             .application(application)
                             .device(device)
                             .vehicle(vehicle)
-                            .validFrom(accessCertificate.getValidFrom())
-                            .validUntil(accessCertificate.getValidUntil())
                             .signedDeviceAccessCertificateBase64(accessCertificate.getSignedDeviceAccessCertificateBase64())
                             .signedVehicleAccessCertificateBase64(accessCertificate.getSignedVehicleAccessCertificateBase64())
                             .build();
@@ -184,8 +184,8 @@ public class AccessCertificateServiceImpl implements AccessCertificateService {
                 .applicationId(applicationEntity.getId())
                 .vehicleId(vehicleEntity.getId())
                 .deviceId(deviceEntity.getId())
-                .validFrom(r.getValidFrom())
-                .validUntil(r.getValidUntil())
+                .validFrom(Date.from(r.getValidFrom().atZone(ZoneOffset.UTC).toInstant()))
+                .validUntil(Date.from(r.getValidUntil().atZone(ZoneOffset.UTC).toInstant()))
                 .signedDeviceAccessCertificateBase64(accessCertificate.getSignedDeviceAccessCertificateBase64())
                 .signedVehicleAccessCertificateBase64(accessCertificate.getSignedVehicleAccessCertificateBase64())
                 .build();

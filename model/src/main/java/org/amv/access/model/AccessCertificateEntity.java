@@ -53,25 +53,13 @@ public class AccessCertificateEntity {
     private long vehicleId;
 
     @Column(name = "valid_from")
-    private LocalDateTime validFrom;
+    private Date validFrom;
 
     @Column(name = "valid_until")
-    private LocalDateTime validUntil;
-
-    //@Column(name = "vehicle_access_certificate_base64")
-    //private String vehicleAccessCertificateBase64;
-
-    //@Column(name = "vehicle_access_certificate_signature_base64")
-    //private String vehicleAccessCertificateSignatureBase64;
+    private Date validUntil;
 
     @Column(name = "signed_vehicle_access_certificate_base64")
     private String signedVehicleAccessCertificateBase64;
-
-    //@Column(name = "device_access_certificate_base64")
-    //private String deviceAccessCertificateBase64;
-
-    //@Column(name = "device_access_certificate_signature_base64")
-    //private String deviceAccessCertificateSignatureBase64;
 
     @Column(name = "signed_device_access_certificate_base64")
     private String signedDeviceAccessCertificateBase64;

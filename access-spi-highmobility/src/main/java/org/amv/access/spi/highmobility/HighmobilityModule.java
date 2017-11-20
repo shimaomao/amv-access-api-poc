@@ -135,8 +135,6 @@ public class HighmobilityModule implements AmvAccessModuleSpi {
                 .application(application)
                 .vehicle(vehicle)
                 .device(device)
-                .validFrom(validFrom)
-                .validUntil(validUntil)
                 .signedDeviceAccessCertificateBase64(signedDeviceAccessCertificateBase64)
                 .signedVehicleAccessCertificateBase64(signedVehicleAccessCertificateBase64)
                 .build();

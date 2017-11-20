@@ -77,10 +77,10 @@ create table if not exists `device_certificate` (
     `UPDATED_AT` timestamp null,
     `ID` integer primary key autoincrement,
     `UUID` varchar(63) not null,
-    `SIGNED_CERTIFICATE_BASE64` varchar(1023) not null,
     `DEVICE_ID` bigint not null,
     `ISSUER_ID` bigint not null,
     `APPLICATION_ID` bigint not null,
+    `SIGNED_CERTIFICATE_BASE64` varchar(1023) not null,
     foreign key (`DEVICE_ID`)
       references device(`ID`)
       on update cascade on delete restrict,
@@ -100,14 +100,14 @@ create table if not exists `access_certificate` (
     `UPDATED_AT` timestamp null,
     `ID` integer primary key autoincrement,
     `UUID` varchar(63) not null,
-    `SIGNED_VEHICLE_ACCESS_CERTIFICATE_BASE64` varchar(1023) not null,
-    `SIGNED_DEVICE_ACCESS_CERTIFICATE_BASE64` varchar(1023) not null,
     `VALID_FROM` timestamp not null,
     `VALID_UNTIL` timestamp not null,
     `ISSUER_ID` bigint not null,
     `APPLICATION_ID` bigint not null,
     `VEHICLE_ID` bigint not null,
     `DEVICE_ID` bigint not null,
+    `SIGNED_VEHICLE_ACCESS_CERTIFICATE_BASE64` varchar(1023) not null,
+    `SIGNED_DEVICE_ACCESS_CERTIFICATE_BASE64` varchar(1023) not null,
     foreign key (`ISSUER_ID`)
       references issuer(`ID`)
       on update cascade on delete restrict,

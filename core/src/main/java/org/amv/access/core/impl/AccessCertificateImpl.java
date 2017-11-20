@@ -21,12 +21,6 @@ public class AccessCertificateImpl implements AccessCertificate {
     @NonNull
     private Vehicle vehicle;
 
-    @NonNull
-    private LocalDateTime validFrom;
-
-    @NonNull
-    private LocalDateTime validUntil;
-
     /**
      * base64(vehicleCert + sign(vehicleCert, issuerPrivateKey))
      */

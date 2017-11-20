@@ -5,20 +5,24 @@ import org.amv.access.client.AccessCertClient;
 import org.amv.access.client.Clients;
 import org.amv.access.client.DeviceCertClient;
 import org.amv.access.client.model.*;
-import org.amv.access.config.SqliteTestDatabaseConfig;
 import org.amv.access.core.Issuer;
+import org.amv.access.database.EmbeddedMySqlConfig;
 import org.amv.access.demo.DemoService;
 import org.amv.access.model.ApplicationEntity;
 import org.amv.access.util.MoreHex;
+import org.amv.access.util.OperationSystemHelper;
 import org.amv.highmobility.cryptotool.Cryptotool;
 import org.amv.highmobility.cryptotool.CryptotoolUtils;
 import org.apache.commons.lang3.RandomUtils;
+import org.junit.Assume;
 import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit4.SpringRunner;
 import reactor.core.publisher.Mono;
 
@@ -35,10 +39,15 @@ import static org.junit.Assert.assertThat;
         webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT,
         classes = {
                 AmvAccessApplication.class,
-                SqliteTestDatabaseConfig.class
+                EmbeddedMySqlConfig.class
         }
 )
+@ActiveProfiles("embedded-mysql-application-it")
 public class DemoApplicationIT {
+    @BeforeClass
+    public static void skipWindowsOs() {
+        Assume.assumeFalse(OperationSystemHelper.isWindows());
+    }
 
     @Value("${local.server.port}")
     private int port;

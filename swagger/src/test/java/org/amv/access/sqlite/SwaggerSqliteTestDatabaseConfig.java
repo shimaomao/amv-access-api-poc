@@ -11,7 +11,7 @@ import java.net.URISyntaxException;
 import java.util.Properties;
 
 @Configuration
-public class SqliteTestDatabaseConfig {
+public class SwaggerSqliteTestDatabaseConfig {
     @Bean
     @Primary
     public DataSource dataSource() {
