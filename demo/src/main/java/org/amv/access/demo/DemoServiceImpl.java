@@ -82,8 +82,6 @@ public class DemoServiceImpl implements DemoService {
     @Override
     @Transactional
     public void createDemoDataFromProperties(DemoProperties demoProperties) {
-        createDefaultDemoData();
-
         IssuerEntity demoIssuer = demoProperties.getIssuer()
                 .map(issuer -> {
                     if (DEMO_ISSUER_NAME.equals(issuer.getName())) {
@@ -97,6 +95,8 @@ public class DemoServiceImpl implements DemoService {
                         .findFirst()
                         .orElseGet(() -> this.createDemoIssuer(issuer)))
                 .orElseThrow(() -> new IllegalStateException("Could not find or create demo issuer from properties file"));
+
+        createDefaultDemoData();
 
         demoProperties.getVehicles().stream()
                 .filter(v -> !vehicleRepository.findOneBySerialNumber(v.getSerialNumber()).isPresent())
