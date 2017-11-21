@@ -41,9 +41,10 @@ public class IssuerEntity implements Issuer {
     private String description;
 
     @Column(name = "public_key_base64")
+    @JsonProperty(value = "public_key_base64")
     private String publicKeyBase64;
 
-    @JsonProperty(value = "api_key", access = JsonProperty.Access.WRITE_ONLY)
+    @JsonProperty(value = "private_key_base64", access = JsonProperty.Access.WRITE_ONLY)
     @Column(name = "private_key_base64")
     @Convert(converter = CryptoConverter.class)
     private String privateKeyBase64;
