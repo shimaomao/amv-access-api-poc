@@ -138,6 +138,13 @@ subprojects {
         }
     }
 
+    clean.doFirst {
+        delete fileTree('./') {
+            // delete temporary sqlite databases
+            include '**/~*.db'
+        }
+    }
+
     task sourcesJar(type: Jar) {
         from sourceSets.main.allSource
         classifier = 'sources'
@@ -269,7 +276,7 @@ project(':swagger') {
 
 project(':api-rest') {
     apply plugin: 'org.springframework.boot'
-    
+
     bootRepackage {
         enabled = false
     }

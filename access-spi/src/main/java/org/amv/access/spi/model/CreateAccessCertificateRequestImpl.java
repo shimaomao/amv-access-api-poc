@@ -6,7 +6,7 @@ import lombok.Value;
 import org.amv.access.core.*;
 import org.amv.access.spi.CreateAccessCertificateRequest;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 
 @Value
 @Builder(builderClassName = "Builder")
@@ -25,10 +25,10 @@ public class CreateAccessCertificateRequestImpl implements CreateAccessCertifica
     private Vehicle vehicle;
 
     @NonNull
-    private LocalDateTime validFrom;
+    private Instant validFrom;
 
     @NonNull
-    private LocalDateTime validUntil;
+    private Instant validUntil;
 
     @NonNull
     private Permissions permissions;

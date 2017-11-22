@@ -12,7 +12,9 @@ import org.amv.highmobility.cryptotool.Cryptotool;
 import org.amv.highmobility.cryptotool.CryptotoolUtils;
 import reactor.core.publisher.Mono;
 
+import java.time.Instant;
 import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -84,8 +86,8 @@ public class HighmobilityModule implements AmvAccessModuleSpi {
         Vehicle vehicle = requireNonNull(accessCertificateRequest.getVehicle());
         Permissions permissions = requireNonNull(accessCertificateRequest.getPermissions());
 
-        LocalDateTime validFrom = requireNonNull(accessCertificateRequest.getValidFrom());
-        LocalDateTime validUntil = requireNonNull(accessCertificateRequest.getValidUntil());
+        Instant validFrom = requireNonNull(accessCertificateRequest.getValidFrom());
+        Instant validUntil = requireNonNull(accessCertificateRequest.getValidUntil());
 
         String vehiclePublicKey = CryptotoolUtils.decodeBase64AsHex(vehicle.getPublicKeyBase64());
         String devicePublicKey = CryptotoolUtils.decodeBase64AsHex(device.getPublicKeyBase64());
@@ -94,16 +96,16 @@ public class HighmobilityModule implements AmvAccessModuleSpi {
                 vehicle.getSerialNumber(),
                 vehiclePublicKey,
                 device.getSerialNumber(),
-                validFrom,
-                validUntil,
+                LocalDateTime.ofInstant(validFrom, ZoneOffset.UTC),
+                LocalDateTime.ofInstant(validUntil, ZoneOffset.UTC),
                 permissions.getPermissions()).block();
 
         Cryptotool.AccessCertificate vehicleAccessCertificate = cryptotool.createAccessCertificate(
                 device.getSerialNumber(),
                 devicePublicKey,
                 vehicle.getSerialNumber(),
-                validFrom,
-                validUntil,
+                LocalDateTime.ofInstant(validFrom, ZoneOffset.UTC),
+                LocalDateTime.ofInstant(validUntil, ZoneOffset.UTC),
                 permissions.getPermissions()).block();
 
         String issuerPrivateKeyInHex = decodeBase64AsHex(issuer.getPrivateKeyBase64());
@@ -129,7 +131,7 @@ public class HighmobilityModule implements AmvAccessModuleSpi {
         String signedVehicleAccessCertificateBase64 = hexToBase64(signedVehicleAccessCertificate)
                 .orElseThrow(() -> new IllegalStateException("Could not convert signed vehicle access certificate to base64"));
 
-        AccessCertificate accessCertificateEntity = AccessCertificateImpl.builder()
+        AccessCertificate accessCertificate = AccessCertificateImpl.builder()
                 .uuid(UUID.randomUUID().toString())
                 .issuer(issuer)
                 .application(application)
@@ -139,7 +141,7 @@ public class HighmobilityModule implements AmvAccessModuleSpi {
                 .signedVehicleAccessCertificateBase64(signedVehicleAccessCertificateBase64)
                 .build();
 
-        return Mono.just(accessCertificateEntity);
+        return Mono.just(accessCertificate);
     }
 
     private Optional<String> hexToBase64(String value) {

@@ -7,6 +7,7 @@ import org.springframework.validation.ValidationUtils;
 import org.springframework.validation.Validator;
 
 import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 
 @Slf4j
 public class CreateAccessCertificateRequestValidator implements Validator {
@@ -52,8 +53,8 @@ public class CreateAccessCertificateRequestValidator implements Validator {
             LocalDateTime validUntil = validFrom.plusDays(1)
                     .toLocalDate().atStartOfDay();
 
-            request.setValidityStart(validFrom);
-            request.setValidityEnd(validUntil);
+            request.setValidityStart(validFrom.toInstant(ZoneOffset.UTC));
+            request.setValidityEnd(validUntil.toInstant(ZoneOffset.UTC));
 
             log.warn("Fill missing validity dates of CreateAccessCertificateRequestDto with: from {}, to {}", validFrom, validUntil);
         }

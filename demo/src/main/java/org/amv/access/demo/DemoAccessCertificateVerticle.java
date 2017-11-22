@@ -10,6 +10,7 @@ import org.amv.access.certificate.AccessCertificateService;
 import org.amv.access.model.*;
 
 import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 
 import static java.util.Objects.requireNonNull;
 
@@ -63,8 +64,8 @@ public class DemoAccessCertificateVerticle extends AbstractVerticle {
                         .appId(demoApplication.getAppId())
                         .deviceSerialNumber(device.getSerialNumber())
                         .vehicleSerialNumber(demoVehicle.getSerialNumber())
-                        .validityStart(LocalDateTime.now().minusMinutes(1))
-                        .validityEnd(LocalDateTime.now().plusYears(1))
+                        .validityStart(LocalDateTime.now().minusDays(2).toInstant(ZoneOffset.UTC))
+                        .validityEnd(LocalDateTime.now().plusYears(2).toInstant(ZoneOffset.UTC))
                         .build())
                         .subscribe(future::complete, future::fail);
             }, result -> {

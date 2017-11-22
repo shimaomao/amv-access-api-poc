@@ -21,6 +21,7 @@ import reactor.core.publisher.Mono;
 import java.sql.Date;
 import java.time.Instant;
 import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 
@@ -165,8 +166,8 @@ public class DemoServiceImpl implements DemoService {
                     .appId(demoApplication.getAppId())
                     .deviceSerialNumber(device.getSerialNumber())
                     .vehicleSerialNumber(demoVehicle.getSerialNumber())
-                    .validityStart(LocalDateTime.now().minusDays(2))
-                    .validityEnd(LocalDateTime.now().plusYears(2))
+                    .validityStart(LocalDateTime.now().minusDays(2).toInstant(ZoneOffset.UTC))
+                    .validityEnd(LocalDateTime.now().plusYears(2).toInstant(ZoneOffset.UTC))
                     .build());
         }
     }

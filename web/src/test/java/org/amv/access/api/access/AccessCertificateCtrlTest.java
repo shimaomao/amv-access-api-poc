@@ -32,6 +32,7 @@ import org.springframework.test.context.junit4.SpringRunner;
 import reactor.core.publisher.Mono;
 
 import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 import java.util.List;
 import java.util.Optional;
 
@@ -251,8 +252,8 @@ public class AccessCertificateCtrlTest {
                 .appId(application.getAppId())
                 .deviceSerialNumber(device.getSerialNumber())
                 .vehicleSerialNumber(vehicle.getSerialNumber())
-                .validityStart(validFrom)
-                .validityEnd(validUntil)
+                .validityStart(validFrom.toInstant(ZoneOffset.UTC))
+                .validityEnd(validUntil.toInstant(ZoneOffset.UTC))
                 .build();
 
         ResponseEntity<CreateAccessCertificateResponseDto> createAccessCertificateResponse = restTemplate

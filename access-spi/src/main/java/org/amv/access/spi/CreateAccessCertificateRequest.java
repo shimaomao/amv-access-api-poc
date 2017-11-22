@@ -2,6 +2,7 @@ package org.amv.access.spi;
 
 import org.amv.access.core.*;
 
+import java.time.Instant;
 import java.time.LocalDateTime;
 
 public interface CreateAccessCertificateRequest {
@@ -22,9 +23,9 @@ public interface CreateAccessCertificateRequest {
      */
     Vehicle getVehicle();
 
-    LocalDateTime getValidFrom();
+    Instant getValidFrom();
 
-    LocalDateTime getValidUntil();
+    Instant getValidUntil();
 
     Permissions getPermissions();
 }

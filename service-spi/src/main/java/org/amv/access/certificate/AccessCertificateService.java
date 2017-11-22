@@ -8,6 +8,7 @@ import org.amv.access.core.AccessCertificate;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
+import java.time.Instant;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
@@ -47,10 +48,10 @@ public interface AccessCertificateService {
         private String vehicleSerialNumber;
 
         @NonNull
-        private LocalDateTime validityStart;
+        private Instant validityStart;
 
         @NonNull
-        private LocalDateTime validityEnd;
+        private Instant validityEnd;
     }
 
 }

@@ -7,6 +7,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.experimental.Tolerate;
 
+import java.time.Instant;
 import java.time.LocalDateTime;
 
 @Data
@@ -27,11 +28,11 @@ public class CreateAccessCertificateRequestDto {
 
     @JsonProperty(value = "validity_start")
     @ApiModelProperty(notes = "DateTime of when the certificate validity starts")
-    private LocalDateTime validityStart;
+    private Instant validityStart;
 
     @JsonProperty(value = "validity_end")
     @ApiModelProperty(notes = "DateTime of when the certificate validity expires")
-    private LocalDateTime validityEnd;
+    private Instant validityEnd;
 
     @Tolerate
     protected CreateAccessCertificateRequestDto() {
