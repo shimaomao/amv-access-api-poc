@@ -1,5 +1,6 @@
 package org.amv.access.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AccessLevel;
 import lombok.Builder;
@@ -10,8 +11,10 @@ import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import javax.persistence.*;
-import java.time.LocalDateTime;
+import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
 import java.util.Date;
+import java.util.Optional;
 
 
 @Data
@@ -67,5 +70,14 @@ public class AccessCertificateEntity {
     @Tolerate
     protected AccessCertificateEntity() {
 
+    }
+
+    @JsonIgnore
+    public boolean isExpired() {
+        return Optional.ofNullable(this.getValidUntil())
+                .map(Date::toInstant)
+                .map(i -> i.atZone(ZoneOffset.UTC))
+                .map(i -> i.isBefore(ZonedDateTime.now(ZoneOffset.UTC)))
+                .orElse(true);
     }
 }

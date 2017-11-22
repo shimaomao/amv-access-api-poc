@@ -1,5 +1,6 @@
 package org.amv.access.api.access;
 
+import com.google.common.collect.ImmutableList;
 import lombok.extern.slf4j.Slf4j;
 import org.amv.access.auth.NonceAuthentication;
 import org.amv.access.certificate.AccessCertificateService;
@@ -87,9 +88,7 @@ public class AccessCertificateServiceImpl implements AccessCertificateService {
             throw new UnprocessableEntityException("DeviceEntity is disabled");
         }
 
-        List<AccessCertificateEntity> accessCertificates = accessCertificateRepository
-                .findByDeviceId(device.getId(), new PageRequest(0, Integer.MAX_VALUE))
-                .getContent();
+        List<AccessCertificateEntity> accessCertificates = findValidAndRemoveExpired(device);
 
         Map<Long, ApplicationEntity> applications = accessCertificates.stream()
                 .map(AccessCertificateEntity::getApplicationId)
@@ -208,8 +207,8 @@ public class AccessCertificateServiceImpl implements AccessCertificateService {
         verifyNonceAuthOrThrow(nonceAuthentication, device);
 
         if (!device.isEnabled()) {
-            log.warn("Allowing disabled device {} to revoke access certificate {}", device.getId(),
-                    context.getAccessCertificateId());
+            log.warn("Allowing disabled device {} to revoke access certificate {}",
+                    device.getId(), context.getAccessCertificateId());
         }
 
         AccessCertificateEntity accessCertificate = accessCertificateRepository
@@ -234,5 +233,23 @@ public class AccessCertificateServiceImpl implements AccessCertificateService {
         if (!isValidNonce) {
             throw new UnauthorizedException("Signature is invalid");
         }
+    }
+
+    private List<AccessCertificateEntity> findValidAndRemoveExpired(DeviceEntity device) {
+        List<AccessCertificateEntity> accessCertificates = accessCertificateRepository
+                .findByDeviceId(device.getId(), new PageRequest(0, Integer.MAX_VALUE))
+                .getContent();
+
+        List<AccessCertificateEntity> expiredAccessCertificates = accessCertificates.stream()
+                .filter(AccessCertificateEntity::isExpired)
+                .collect(Collectors.toList());
+
+        accessCertificateRepository.delete(expiredAccessCertificates);
+
+        List<AccessCertificateEntity> validAccessCertificates = accessCertificates.stream()
+                .filter(a -> !a.isExpired())
+                .collect(Collectors.toList());
+
+        return ImmutableList.copyOf(validAccessCertificates);
     }
 }

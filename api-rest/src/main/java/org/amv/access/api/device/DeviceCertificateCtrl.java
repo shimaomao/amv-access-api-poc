@@ -91,8 +91,6 @@ public class DeviceCertificateCtrl {
                 .map(body -> ResponseEntity.status(CREATED_201).body(body))
                 .block();
 
-        ;
-
         return response;
     }
 }

@@ -145,7 +145,9 @@ public class DemoServiceImpl implements DemoService {
     public Mono<AccessCertificate> createDemoAccessCertificateIfNecessary(DeviceCertificate deviceCertificate) {
         ApplicationEntity demoApplication = this.getOrCreateDemoApplication();
 
-        boolean isDeviceCertificateForDemoApplication = demoApplication.getAppId().equals(deviceCertificate.getApplication().getAppId());
+        boolean isDeviceCertificateForDemoApplication = demoApplication.getAppId()
+                .equals(deviceCertificate.getApplication().getAppId());
+
         if (!isDeviceCertificateForDemoApplication) {
             log.debug("Skip creating demo access certificate for device {}: Device Certificate is not issued for demo application",
                     deviceCertificate.getDevice().getSerialNumber());
@@ -163,8 +165,8 @@ public class DemoServiceImpl implements DemoService {
                     .appId(demoApplication.getAppId())
                     .deviceSerialNumber(device.getSerialNumber())
                     .vehicleSerialNumber(demoVehicle.getSerialNumber())
-                    .validityStart(LocalDateTime.now().minusMinutes(1))
-                    .validityEnd(LocalDateTime.now().plusYears(1))
+                    .validityStart(LocalDateTime.now().minusDays(2))
+                    .validityEnd(LocalDateTime.now().plusYears(2))
                     .build());
         }
     }
