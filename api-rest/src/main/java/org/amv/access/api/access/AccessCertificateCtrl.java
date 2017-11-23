@@ -22,6 +22,7 @@ import org.springframework.validation.BindException;
 import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Mono;
 
+import java.util.Collections;
 import java.util.UUID;
 
 import static java.util.Objects.requireNonNull;
@@ -81,6 +82,7 @@ public class AccessCertificateCtrl {
                         .vehicleAccessCertificate(accessCertificate.getSignedVehicleAccessCertificateBase64())
                         .build())
                 .collectList()
+                .switchIfEmpty(Mono.just(Collections.emptyList()))
                 .map(accessCertificateDto -> GetAccessCertificatesResponseDto.builder()
                         .accessCertificates(accessCertificateDto)
                         .build())

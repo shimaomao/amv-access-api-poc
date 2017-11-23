@@ -84,11 +84,15 @@ public class AccessCertificateServiceImpl implements AccessCertificateService {
 
         verifyNonceAuthOrThrow(nonceAuthentication, device);
 
-        if (!device.isEnabled()) {
-            throw new UnprocessableEntityException("DeviceEntity is disabled");
-        }
-
         List<AccessCertificateEntity> accessCertificates = findValidAndRemoveExpired(device);
+
+        if (!device.isEnabled()) {
+            log.info("Removing {} access certificates for disabled device {}", accessCertificates.size(), device.getId());
+            // remove access certificates for disabled devices instead of throwing error
+            // so the device certificates will be removed from the device.
+            accessCertificateRepository.delete(accessCertificates);
+            return Flux.empty();
+        }
 
         Map<Long, ApplicationEntity> applications = accessCertificates.stream()
                 .map(AccessCertificateEntity::getApplicationId)
