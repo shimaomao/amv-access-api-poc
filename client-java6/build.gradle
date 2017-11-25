@@ -4,7 +4,7 @@ description = 'a simple java6 based client for the AMV access rest interface'
 buildscript {
     ext {
         okhttpVersion = '3.9.0'
-        rxjavaVersion = '1.3.3'
+        rxjavaVersion = '2.1.6'
         gsonVersion = '2.8.2'
     }
 }
@@ -16,5 +16,5 @@ dependencies {
     compile project(':client-model-java6')
 
     compile "com.squareup.okhttp3:okhttp:${okhttpVersion}"
-    compile "io.reactivex:rxjava:${rxjavaVersion}"
+    compile "io.reactivex.rxjava2:rxjava:${rxjavaVersion}"
 }

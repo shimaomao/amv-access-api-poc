@@ -1,11 +1,11 @@
 package org.amv.access.client.java6;
 
 import com.google.common.base.Preconditions;
+import io.reactivex.Observable;
 import okhttp3.*;
 import okhttp3.internal.Util;
 import org.amv.access.client.model.java6.CreateDeviceCertificateRequestDto;
 import org.amv.access.client.model.java6.CreateDeviceCertificateResponseDto;
-import rx.Observable;
 
 import java.util.concurrent.Callable;
 
