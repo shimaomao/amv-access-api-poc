@@ -1,6 +1,5 @@
 package org.amv.access.client.java6;
 
-import com.google.common.base.Preconditions;
 import io.reactivex.Observable;
 import okhttp3.*;
 import okhttp3.internal.Util;
@@ -9,8 +8,6 @@ import org.amv.access.client.model.java6.CreateDeviceCertificateResponseDto;
 
 import java.util.concurrent.Callable;
 
-import static com.google.common.net.HttpHeaders.AUTHORIZATION;
-
 public class SimpleDeviceCertClient implements DeviceCertClient {
 
     private final OkHttpClient client = new OkHttpClient();
@@ -18,7 +15,10 @@ public class SimpleDeviceCertClient implements DeviceCertClient {
     private final String baseUrl;
 
     SimpleDeviceCertClient(String baseUrl) {
-        this.baseUrl = Preconditions.checkNotNull(baseUrl);
+        if (baseUrl == null) {
+            throw new IllegalArgumentException("`baseUrl` must not be null");
+        }
+        this.baseUrl = baseUrl;
     }
 
     @Override
@@ -35,7 +35,7 @@ public class SimpleDeviceCertClient implements DeviceCertClient {
                 RequestBody requestBody = RequestBody.create(Clients.JSON, json);
 
                 Request request = new Request.Builder()
-                        .addHeader(AUTHORIZATION, apiKey)
+                        .addHeader("Authorization", apiKey)
                         .url(url)
                         .post(requestBody)
                         .build();
@@ -46,7 +46,8 @@ public class SimpleDeviceCertClient implements DeviceCertClient {
 
                     final ResponseBody responseBody = response.body();
 
-                    return Clients.defaultObjectMapper.fromJson(responseBody.charStream(), CreateDeviceCertificateResponseDto.class);
+                    return Clients.defaultObjectMapper
+                            .fromJson(responseBody.charStream(), CreateDeviceCertificateResponseDto.class);
                 } finally {
                     Util.closeQuietly(response);
                 }

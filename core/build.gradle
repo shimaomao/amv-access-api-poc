@@ -2,5 +2,9 @@ description = 'core interfaces and basic classes used in amv access platform'
 
 dependencies {
     compile group: 'io.projectreactor', name: 'reactor-core', version: '3.0.7.RELEASE'
+
+    compile "com.google.guava:guava:${guavaVersion}"
+    compile 'commons-codec:commons-codec:1.10'
+
 }
 

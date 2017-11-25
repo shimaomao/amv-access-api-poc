@@ -30,6 +30,13 @@ public class ApplicationAuthenticationArgumentResolver implements HandlerMethodA
     }
 
     private static final String HEADER_NAME = HttpHeaders.AUTHORIZATION;
+
+    private static final CharMatcher API_KEY_MATCHER = CharMatcher.anyOf("-")
+            .or(CharMatcher.inRange('a', 'z'))
+            .or(CharMatcher.inRange('A', 'Z'))
+            .or(CharMatcher.inRange('0', '9'))
+            .precomputed();
+
     private final ApiKeyResolver apiKeyResolver;
 
     public ApplicationAuthenticationArgumentResolver(ApiKeyResolver apiKeyResolver) {
@@ -63,9 +70,7 @@ public class ApplicationAuthenticationArgumentResolver implements HandlerMethodA
     private boolean isValidApiKey(String key) {
         int keyLength = key.length();
         boolean hasValidLength = 8 <= keyLength && keyLength <= 1024;
-        boolean hasValidChars = CharMatcher.anyOf("-")
-                .or(CharMatcher.JAVA_LETTER_OR_DIGIT)
-                .matchesAllOf(key);
+        boolean hasValidChars = API_KEY_MATCHER.matchesAllOf(key);
 
         return hasValidLength && hasValidChars;
     }

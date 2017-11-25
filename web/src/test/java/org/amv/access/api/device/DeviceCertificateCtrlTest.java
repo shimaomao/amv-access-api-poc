@@ -87,6 +87,39 @@ public class DeviceCertificateCtrlTest {
     }
 
     @Test
+    public void itShouldFailCreatingDeviceCertificateIfApiKeyIsInvalid() throws Exception {
+        Cryptotool.Keys keys = cryptotool.generateKeys().block();
+        String publicKeyBase64 = CryptotoolUtils.encodeHexAsBase64(keys.getPublicKey());
+
+        CreateDeviceCertificateRequestDto body = CreateDeviceCertificateRequestDto.builder()
+                .devicePublicKey(publicKeyBase64)
+                .build();
+
+        String keyWithIllegalChars = "@@_KEY_WITH_ILLEGAL_CHARACTERS_@@";
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.add(HttpHeaders.AUTHORIZATION, keyWithIllegalChars);
+        HttpEntity<CreateDeviceCertificateRequestDto> entity = new HttpEntity<>(body, headers);
+
+        ResponseEntity<ErrorResponseDto> responseEntity = restTemplate
+                .postForEntity("/api/v1/device_certificates", entity,
+                        ErrorResponseDto.class);
+
+        assertThat(responseEntity.getStatusCode(), is(HttpStatus.BAD_REQUEST));
+
+        ErrorResponseDto errorResponseDto = responseEntity.getBody();
+        assertThat(errorResponseDto.getErrors(), hasSize(1));
+
+        ErrorResponseDto.ErrorInfoDto errorInfoDto = errorResponseDto.getErrors()
+                .stream()
+                .findFirst()
+                .orElseThrow(IllegalStateException::new);
+
+        assertThat(errorInfoDto.getTitle(), is(BadRequestException.class.getSimpleName()));
+        assertThat(errorInfoDto.getDetail(), is("Authorization header is invalid or missing"));
+    }
+
+    @Test
     public void itShouldFailCreatingDeviceCertificateIfApplicationDoesNotExist() throws Exception {
         Cryptotool.Keys keys = cryptotool.generateKeys().block();
         String publicKeyBase64 = CryptotoolUtils.encodeHexAsBase64(keys.getPublicKey());

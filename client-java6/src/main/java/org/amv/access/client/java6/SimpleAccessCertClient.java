@@ -1,6 +1,5 @@
 package org.amv.access.client.java6;
 
-import com.google.common.base.Preconditions;
 import io.reactivex.Observable;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
@@ -20,7 +19,10 @@ public class SimpleAccessCertClient implements AccessCertClient {
     private final String baseUrl;
 
     SimpleAccessCertClient(String baseUrl) {
-        this.baseUrl = Preconditions.checkNotNull(baseUrl);
+        if (baseUrl == null) {
+            throw new IllegalArgumentException("`baseUrl` must not be null");
+        }
+        this.baseUrl = baseUrl;
     }
 
     @Override
@@ -43,7 +45,8 @@ public class SimpleAccessCertClient implements AccessCertClient {
                     response = client.newCall(request).execute();
                     final ResponseBody responseBody = response.body();
 
-                    return Clients.defaultObjectMapper.fromJson(responseBody.charStream(), GetAccessCertificatesResponseDto.class);
+                    return Clients.defaultObjectMapper
+                            .fromJson(responseBody.charStream(), GetAccessCertificatesResponseDto.class);
                 } finally {
                     Util.closeQuietly(response);
                 }

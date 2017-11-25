@@ -4,8 +4,6 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import okhttp3.MediaType;
 
-import static com.google.common.base.Preconditions.checkArgument;
-
 public final class Clients {
     static final MediaType JSON = MediaType.parse("application/json;charset=utf-8");
 
@@ -17,13 +15,17 @@ public final class Clients {
 
 
     public static DeviceCertClient simpleDeviceCertClient(String baseUrl) {
-        checkArgument(baseUrl != null);
+        if (baseUrl == null) {
+            throw new IllegalArgumentException("`baseUrl` must not be null");
+        }
 
         return new SimpleDeviceCertClient(baseUrl);
     }
 
     public static AccessCertClient simpleAccessCertClient(String baseUrl) {
-        checkArgument(baseUrl != null);
+        if (baseUrl == null) {
+            throw new IllegalArgumentException("`baseUrl` must not be null");
+        }
 
         return new SimpleAccessCertClient(baseUrl);
     }

@@ -9,6 +9,7 @@ buildscript {
         jacksonVersion = '2.8.10'
         jettyVersion = '9.4.7.v20170914'
         vertxVersion = '3.5.0'
+        guavaVersion = '23.4-jre'
     }
     repositories {
         jcenter()
@@ -33,7 +34,7 @@ apply plugin: 'idea'
 apply plugin: 'maven'
 apply plugin: 'nu.studer.credentials'
 
-description = 'AMV specific implementation of the Highmobility OEM Api'
+description = 'AMV Access API Gateway'
 group = 'org.amv.access'
 
 configurations.all {
@@ -87,10 +88,6 @@ subprojects {
 
     dependencies {
         compile 'org.slf4j:slf4j-api:1.7.25'
-        compile 'com.google.guava:guava:19.0'
-        compile 'org.apache.commons:commons-lang3:3.5'
-        compile 'commons-io:commons-io:2.5'
-        compile 'commons-codec:commons-codec:1.10'
 
         compileOnly 'org.projectlombok:lombok:1.16.16'
 
@@ -98,6 +95,7 @@ subprojects {
         testCompile 'org.hamcrest:hamcrest-all:1.3'
         testCompile 'pl.pragmatists:JUnitParams:1.1.0'
         testCompile 'org.mockito:mockito-core:2.12.0'
+        testCompile 'org.apache.commons:commons-lang3:3.5'
     }
 
     lombok {

@@ -5,7 +5,6 @@ buildscript {
     ext {
         okhttpVersion = '3.9.0'
         rxjavaVersion = '2.1.6'
-        gsonVersion = '2.8.2'
     }
 }
 

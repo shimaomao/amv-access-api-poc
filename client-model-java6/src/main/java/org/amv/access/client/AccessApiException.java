@@ -4,8 +4,6 @@ import lombok.EqualsAndHashCode;
 import lombok.Value;
 import org.amv.access.client.model.java6.ErrorResponseDto;
 
-import static com.google.common.base.Preconditions.checkArgument;
-
 @Value
 @EqualsAndHashCode(callSuper = true)
 public class AccessApiException extends Exception {
@@ -13,7 +11,9 @@ public class AccessApiException extends Exception {
 
     AccessApiException(ErrorResponseDto error, Throwable cause) {
         super(cause);
-        checkArgument(error != null, "`error` must not be null");
+        if (error == null) {
+            throw new IllegalArgumentException("`error` must not be null");
+        }
         this.error = error;
     }
 }
