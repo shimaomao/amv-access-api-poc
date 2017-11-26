@@ -55,13 +55,13 @@ public class SimpleAccessCertClient implements AccessCertClient {
     }
 
     @Override
-    public Observable<Void> revokeAccessCertificate(final String nonce,
+    public Observable<Boolean> revokeAccessCertificate(final String nonce,
                                                     final String signedNonce,
                                                     final String deviceSerialNumber,
                                                     final String accessCertificateId) {
-        return Observable.fromCallable(new Callable<Void>() {
+        return Observable.fromCallable(new Callable<Boolean>() {
             @Override
-            public Void call() throws Exception {
+            public Boolean call() throws Exception {
                 String url = String.format("%s/api/v1/device/%s/access_certificates/%s", baseUrl, deviceSerialNumber, accessCertificateId);
 
                 Request request = new Request.Builder()
@@ -74,7 +74,7 @@ public class SimpleAccessCertClient implements AccessCertClient {
                 Response response = null;
                 try {
                     response = client.newCall(request).execute();
-                    return null;
+                    return true;
                 } finally {
                     Util.closeQuietly(response);
                 }

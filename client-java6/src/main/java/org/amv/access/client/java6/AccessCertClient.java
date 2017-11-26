@@ -13,7 +13,7 @@ public interface AccessCertClient extends AccessApiClient {
                                                                          String signedNonce,
                                                                          String deviceSerialNumber);
 
-    Observable<Void> revokeAccessCertificate(String nonce,
+    Observable<Boolean> revokeAccessCertificate(String nonce,
                                              String signedNonce,
                                              String deviceSerialNumber,
                                              String accessCertificateId);
