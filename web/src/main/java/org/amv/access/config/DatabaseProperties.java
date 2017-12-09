@@ -15,4 +15,5 @@ public class DatabaseProperties {
     private int maximumPoolSize = 25;
     private int idleTimeout = 30000;
     private String connectionTestQuery = "SELECT 1";
+    private String columnEncryptionKey = "MySuperSecretKey";
 }

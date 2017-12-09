@@ -7,11 +7,35 @@ import javax.persistence.Converter;
 import java.security.Key;
 import java.util.Base64;
 
+/**
+ * An encrypted column converter for JPA entities.
+ * <p>
+ * You must use {@link #initKey(byte[])} before using this class.
+ * <p>
+ * Usage in JPA entity:
+ * <pre><code>
+ * @Entity
+ * @Table(name = "my_entity")
+ * public class MyEntity {
+ *   @Column(name = "value")
+ *   @Convert(converter = CryptoConverter.class)
+ *   private String value;
+ * }
+ * </code></pre>
+ */
 @Converter
 public class CryptoConverter implements AttributeConverter<String, String> {
+    static {
+        String defaultKey = "MySuperSecretKey";
+        initKey(defaultKey.getBytes());
+    }
+
     private static final String ALGORITHM = "AES/ECB/PKCS5Padding";
-    private static final byte[] KEY = "MySuperSecretKey".getBytes();
-    private static final Key key = new SecretKeySpec(KEY, "AES");
+    private static Key key;
+
+    public static void initKey(byte[] key) {
+        CryptoConverter.key = new SecretKeySpec(key, "AES");
+    }
 
     @Override
     public String convertToDatabaseColumn(String val) {
@@ -20,9 +44,9 @@ public class CryptoConverter implements AttributeConverter<String, String> {
         }
 
         try {
-            Cipher c = Cipher.getInstance(ALGORITHM);
-            c.init(Cipher.ENCRYPT_MODE, key);
-            return Base64.getEncoder().encodeToString(c.doFinal(val.getBytes()));
+            Cipher cipher = Cipher.getInstance(ALGORITHM);
+            cipher.init(Cipher.ENCRYPT_MODE, key);
+            return Base64.getEncoder().encodeToString(cipher.doFinal(val.getBytes()));
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
@@ -35,9 +59,9 @@ public class CryptoConverter implements AttributeConverter<String, String> {
         }
 
         try {
-            Cipher c = Cipher.getInstance(ALGORITHM);
-            c.init(Cipher.DECRYPT_MODE, key);
-            return new String(c.doFinal(Base64.getDecoder().decode(dbVal)));
+            Cipher cipher = Cipher.getInstance(ALGORITHM);
+            cipher.init(Cipher.DECRYPT_MODE, key);
+            return new String(cipher.doFinal(Base64.getDecoder().decode(dbVal)));
         } catch (Exception e) {
             throw new RuntimeException(e);
         }

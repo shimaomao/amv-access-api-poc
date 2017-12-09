@@ -22,6 +22,16 @@ management.context-path: /manage
 
 logging.config: classpath:logback-spring.xml
 
+flyway.enabled: true
+flyway.locations: 'db/migration/sqlite'
+
+amv.access.database:
+  driverClassName: 'org.sqlite.JDBC'
+  url: 'jdbc:sqlite:amv-access-template.db?journal_mode=wal'
+  pool-name: 'amv-access-sqlite-connection-pool'
+  maximum-pool-size: 10
+  column-encryption-key: 'MySuperSecretKey'
+
 amv.issuer:
   name: XXXX
   public-key: AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA

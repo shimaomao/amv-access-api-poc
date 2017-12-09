@@ -32,6 +32,7 @@ amv.access.database:
   url: 'jdbc:sqlite:amv-access.db?journal_mode=wal'
   pool-name: 'amv-access-sqlite-connection-pool'
   maximum-pool-size: 10
+  column-encryption-key: 'MySuperSecretKey'
 
 amv.issuer:
   name: XXXX

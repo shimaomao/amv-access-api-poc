@@ -1,9 +1,11 @@
 package org.amv.access.config;
 
+import com.google.common.base.Strings;
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
 import com.zaxxer.hikari.metrics.prometheus.PrometheusMetricsTrackerFactory;
 import lombok.extern.slf4j.Slf4j;
+import org.amv.access.model.CryptoConverter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
@@ -16,6 +18,8 @@ import org.springframework.transaction.annotation.EnableTransactionManagement;
 import javax.sql.DataSource;
 import java.util.Properties;
 
+import static java.util.Objects.requireNonNull;
+
 @Slf4j
 @Configuration
 @EnableTransactionManagement
@@ -25,8 +29,17 @@ import java.util.Properties;
 @ConditionalOnProperty("amv.access.database.url")
 public class DatabaseConfig {
 
+    private final DatabaseProperties databaseProperties;
+    
     @Autowired
-    private DatabaseProperties databaseProperties;
+    public DatabaseConfig(DatabaseProperties databaseProperties) {
+        this.databaseProperties = requireNonNull(databaseProperties);
+
+        String columnEncryptionKey = this.databaseProperties.getColumnEncryptionKey();
+        if (Strings.isNullOrEmpty(columnEncryptionKey)) {
+            CryptoConverter.initKey(columnEncryptionKey.getBytes());
+        }
+    }
 
     @Bean(destroyMethod = "close")
     public DataSource dataSource() {
