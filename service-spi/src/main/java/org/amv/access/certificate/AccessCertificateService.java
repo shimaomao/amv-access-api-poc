@@ -17,7 +17,7 @@ public interface AccessCertificateService {
 
     Mono<AccessCertificate> createAccessCertificate(CreateAccessCertificateContext request);
 
-    Mono<Void> revokeAccessCertificate(NonceAuthentication nonceAuthentication, RevokeAccessCertificateContext request);
+    Mono<Boolean> revokeAccessCertificate(NonceAuthentication nonceAuthentication, RevokeAccessCertificateContext request);
 
     @Value
     @Builder(builderClassName = "Builder")

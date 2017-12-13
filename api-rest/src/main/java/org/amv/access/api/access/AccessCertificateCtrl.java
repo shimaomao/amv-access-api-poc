@@ -3,16 +3,12 @@ package org.amv.access.api.access;
 import io.prometheus.client.spring.web.PrometheusTimeMethod;
 import io.swagger.annotations.*;
 import lombok.extern.slf4j.Slf4j;
-import org.amv.access.client.model.CreateAccessCertificateRequestDto;
-import org.amv.access.client.model.CreateAccessCertificateResponseDto;
 import org.amv.access.auth.NonceAuthentication;
 import org.amv.access.certificate.AccessCertificateService;
 import org.amv.access.certificate.AccessCertificateService.GetAccessCertificateContext;
 import org.amv.access.certificate.AccessCertificateService.RevokeAccessCertificateContext;
 import org.amv.access.client.MoreHttpHeaders;
-import org.amv.access.client.model.AccessCertificateDto;
-import org.amv.access.client.model.ErrorResponseDto;
-import org.amv.access.client.model.GetAccessCertificatesResponseDto;
+import org.amv.access.client.model.*;
 import org.amv.access.exception.BadRequestException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -108,7 +104,7 @@ public class AccessCertificateCtrl {
     })
     @ResponseStatus(HttpStatus.NO_CONTENT)
     @PrometheusTimeMethod(name = "access_certificate_ctrl_revoke_access_certificate", help = "")
-    public ResponseEntity<Void> revokeAccessCertificate(
+    public ResponseEntity<Boolean> revokeAccessCertificate(
             NonceAuthentication nonceAuthentication,
             @ApiParam(required = true) @PathVariable("deviceSerialNumber") String deviceSerialNumber,
             @ApiParam(required = true) @PathVariable("accessCertificateId") UUID accessCertificateId) {
@@ -123,10 +119,9 @@ public class AccessCertificateCtrl {
                 .accessCertificateId(accessCertificateId)
                 .build();
 
-        ResponseEntity<Void> response = accessCertificateService
+        ResponseEntity<Boolean> response = accessCertificateService
                 .revokeAccessCertificate(nonceAuthentication, revokeAccessCertificateContext)
-                .map(foo -> ResponseEntity.noContent().<Void>build())
-                .defaultIfEmpty(ResponseEntity.noContent().build())
+                .map(result -> ResponseEntity.status(HttpStatus.NO_CONTENT).body(result))
                 .block();
 
         return response;

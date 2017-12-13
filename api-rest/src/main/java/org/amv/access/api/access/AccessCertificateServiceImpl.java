@@ -200,8 +200,8 @@ public class AccessCertificateServiceImpl implements AccessCertificateService {
 
     @Override
     @Transactional
-    public Mono<Void> revokeAccessCertificate(NonceAuthentication nonceAuthentication,
-                                              RevokeAccessCertificateContext context) {
+    public Mono<Boolean> revokeAccessCertificate(NonceAuthentication nonceAuthentication,
+                                                 RevokeAccessCertificateContext context) {
         requireNonNull(nonceAuthentication, "`nonceAuthentication` must not be null");
         requireNonNull(context, "`context` must not be null");
 
@@ -226,7 +226,7 @@ public class AccessCertificateServiceImpl implements AccessCertificateService {
 
         accessCertificateRepository.delete(accessCertificate);
 
-        return Mono.empty();
+        return Mono.just(true);
     }
 
     private void verifyNonceAuthOrThrow(NonceAuthentication nonceAuthentication, DeviceEntity device) {

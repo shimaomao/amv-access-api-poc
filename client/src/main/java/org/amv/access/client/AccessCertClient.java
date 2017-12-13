@@ -31,19 +31,20 @@ public interface AccessCertClient extends AccessApiClient {
             MoreHttpHeaders.AMV_SIGNATURE + ": " + "{signedNonce}"
     })
     @RequestLine("DELETE /api/v1/issuer/{issuerName}/access_certificates/{accessCertificateId}")
-    HystrixCommand<Void> revokeAccessCertificate(@Param("nonce") String nonce,
+    HystrixCommand<Boolean> revokeAccessCertificate(@Param("nonce") String nonce,
                                                  @Param("signedNonce") String signedNonce,
                                                  @Param("issuerName") String issuerName,
                                                  @Param("accessCertificateId") String accessCertificateId);
 
 
     @Headers({
-                   MoreHttpHeaders.AMV_NONCE + ": " + "{nonce}",
-                   MoreHttpHeaders.AMV_SIGNATURE + ": " + "{signedNonce}" })
+            MoreHttpHeaders.AMV_NONCE + ": " + "{nonce}",
+            MoreHttpHeaders.AMV_SIGNATURE + ": " + "{signedNonce}"
+    })
     @RequestLine("POST /api/v1/issuer/{issuerName}/access_certificates")
     HystrixCommand<CreateAccessCertificateResponseDto> createAccessCertificates(
-          @Param("nonce") String nonce,
-          @Param("signedNonce") String signedNonce,
-          @Param("issuerName") String issuerName,
-          CreateAccessCertificateRequestDto body);
+            @Param("nonce") String nonce,
+            @Param("signedNonce") String signedNonce,
+            @Param("issuerName") String issuerName,
+            CreateAccessCertificateRequestDto body);
 }
