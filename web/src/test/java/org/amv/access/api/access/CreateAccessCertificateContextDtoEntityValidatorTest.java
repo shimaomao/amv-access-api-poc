@@ -1,6 +1,6 @@
 package org.amv.access.api.access;
 
-import org.amv.access.api.access.model.CreateAccessCertificateRequestDto;
+import org.amv.access.client.model.CreateAccessCertificateRequestDto;
 import org.junit.Before;
 import org.junit.Test;
 import org.springframework.validation.BeanPropertyBindingResult;

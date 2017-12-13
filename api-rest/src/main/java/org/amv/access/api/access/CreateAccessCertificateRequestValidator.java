@@ -1,7 +1,7 @@
 package org.amv.access.api.access;
 
 import lombok.extern.slf4j.Slf4j;
-import org.amv.access.api.access.model.CreateAccessCertificateRequestDto;
+import org.amv.access.client.model.CreateAccessCertificateRequestDto;
 import org.springframework.validation.Errors;
 import org.springframework.validation.ValidationUtils;
 import org.springframework.validation.Validator;
