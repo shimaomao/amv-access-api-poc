@@ -2,26 +2,21 @@ package org.amv.access.api.access;
 
 import org.amv.access.AmvAccessApplication;
 import org.amv.access.auth.NonceAuthentication;
-import org.amv.access.client.model.CreateAccessCertificateRequestDto;
-import org.amv.access.client.model.CreateAccessCertificateResponseDto;
 import org.amv.access.client.MoreHttpHeaders;
-import org.amv.access.client.model.AccessCertificateDto;
-import org.amv.access.client.model.CreateDeviceCertificateRequestDto;
-import org.amv.access.client.model.ErrorResponseDto;
-import org.amv.access.client.model.GetAccessCertificatesResponseDto;
+import org.amv.access.client.model.*;
+import org.amv.access.client.model.CreateAccessCertificateResponseDto.AccessCertificateSigningRequestDto;
 import org.amv.access.config.SqliteTestDatabaseConfig;
 import org.amv.access.demo.DemoService;
 import org.amv.access.demo.DeviceWithKeys;
+import org.amv.access.demo.IssuerWithKeys;
 import org.amv.access.demo.NonceAuthHelper;
 import org.amv.access.exception.BadRequestException;
 import org.amv.access.exception.UnauthorizedException;
 import org.amv.access.model.ApplicationEntity;
 import org.amv.access.model.DeviceEntity;
-import org.amv.access.model.IssuerEntity;
 import org.amv.access.model.VehicleEntity;
 import org.amv.highmobility.cryptotool.Cryptotool;
 import org.amv.highmobility.cryptotool.CryptotoolUtils;
-import org.apache.commons.lang3.RandomUtils;
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
@@ -33,11 +28,10 @@ import org.springframework.http.*;
 import org.springframework.test.context.junit4.SpringRunner;
 import reactor.core.publisher.Mono;
 
-import java.time.LocalDateTime;
-import java.time.ZoneOffset;
 import java.util.List;
 import java.util.Optional;
 
+import static org.amv.highmobility.cryptotool.CryptotoolUtils.decodeBase64AsHex;
 import static org.apache.commons.codec.binary.Base64.isBase64;
 import static org.hamcrest.Matchers.*;
 import static org.junit.Assert.assertThat;
@@ -60,7 +54,7 @@ public class AccessCertificateCtrlTest {
     private ApplicationEntity application;
 
     private DeviceWithKeys deviceWithKeys;
-    private IssuerEntity demoIssuer;
+    private IssuerWithKeys demoIssuer;
     private NonceAuthHelper nonceAuthHelper;
 
     @Before
@@ -68,7 +62,7 @@ public class AccessCertificateCtrlTest {
         this.nonceAuthHelper = new NonceAuthHelper(cryptotool);
         this.application = demoService.getOrCreateDemoApplication();
 
-        this.demoIssuer = demoService.getOrCreateDemoIssuer().getIssuer();
+        this.demoIssuer = demoService.getOrCreateDemoIssuer();
 
         this.deviceWithKeys = demoService.createDemoDeviceWithKeys(this.application);
     }
@@ -137,10 +131,10 @@ public class AccessCertificateCtrlTest {
         String nonceBase64ForFakeSignature = nonceAuthHelper.createNonceWithRandomLengthBase64();
         String nonceSignatureBase64 = nonceAuthHelper.createNonceSignatureBase64(deviceWithKeys.getKeys(), nonceBase64ForFakeSignature);
 
-        String devicePublicKey = CryptotoolUtils.decodeBase64AsHex(device.getPublicKeyBase64());
+        String devicePublicKey = decodeBase64AsHex(device.getPublicKeyBase64());
         Cryptotool.Validity signedNonceValidity = Optional.of(cryptotool.verifySignature(
-                CryptotoolUtils.decodeBase64AsHex(nonceBase64),
-                CryptotoolUtils.decodeBase64AsHex(nonceSignatureBase64),
+                decodeBase64AsHex(nonceBase64),
+                decodeBase64AsHex(nonceSignatureBase64),
                 devicePublicKey))
                 .map(Mono::block)
                 .orElse(Cryptotool.Validity.VALID);
@@ -216,61 +210,132 @@ public class AccessCertificateCtrlTest {
                 .vehicleSerialNumber(vehicle.getSerialNumber())
                 .build();
 
-        ResponseEntity<CreateAccessCertificateResponseDto> responseEntity = restTemplate
-                .postForEntity("/api/v1/device/{deviceSerialNumber}/access_certificates", request,
+
+        NonceAuthentication issuerNonceAuthentication = nonceAuthHelper
+                .createNonceAuthentication(demoIssuer.getKeys());
+
+        HttpHeaders postRequestHeaders = new HttpHeaders();
+        postRequestHeaders.add(MoreHttpHeaders.AMV_NONCE, issuerNonceAuthentication.getNonceBase64());
+        postRequestHeaders.add(MoreHttpHeaders.AMV_SIGNATURE, issuerNonceAuthentication.getNonceSignatureBase64());
+
+        HttpEntity<CreateAccessCertificateRequestDto> postEntity = new HttpEntity<>(request, postRequestHeaders);
+
+        ResponseEntity<CreateAccessCertificateResponseDto> createAccessCertificateResponse = restTemplate
+                .postForEntity("/api/v1/issuer/{issuerUuid}/access_certificates",
+                        postEntity,
                         CreateAccessCertificateResponseDto.class,
-                        device.getSerialNumber());
+                        demoIssuer.getIssuer().getUuid());
 
-        assertThat(responseEntity.getStatusCode(), is(HttpStatus.OK));
+        assertThat(createAccessCertificateResponse.getStatusCode(), is(HttpStatus.OK));
 
-        CreateAccessCertificateResponseDto response = responseEntity.getBody();
+        CreateAccessCertificateResponseDto response = createAccessCertificateResponse.getBody();
         assertThat(response, is(notNullValue()));
 
-        AccessCertificateDto accessCertificate = response.getAccessCertificate();
+        AccessCertificateSigningRequestDto signingRequest = response.getAccessCertificateSigningRequest();
 
-        assertThat(accessCertificate.getDeviceAccessCertificate(), is(notNullValue()));
-        assertThat(isBase64(accessCertificate.getDeviceAccessCertificate()), is(true));
+        assertThat(signingRequest.getDeviceAccessCertificate(), is(notNullValue()));
+        assertThat(isBase64(signingRequest.getDeviceAccessCertificate()), is(true));
 
-        assertThat(accessCertificate.getVehicleAccessCertificate(), is(notNullValue()));
-        assertThat(isBase64(accessCertificate.getVehicleAccessCertificate()), is(true));
+        assertThat(signingRequest.getVehicleAccessCertificate(), is(notNullValue()));
+        assertThat(isBase64(signingRequest.getVehicleAccessCertificate()), is(true));
+    }
+
+    @Test
+    public void itShouldCreateAndThenSignAccessCertificate() throws Exception {
+        VehicleEntity vehicle = demoService.getOrCreateDemoVehicle();
+        DeviceEntity device = deviceWithKeys.getDevice();
+
+        CreateAccessCertificateRequestDto postBody = CreateAccessCertificateRequestDto.builder()
+                .appId(application.getAppId())
+                .deviceSerialNumber(device.getSerialNumber())
+                .vehicleSerialNumber(vehicle.getSerialNumber())
+                .build();
+
+        NonceAuthentication issuerNonceAuthentication = nonceAuthHelper
+                .createNonceAuthentication(demoIssuer.getKeys());
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.add(MoreHttpHeaders.AMV_NONCE, issuerNonceAuthentication.getNonceBase64());
+        headers.add(MoreHttpHeaders.AMV_SIGNATURE, issuerNonceAuthentication.getNonceSignatureBase64());
+
+        HttpEntity<CreateAccessCertificateRequestDto> postEntity = new HttpEntity<>(postBody, headers);
+
+        ResponseEntity<CreateAccessCertificateResponseDto> createAccessCertificateResponse = restTemplate
+                .postForEntity("/api/v1/issuer/{issuerUuid}/access_certificates",
+                        postEntity,
+                        CreateAccessCertificateResponseDto.class,
+                        demoIssuer.getIssuer().getUuid());
+
+        assertThat(createAccessCertificateResponse.getStatusCode(), is(HttpStatus.OK));
+
+        CreateAccessCertificateResponseDto postResponse = createAccessCertificateResponse.getBody();
+        assertThat(postResponse, is(notNullValue()));
+
+        AccessCertificateSigningRequestDto signingRequest = postResponse.getAccessCertificateSigningRequest();
+
+        assertThat(signingRequest.getDeviceAccessCertificate(), is(notNullValue()));
+        assertThat(isBase64(signingRequest.getDeviceAccessCertificate()), is(true));
+
+        assertThat(signingRequest.getVehicleAccessCertificate(), is(notNullValue()));
+        assertThat(isBase64(signingRequest.getVehicleAccessCertificate()), is(true));
+
+
+        String vehicleAccessCertSignatureBase64 = Optional.ofNullable(cryptotool
+                .generateSignature(decodeBase64AsHex(signingRequest.getVehicleAccessCertificate()),
+                        demoIssuer.getKeys().getPrivateKey()))
+                .map(Mono::block)
+                .map(Cryptotool.Signature::getSignature)
+                .map(CryptotoolUtils::encodeHexAsBase64)
+                .orElseThrow(IllegalStateException::new);
+
+        String deviceAccessCertSignatureBase64 = Optional.ofNullable(cryptotool
+                .generateSignature(decodeBase64AsHex(signingRequest.getDeviceAccessCertificate()),
+                        demoIssuer.getKeys().getPrivateKey()))
+                .map(Mono::block)
+                .map(Cryptotool.Signature::getSignature)
+                .map(CryptotoolUtils::encodeHexAsBase64)
+                .orElseThrow(IllegalStateException::new);
+
+        UpdateAccessCertificateSignatureRequestDto putBody = UpdateAccessCertificateSignatureRequestDto.builder()
+                .deviceAccessCertificateSignatureBase64(deviceAccessCertSignatureBase64)
+                .vehicleAccessCertificateSignatureBase64(vehicleAccessCertSignatureBase64)
+                .build();
+
+        HttpEntity<UpdateAccessCertificateSignatureRequestDto> putEntity = new HttpEntity<>(putBody, headers);
+
+        ResponseEntity<Boolean> addAccessCertificateSignatureResponse = restTemplate
+                .exchange("/api/v1/issuer/{issuerUuid}/access_certificates/{accessCertificateId}/signature",
+                        HttpMethod.PUT,
+                        putEntity,
+                        Boolean.class,
+                        demoIssuer.getIssuer().getUuid(),
+                        signingRequest.getId());
+
+        assertThat(createAccessCertificateResponse.getStatusCode(), is(HttpStatus.OK));
+
+        Boolean putResponse = addAccessCertificateSignatureResponse.getBody();
+        assertThat(putResponse, is(notNullValue()));
+        assertThat(putResponse, equalTo(true));
     }
 
     @Test
     public void itShouldCreateAndThenFetchAllAccessCertificates() throws Exception {
-        VehicleEntity vehicle = demoService.getOrCreateDemoVehicle();
+        itShouldCreateAndThenSignAccessCertificate();
+
         DeviceEntity device = deviceWithKeys.getDevice();
 
-        LocalDateTime validFrom = LocalDateTime.now();
-        LocalDateTime validUntil = validFrom.plusMinutes(RandomUtils.nextInt(10, 1_000_000));
-
-        CreateAccessCertificateRequestDto createAccessCertificateRequest = CreateAccessCertificateRequestDto.builder()
-                .appId(application.getAppId())
-                .deviceSerialNumber(device.getSerialNumber())
-                .vehicleSerialNumber(vehicle.getSerialNumber())
-                .validityStart(validFrom.toInstant(ZoneOffset.UTC))
-                .validityEnd(validUntil.toInstant(ZoneOffset.UTC))
-                .build();
-
-        ResponseEntity<CreateAccessCertificateResponseDto> createAccessCertificateResponse = restTemplate
-                .postForEntity("/api/v1/device/{deviceSerialNumber}/access_certificates",
-                        createAccessCertificateRequest,
-                        CreateAccessCertificateResponseDto.class,
-                        device.getSerialNumber());
-
-        assertThat(createAccessCertificateResponse.getStatusCode(), is(HttpStatus.OK));
-
-        NonceAuthentication nonceAuthentication = nonceAuthHelper
+        NonceAuthentication deviceNonceAuthentication = nonceAuthHelper
                 .createNonceAuthentication(deviceWithKeys.getKeys());
 
-        HttpHeaders headers = new HttpHeaders();
-        headers.add(MoreHttpHeaders.AMV_NONCE, nonceAuthentication.getNonceBase64());
-        headers.add(MoreHttpHeaders.AMV_SIGNATURE, nonceAuthentication.getNonceSignatureBase64());
+        HttpHeaders fetchRequestHeaders = new HttpHeaders();
+        fetchRequestHeaders.add(MoreHttpHeaders.AMV_NONCE, deviceNonceAuthentication.getNonceBase64());
+        fetchRequestHeaders.add(MoreHttpHeaders.AMV_SIGNATURE, deviceNonceAuthentication.getNonceSignatureBase64());
 
-        HttpEntity<CreateDeviceCertificateRequestDto> entity = new HttpEntity<>(headers);
+        HttpEntity<CreateDeviceCertificateRequestDto> fetchEntity = new HttpEntity<>(fetchRequestHeaders);
 
         ResponseEntity<GetAccessCertificatesResponseDto> getAccessCertificateResponse = restTemplate
                 .exchange("/api/v1/device/{deviceSerialNumber}/access_certificates",
-                        HttpMethod.GET, entity, GetAccessCertificatesResponseDto.class,
+                        HttpMethod.GET, fetchEntity, GetAccessCertificatesResponseDto.class,
                         device.getSerialNumber());
 
         assertThat(getAccessCertificateResponse.getStatusCode(), is(HttpStatus.OK));
@@ -287,12 +352,12 @@ public class AccessCertificateCtrlTest {
         assertThat(accessCertificateDto.getName(), is(notNullValue()));
         assertThat(accessCertificateDto.getDeviceAccessCertificate(), is(notNullValue()));
 
-        String signedDeviceAccessCertificateInHex = CryptotoolUtils.decodeBase64AsHex(accessCertificateDto.getDeviceAccessCertificate());
+        String signedDeviceAccessCertificateInHex = decodeBase64AsHex(accessCertificateDto.getDeviceAccessCertificate());
 
         String deviceAccessCertificateInHex = signedDeviceAccessCertificateInHex.substring(0, 200);
         String deviceAccessSignatureInHex = signedDeviceAccessCertificateInHex.substring(200, signedDeviceAccessCertificateInHex.length());
 
-        String issuerPublicKeyInHex = CryptotoolUtils.decodeBase64AsHex(demoIssuer.getPublicKeyBase64());
+        String issuerPublicKeyInHex = decodeBase64AsHex(demoIssuer.getIssuer().getPublicKeyBase64());
         Cryptotool.Validity validity = Optional.of(cryptotool.verifySignature(deviceAccessCertificateInHex, deviceAccessSignatureInHex, issuerPublicKeyInHex))
                 .map(Mono::block)
                 .filter(val -> val == Cryptotool.Validity.VALID)

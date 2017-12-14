@@ -7,6 +7,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.Setter;
 import lombok.experimental.Tolerate;
+import org.amv.access.util.MoreBase64;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
@@ -19,7 +20,7 @@ import java.util.Optional;
 
 @Data
 @Setter(AccessLevel.PROTECTED)
-@Builder(builderClassName = "Builder")
+@Builder(builderClassName = "Builder", toBuilder = true)
 @Entity
 @Table(name = "access_certificate")
 @EntityListeners(AuditingEntityListener.class)
@@ -61,11 +62,17 @@ public class AccessCertificateEntity {
     @Column(name = "valid_until")
     private Date validUntil;
 
-    @Column(name = "signed_vehicle_access_certificate_base64")
-    private String signedVehicleAccessCertificateBase64;
+    @Column(name = "vehicle_access_certificate_base64")
+    private String vehicleAccessCertificateBase64;
 
-    @Column(name = "signed_device_access_certificate_base64")
-    private String signedDeviceAccessCertificateBase64;
+    @Column(name = "device_access_certificate_base64")
+    private String deviceAccessCertificateBase64;
+
+    @Column(name = "vehicle_access_certificate_signature_base64")
+    private String vehicleAccessCertificateSignatureBase64;
+
+    @Column(name = "device_access_certificate_signature_base64")
+    private String deviceAccessCertificateSignatureBase64;
 
     @Tolerate
     protected AccessCertificateEntity() {
@@ -79,5 +86,29 @@ public class AccessCertificateEntity {
                 .map(i -> i.atZone(ZoneOffset.UTC))
                 .map(i -> i.isBefore(ZonedDateTime.now(ZoneOffset.UTC)))
                 .orElse(true);
+    }
+
+    @JsonIgnore
+    public Optional<String> getVehicleAccessCertificateSignatureBase64() {
+        return Optional.ofNullable(vehicleAccessCertificateSignatureBase64);
+    }
+
+    public Optional<String> getSignedVehicleAccessCertificateBase64() {
+        return getVehicleAccessCertificateSignatureBase64()
+                .map(MoreBase64::decodeBase64AsHex)
+                .map(signatureHex -> MoreBase64.decodeBase64AsHex(vehicleAccessCertificateBase64) + signatureHex)
+                .map(MoreBase64::encodeHexAsBase64);
+    }
+
+    @JsonIgnore
+    public Optional<String> getDeviceAccessCertificateSignatureBase64() {
+        return Optional.ofNullable(deviceAccessCertificateSignatureBase64);
+    }
+
+    public Optional<String> getSignedDeviceAccessCertificateBase64() {
+        return getDeviceAccessCertificateSignatureBase64()
+                .map(MoreBase64::decodeBase64AsHex)
+                .map(signatureHex -> MoreBase64.decodeBase64AsHex(deviceAccessCertificateBase64) + signatureHex)
+                .map(MoreBase64::encodeHexAsBase64);
     }
 }

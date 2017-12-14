@@ -51,6 +51,9 @@ public class HighmobilityModule implements AmvAccessModuleSpi {
         Application application = requireNonNull(deviceCertificateRequest.getApplication());
         Device device = requireNonNull(deviceCertificateRequest.getDevice());
 
+        String issuerPrivateKeyBase64 = issuer.getPrivateKeyBase64()
+                .orElseThrow(() -> new IllegalArgumentException("Issuer private key is not present"));
+
         Cryptotool.DeviceCertificate hmDeviceCertificate = cryptotool
                 .createDeviceCertificate(issuer.getNameInHex(),
                         application.getAppId(),
@@ -58,13 +61,13 @@ public class HighmobilityModule implements AmvAccessModuleSpi {
                         decodeBase64AsHex(device.getPublicKeyBase64()))
                 .block();
 
-        Cryptotool.Signature hmSignature = cryptotool
-                .generateSignature(hmDeviceCertificate.getDeviceCertificate(), decodeBase64AsHex(issuer
-                        .getPrivateKeyBase64()
-                        .orElseThrow(IllegalArgumentException::new)))
+        String hmDeviceCertificateBase64 = hexToBase64(hmDeviceCertificate.getDeviceCertificate())
+                .orElseThrow(() -> new IllegalStateException("Could not convert device certificate to base64"));
+
+        String hmSignatureBase64 = this.createSignature(hmDeviceCertificateBase64, issuerPrivateKeyBase64)
                 .block();
 
-        String signedDeviceCertificate = hmDeviceCertificate.getDeviceCertificate() + hmSignature.getSignature();
+        String signedDeviceCertificate = hmDeviceCertificate.getDeviceCertificate() + decodeBase64AsHex(hmSignatureBase64);
         String signedDeviceCertificateBase64 = hexToBase64(signedDeviceCertificate)
                 .orElseThrow(() -> new IllegalStateException("Could not convert signed device certificate to base64"));
 
@@ -82,8 +85,8 @@ public class HighmobilityModule implements AmvAccessModuleSpi {
     public Mono<AccessCertificate> createAccessCertificate(CreateAccessCertificateRequest accessCertificateRequest) {
         requireNonNull(accessCertificateRequest);
 
-        Issuer issuer = requireNonNull(accessCertificateRequest.getIssuer());
-        Application application = requireNonNull(accessCertificateRequest.getApplication());
+        //Issuer issuer = requireNonNull(accessCertificateRequest.getIssuer());
+        //Application application = requireNonNull(accessCertificateRequest.getApplication());
         Device device = requireNonNull(accessCertificateRequest.getDevice());
         Vehicle vehicle = requireNonNull(accessCertificateRequest.getVehicle());
         Permissions permissions = requireNonNull(accessCertificateRequest.getPermissions());
@@ -110,6 +113,7 @@ public class HighmobilityModule implements AmvAccessModuleSpi {
                 LocalDateTime.ofInstant(validUntil, ZoneOffset.UTC),
                 permissions.getPermissions()).block();
 
+        /*
         String issuerPrivateKeyInHex = decodeBase64AsHex(issuer.getPrivateKeyBase64()
                 .orElseThrow(IllegalArgumentException::new));
         String deviceAccessCertificateSignature = Mono.just(deviceAccessCertificate)
@@ -132,19 +136,46 @@ public class HighmobilityModule implements AmvAccessModuleSpi {
 
         String signedVehicleAccessCertificate = vehicleAccessCertificate.getAccessCertificate() + vehicleAccessCertificateSignature;
         String signedVehicleAccessCertificateBase64 = hexToBase64(signedVehicleAccessCertificate)
-                .orElseThrow(() -> new IllegalStateException("Could not convert signed vehicle access certificate to base64"));
+                .orElseThrow(() -> new IllegalStateException("Could not convert signed vehicle access certificate to base64"));*/
 
         AccessCertificate accessCertificate = AccessCertificateImpl.builder()
                 .uuid(UUID.randomUUID().toString())
-                .issuer(issuer)
-                .application(application)
-                .vehicle(vehicle)
-                .device(device)
-                .signedDeviceAccessCertificateBase64(signedDeviceAccessCertificateBase64)
-                .signedVehicleAccessCertificateBase64(signedVehicleAccessCertificateBase64)
+                .name(vehicle.getName())
+                .deviceAccessCertificateBase64(hexToBase64(deviceAccessCertificate.getAccessCertificate())
+                        .orElseThrow(() -> new IllegalStateException("Could not convert device access certificate to base64")))
+                .vehicleAccessCertificateBase64(hexToBase64(vehicleAccessCertificate.getAccessCertificate())
+                        .orElseThrow(() -> new IllegalStateException("Could not convert vehicle access certificate to base64")))
+                //.issuer(issuer)
+                //.application(application)
+                //.vehicle(vehicle)
+                //.device(device)
+                //.signedDeviceAccessCertificateBase64(signedDeviceAccessCertificateBase64)
+                //.signedVehicleAccessCertificateBase64(signedVehicleAccessCertificateBase64)
                 .build();
 
         return Mono.just(accessCertificate);
+    }
+
+    @Override
+    public Mono<String> createSignature(String messageBase64, String privateKeyBase64) {
+        String messageInHex = decodeBase64AsHex(messageBase64);
+        String issuerPrivateKeyInHex = decodeBase64AsHex(privateKeyBase64);
+
+        return cryptotool.generateSignature(messageInHex, issuerPrivateKeyInHex)
+                .map(Cryptotool.Signature::getSignature)
+                .map(this::hexToBase64)
+                .map(opt -> opt.orElseThrow(() -> new IllegalStateException("Could not turn signature from hex to base64")));
+    }
+
+
+    @Override
+    public Mono<Boolean> verifySignature(String messageBase64, String signatureBase64, String publicKeyBase64) {
+        String messageInHex = decodeBase64AsHex(messageBase64);
+        String signatureInHex = decodeBase64AsHex(signatureBase64);
+        String publicKeyInHex = decodeBase64AsHex(publicKeyBase64);
+
+        return cryptotool.verifySignature(messageInHex, signatureInHex, publicKeyInHex)
+                .map(s -> s == Cryptotool.Validity.VALID);
     }
 
     private Optional<String> hexToBase64(String value) {

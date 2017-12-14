@@ -15,7 +15,7 @@ public interface IssuerRepository extends JpaRepository<IssuerEntity, Long> {
 
     Optional<IssuerEntity> findByNameAndPublicKeyBase64(@Param("name") String name, @Param("publicKeyBase64") String publicKeyBase64);
 
-    Optional<IssuerEntity> findFirstByOrderByCreatedAtDesc();
+    Optional<IssuerEntity> findFirstByPrivateKeyBase64NotNullOrderByCreatedAtDesc();
 
     Optional<IssuerEntity> findByUuid(@Param("uuid") String uuid);
 }

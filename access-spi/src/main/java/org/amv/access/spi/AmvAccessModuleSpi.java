@@ -2,7 +2,6 @@ package org.amv.access.spi;
 
 import org.amv.access.auth.NonceAuthentication;
 import org.amv.access.core.AccessCertificate;
-import org.amv.access.core.Device;
 import org.amv.access.core.DeviceCertificate;
 import reactor.core.publisher.Mono;
 
@@ -27,4 +26,7 @@ public interface AmvAccessModuleSpi {
      */
     Mono<AccessCertificate> createAccessCertificate(CreateAccessCertificateRequest accessCertificateRequest);
 
+    Mono<String> createSignature(String messageBase64, String privateKeyBase64);
+
+    Mono<Boolean> verifySignature(String messageBase64, String signatureBase64, String publicKeyBase64);
 }

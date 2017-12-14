@@ -264,6 +264,14 @@ project(':access-spi-highmobility') {
     }
 }
 
+project(':config-commons') {
+    apply plugin: 'org.springframework.boot'
+
+    bootRepackage {
+        enabled = false
+    }
+}
+
 project(':swagger') {
     apply plugin: 'org.springframework.boot'
 

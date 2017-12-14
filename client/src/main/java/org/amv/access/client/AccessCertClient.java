@@ -7,6 +7,7 @@ import feign.RequestLine;
 import org.amv.access.client.model.CreateAccessCertificateRequestDto;
 import org.amv.access.client.model.CreateAccessCertificateResponseDto;
 import org.amv.access.client.model.GetAccessCertificatesResponseDto;
+import org.amv.access.client.model.UpdateAccessCertificateSignatureRequestDto;
 
 import static com.google.common.net.HttpHeaders.CONTENT_TYPE;
 
@@ -27,6 +28,30 @@ public interface AccessCertClient extends AccessApiClient {
                                                                              @Param("signedNonce") String signedNonce,
                                                                              @Param("deviceSerialNumber") String deviceSerialNumber);
 
+    @Headers({
+            CONTENT_TYPE + ": " + "application/json;charset=UTF-8",
+            MoreHttpHeaders.AMV_NONCE + ": " + "{nonce}",
+            MoreHttpHeaders.AMV_SIGNATURE + ": " + "{signedNonce}"
+    })
+    @RequestLine("POST /api/v1/issuer/{issuerUuid}/access_certificates")
+    HystrixCommand<CreateAccessCertificateResponseDto> createAccessCertificate(
+            @Param("nonce") String nonce,
+            @Param("signedNonce") String signedNonce,
+            @Param("issuerUuid") String issuerUuid,
+            CreateAccessCertificateRequestDto body);
+
+    @Headers({
+            CONTENT_TYPE + ": " + "application/json;charset=UTF-8",
+            MoreHttpHeaders.AMV_NONCE + ": " + "{nonce}",
+            MoreHttpHeaders.AMV_SIGNATURE + ": " + "{signedNonce}"
+    })
+    @RequestLine("PUT /api/v1/issuer/{issuerUuid}/access_certificates/{accessCertificateId}/signature")
+    HystrixCommand<CreateAccessCertificateResponseDto> addAccessCertificateSignature(
+            @Param("nonce") String nonce,
+            @Param("signedNonce") String signedNonce,
+            @Param("issuerUuid") String issuerUuid,
+            @Param("accessCertificateId") String accessCertificateId,
+            UpdateAccessCertificateSignatureRequestDto body);
 
     @Headers({
             MoreHttpHeaders.AMV_NONCE + ": " + "{nonce}",
@@ -34,20 +59,8 @@ public interface AccessCertClient extends AccessApiClient {
     })
     @RequestLine("DELETE /api/v1/issuer/{issuerUuid}/access_certificates/{accessCertificateId}")
     HystrixCommand<Boolean> revokeAccessCertificate(@Param("nonce") String nonce,
-                                                 @Param("signedNonce") String signedNonce,
-                                                 @Param("issuerUuid") String issuerUuid,
-                                                 @Param("accessCertificateId") String accessCertificateId);
+                                                    @Param("signedNonce") String signedNonce,
+                                                    @Param("issuerUuid") String issuerUuid,
+                                                    @Param("accessCertificateId") String accessCertificateId);
 
-
-    @Headers({
-            CONTENT_TYPE + ": " + "application/json;charset=UTF-8",
-            MoreHttpHeaders.AMV_NONCE + ": " + "{nonce}",
-            MoreHttpHeaders.AMV_SIGNATURE + ": " + "{signedNonce}"
-    })
-    @RequestLine("POST /api/v1/issuer/{issuerUuid}/access_certificates")
-    HystrixCommand<CreateAccessCertificateResponseDto> createAccessCertificates(
-            @Param("nonce") String nonce,
-            @Param("signedNonce") String signedNonce,
-            @Param("issuerUuid") String issuerUuid,
-            CreateAccessCertificateRequestDto body);
 }

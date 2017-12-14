@@ -3,6 +3,4 @@ description = 'Highmobility implementation of the AMV access service provider in
 dependencies {
     compile project(':access-spi')
     compile 'org.amv.highmobility:amv-highmobility-cryptotool-wrapper:0.1.3'
-
-    compile 'org.springframework.boot:spring-boot-starter'
 }

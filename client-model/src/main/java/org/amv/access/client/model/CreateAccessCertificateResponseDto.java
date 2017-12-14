@@ -5,18 +5,30 @@ import io.swagger.annotations.ApiModel;
 import lombok.Builder;
 import lombok.Data;
 import lombok.experimental.Tolerate;
-import org.amv.access.client.model.AccessCertificateDto;
 
 @Data
 @Builder(builderClassName = "Builder")
 @ApiModel(description = "A resource representing the response after creating an access certificate.")
 public class CreateAccessCertificateResponseDto {
 
-    @JsonProperty(value = "access_certificate")
-    private AccessCertificateDto accessCertificate;
+    @JsonProperty(value = "access_certificate_signing_request")
+    private AccessCertificateSigningRequestDto accessCertificateSigningRequest;
 
     @Tolerate
     protected CreateAccessCertificateResponseDto() {
 
+    }
+
+    @Data
+    @lombok.Builder(builderClassName = "Builder")
+    public static class AccessCertificateSigningRequestDto {
+        @JsonProperty("id")
+        private String id;
+
+        @JsonProperty("device_access_certificate")
+        private String deviceAccessCertificate;
+
+        @JsonProperty("vehicle_access_certificate")
+        private String vehicleAccessCertificate;
     }
 }

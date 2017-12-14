@@ -1,0 +1,7 @@
+description = 'Highmobility implementation of the AMV access service provider interface'
+
+dependencies {
+    compile project(':access-spi-highmobility')
+
+    compile 'org.springframework.boot:spring-boot-starter'
+}

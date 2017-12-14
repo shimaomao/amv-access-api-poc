@@ -31,13 +31,13 @@ test {
 sourceSets {
     test {
         resources {
-            srcDirs 'src/test/resources',
-                    '../model/src/main/resources'
+            srcDirs 'src/test/resources', '../model/src/main/resources'
         }
     }
 }
 
 dependencies {
+    compile project(':config-commons')
     compile project(':api-rest')
 
     compile('org.springframework.boot:spring-boot-starter-web')

@@ -8,8 +8,7 @@ sourceSets {
 sourceSets {
     main {
         resources {
-            srcDirs 'src/main/resources',
-                    '../model/src/main/resources'
+            srcDirs 'src/main/resources', '../model/src/main/resources'
         }
     }
 }
@@ -41,6 +40,7 @@ test {
 
 dependencies {
     compile project(':api-rest')
+    compile project(':config-commons')
     compile project(':swagger')
     compile project(':demo')
 

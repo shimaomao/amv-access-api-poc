@@ -33,8 +33,9 @@ create table if not exists `issuer` (
     `NAME` varchar(4) not null,
     `DESCRIPTION` varchar(1023) null,
     `PUBLIC_KEY_BASE64` varchar(1023) not null,
-    `PRIVATE_KEY_BASE64` varchar(1023) not null,
-    primary key (`ID`)
+    `PRIVATE_KEY_BASE64` varchar(1023) null,
+    primary key (`ID`),
+    unique key `INDEX_ISSUER_UUID_UNIQUE` (`UUID`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 create table if not exists `device` (
@@ -115,8 +116,10 @@ create table if not exists `access_certificate` (
     `APPLICATION_ID` bigint not null,
     `VEHICLE_ID` bigint not null,
     `DEVICE_ID` bigint not null,
-    `SIGNED_VEHICLE_ACCESS_CERTIFICATE_BASE64` varchar(1023) not null,
-    `SIGNED_DEVICE_ACCESS_CERTIFICATE_BASE64` varchar(1023) not null,
+    `VEHICLE_ACCESS_CERTIFICATE_BASE64` varchar(1023) not null,
+    `DEVICE_ACCESS_CERTIFICATE_BASE64` varchar(1023) not null,
+    `VEHICLE_ACCESS_CERTIFICATE_SIGNATURE_BASE64` varchar(1023) null,
+    `DEVICE_ACCESS_CERTIFICATE_SIGNATURE_BASE64` varchar(1023) null,
     primary key (`ID`),
     foreign key (`ISSUER_ID`)
       references issuer(`ID`)

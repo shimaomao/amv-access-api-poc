@@ -13,4 +13,5 @@ include 'client-model-java6'
 include 'demo'
 include 'api-rest'
 include 'service-spi'
+include 'config-commons'
 

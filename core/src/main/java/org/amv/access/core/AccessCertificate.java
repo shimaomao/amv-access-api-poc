@@ -4,16 +4,18 @@ public interface AccessCertificate {
 
     String getUuid();
 
-    Issuer getIssuer();
+    String getName();
+
+    /*Issuer getIssuer();
 
     Application getApplication();
 
     Device getDevice();
 
-    Vehicle getVehicle();
+    Vehicle getVehicle();*/
 
-    String getSignedDeviceAccessCertificateBase64();
+    String getDeviceAccessCertificateBase64();
 
-    String getSignedVehicleAccessCertificateBase64();
+    String getVehicleAccessCertificateBase64();
 
 }

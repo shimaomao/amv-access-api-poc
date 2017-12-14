@@ -3,8 +3,6 @@ package org.amv.access.core.impl;
 import lombok.*;
 import org.amv.access.core.*;
 
-import java.time.LocalDateTime;
-
 
 @Data
 @Setter(AccessLevel.PROTECTED)
@@ -13,23 +11,19 @@ public class AccessCertificateImpl implements AccessCertificate {
     @NonNull
     private String uuid;
     @NonNull
+    private String name;
+    /*@NonNull
     private Issuer issuer;
     @NonNull
     private Application application;
     @NonNull
     private Device device;
     @NonNull
-    private Vehicle vehicle;
+    private Vehicle vehicle;*/
 
-    /**
-     * base64(vehicleCert + sign(vehicleCert, issuerPrivateKey))
-     */
     @NonNull
-    private String signedVehicleAccessCertificateBase64;
+    private String vehicleAccessCertificateBase64;
 
-    /**
-     * base64(deviceCert + sign(deviceCert, issuerPrivateKey))
-     */
     @NonNull
-    private String signedDeviceAccessCertificateBase64;
+    private String deviceAccessCertificateBase64;
 }

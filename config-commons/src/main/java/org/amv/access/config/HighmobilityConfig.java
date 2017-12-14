@@ -1,5 +1,6 @@
-package org.amv.access.spi.highmobility;
+package org.amv.access.config;
 
+import org.amv.access.spi.highmobility.HighmobilityModule;
 import org.amv.highmobility.cryptotool.*;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;

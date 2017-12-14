@@ -6,6 +6,8 @@ import lombok.Value;
 import org.amv.access.auth.DeviceNonceAuthentication;
 import org.amv.access.auth.IssuerNonceAuthentication;
 import org.amv.access.core.AccessCertificate;
+import org.amv.access.core.Issuer;
+import org.amv.access.core.SignedAccessCertificate;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
@@ -13,11 +15,17 @@ import java.time.Instant;
 import java.util.UUID;
 
 public interface AccessCertificateService {
-    Flux<AccessCertificate> getAccessCertificates(DeviceNonceAuthentication auth);
+    Flux<SignedAccessCertificate> getAccessCertificates(DeviceNonceAuthentication auth);
 
     Mono<AccessCertificate> createAccessCertificate(IssuerNonceAuthentication auth, CreateAccessCertificateContext request);
 
+    Mono<Boolean> addAccessCertificateSignatures(IssuerNonceAuthentication auth, AddAccessCertificateSignaturesContext request);
+
     Mono<Boolean> revokeAccessCertificate(IssuerNonceAuthentication nonceAuthentication, RevokeAccessCertificateContext request);
+
+    Mono<String> createSignature(String messageBase64, String privateKeyBase64);
+
+    Mono<Boolean> verifySignature(String messageBase64, String signatureBase64, String publicKeyBase64);
 
     @Value
     @Builder(builderClassName = "Builder")
@@ -25,6 +33,18 @@ public interface AccessCertificateService {
         @NonNull
         private UUID accessCertificateId;
     }
+
+    @Value
+    @Builder(builderClassName = "Builder")
+    class AddAccessCertificateSignaturesContext {
+        @NonNull
+        private UUID accessCertificateId;
+        @NonNull
+        private String vehicleAccessCertificateSignatureBase64;
+        @NonNull
+        private String deviceAccessCertificateSignatureBase64;
+    }
+
 
     @Value
     @Builder(builderClassName = "Builder")

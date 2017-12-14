@@ -12,11 +12,11 @@ import java.time.Instant;
 @Builder(builderClassName = "Builder")
 public class CreateAccessCertificateRequestImpl implements CreateAccessCertificateRequest {
 
-    @NonNull
-    private Issuer issuer;
+    //@NonNull
+    //private Issuer issuer;
 
-    @NonNull
-    private Application application;
+    //@NonNull
+    //private Application application;
 
     @NonNull
     private Device device;
@@ -35,7 +35,7 @@ public class CreateAccessCertificateRequestImpl implements CreateAccessCertifica
 
     @Override
     public String toString() {
-        return String.format("CreateAccessCertificateRequestImpl[appId='%s', deviceSerial='%s', vehicleSerial='%s']",
-                application.getAppId(), device.getSerialNumber(), vehicle.getSerialNumber());
+        return String.format("CreateAccessCertificateRequestImpl[deviceSerial='%s', vehicleSerial='%s']",
+                device.getSerialNumber(), vehicle.getSerialNumber());
     }
 }

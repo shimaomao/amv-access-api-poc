@@ -6,9 +6,9 @@ import org.amv.access.AmvAccessApplication;
 import org.amv.access.auth.NonceAuthentication;
 import org.amv.access.client.AccessCertClient;
 import org.amv.access.client.Clients;
-import org.amv.access.client.model.AccessCertificateDto;
 import org.amv.access.client.model.CreateAccessCertificateRequestDto;
 import org.amv.access.client.model.CreateAccessCertificateResponseDto;
+import org.amv.access.client.model.CreateAccessCertificateResponseDto.AccessCertificateSigningRequestDto;
 import org.amv.access.client.model.GetAccessCertificatesResponseDto;
 import org.amv.access.config.SqliteTestDatabaseConfig;
 import org.amv.access.demo.DemoService;
@@ -98,7 +98,8 @@ public class AccessCertificateCtrlWithRestClient {
         NonceAuthentication nonceAuthentication = nonceAuthHelper
                 .createNonceAuthentication(deviceWithKeys.getKeys());
 
-        GetAccessCertificatesResponseDto body = accessCertClient.fetchAccessCertificates(nonceAuthentication.getNonceBase64(),
+        GetAccessCertificatesResponseDto body = accessCertClient.fetchAccessCertificates(
+                nonceAuthentication.getNonceBase64(),
                 nonceAuthentication.getNonceSignatureBase64(),
                 device.getSerialNumber())
                 .execute();
@@ -129,7 +130,7 @@ public class AccessCertificateCtrlWithRestClient {
                 .createNonceAuthentication(demoIssuer.getKeys());
 
         CreateAccessCertificateResponseDto response = accessCertClient
-                .createAccessCertificates(nonceAuthentication.getNonceBase64(),
+                .createAccessCertificate(nonceAuthentication.getNonceBase64(),
                         nonceAuthentication.getNonceSignatureBase64(),
                         demoIssuer.getIssuer().getUuid(),
                         request)
@@ -137,13 +138,13 @@ public class AccessCertificateCtrlWithRestClient {
 
         assertThat(response, is(notNullValue()));
 
-        AccessCertificateDto accessCertificate = response.getAccessCertificate();
+        AccessCertificateSigningRequestDto signingRequest = response.getAccessCertificateSigningRequest();
 
-        assertThat(accessCertificate.getDeviceAccessCertificate(), is(notNullValue()));
-        assertThat(isBase64(accessCertificate.getDeviceAccessCertificate()), is(true));
+        assertThat(signingRequest.getDeviceAccessCertificate(), is(notNullValue()));
+        assertThat(isBase64(signingRequest.getDeviceAccessCertificate()), is(true));
 
-        assertThat(accessCertificate.getVehicleAccessCertificate(), is(notNullValue()));
-        assertThat(isBase64(accessCertificate.getVehicleAccessCertificate()), is(true));
+        assertThat(signingRequest.getVehicleAccessCertificate(), is(notNullValue()));
+        assertThat(isBase64(signingRequest.getVehicleAccessCertificate()), is(true));
     }
 
 /*

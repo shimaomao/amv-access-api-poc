@@ -36,8 +36,8 @@ amv.access.database:
 
 amv.issuer:
   name: XXXX
-  public-key: AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
-  private-key: BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB
+  public-key: 6ECEC318027EFFA4FE235D8C207A06C64C34DEAE60024CD581420C11F56E391920D6CB8273DF6DC10CB41638035B2E8A23D8837136091F6551E5FB269D01FBC1
+  private-key: 9A1FE538D93347F8C6E07F2EBEE9BEB4B3D315D2955C660FB29D6F8164074825
 
 amv.swagger:
   enabled: true
@@ -58,8 +58,8 @@ amv.access.demo:
   enabled: true
   issuer:
      name: 'DEMO'
-     publicKeyBase64: 'qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqg=='
-     privateKeyBase64: 'u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7s='
+     publicKeyBase64: 'bs7DGAJ+/6T+I12MIHoGxkw03q5gAkzVgUIMEfVuORkg1suCc99twQy0FjgDWy6KI9iDcTYJH2VR5fsmnQH7wQ=='
+     privateKeyBase64: 'mh/lONkzR/jG4H8uvum+tLPTFdKVXGYPsp1vgWQHSCU='
   vehicles:
    - name: 'TEST-VEHICLE-1'
      serialNumber: '0000073cbc01354c9c'

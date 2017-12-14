@@ -7,7 +7,9 @@ import org.amv.access.auth.IssuerNonceAuthentication;
 import org.amv.access.auth.NonceAuthentication;
 import org.amv.access.certificate.AccessCertificateService;
 import org.amv.access.core.AccessCertificate;
+import org.amv.access.core.SignedAccessCertificate;
 import org.amv.access.core.impl.AccessCertificateImpl;
+import org.amv.access.core.impl.SignedAccessCertificateImpl;
 import org.amv.access.exception.BadRequestException;
 import org.amv.access.exception.NotFoundException;
 import org.amv.access.exception.UnauthorizedException;
@@ -73,7 +75,7 @@ public class AccessCertificateServiceImpl implements AccessCertificateService {
 
     @Override
     @Transactional
-    public Flux<AccessCertificate> getAccessCertificates(DeviceNonceAuthentication nonceAuthentication) {
+    public Flux<SignedAccessCertificate> getAccessCertificates(DeviceNonceAuthentication nonceAuthentication) {
         requireNonNull(nonceAuthentication, "`nonceAuthentication` must not be null");
 
         DeviceEntity device = deviceRepository.findBySerialNumber(nonceAuthentication.getDeviceSerialNumber())
@@ -113,19 +115,32 @@ public class AccessCertificateServiceImpl implements AccessCertificateService {
                 .collect(Collectors.toMap(VehicleEntity::getId, Function.identity()));
 
         return Flux.fromIterable(accessCertificates)
-                .map(accessCertificate -> {
-                    IssuerEntity issuer = issuers.get(accessCertificate.getIssuerId());
-                    ApplicationEntity application = applications.get(accessCertificate.getApplicationId());
-                    VehicleEntity vehicle = vehicles.get(accessCertificate.getVehicleId());
+                .map(accessCertificateEntity -> {
+                    IssuerEntity issuer = issuers.get(accessCertificateEntity.getIssuerId());
+                    ApplicationEntity application = applications.get(accessCertificateEntity.getApplicationId());
+                    VehicleEntity vehicle = vehicles.get(accessCertificateEntity.getVehicleId());
 
-                    return AccessCertificateImpl.builder()
-                            .uuid(accessCertificate.getUuid())
-                            .issuer(issuer)
-                            .application(application)
-                            .device(device)
-                            .vehicle(vehicle)
-                            .signedDeviceAccessCertificateBase64(accessCertificate.getSignedDeviceAccessCertificateBase64())
-                            .signedVehicleAccessCertificateBase64(accessCertificate.getSignedVehicleAccessCertificateBase64())
+                    AccessCertificate accessCertificate = AccessCertificateImpl.builder()
+                            .uuid(accessCertificateEntity.getUuid())
+                            .name(vehicle.getName())
+                            //.issuer(issuer)
+                            //.application(application)
+                            //.device(device)
+                            //.vehicle(vehicle)
+                            .deviceAccessCertificateBase64(accessCertificateEntity
+                                    .getDeviceAccessCertificateBase64())
+                            .vehicleAccessCertificateBase64(accessCertificateEntity
+                                    .getVehicleAccessCertificateBase64())
+                            .build();
+
+                    return SignedAccessCertificateImpl.builder()
+                            .accessCertificate(accessCertificate)
+                            .signedDeviceAccessCertificateBase64(accessCertificateEntity
+                                    .getSignedDeviceAccessCertificateBase64()
+                                    .orElseThrow(IllegalStateException::new))
+                            .signedVehicleAccessCertificateBase64(accessCertificateEntity
+                                    .getSignedVehicleAccessCertificateBase64()
+                                    .orElseThrow(IllegalStateException::new))
                             .build();
                 });
     }
@@ -137,8 +152,7 @@ public class AccessCertificateServiceImpl implements AccessCertificateService {
         requireNonNull(nonceAuthentication, "`nonceAuthentication` must not be null");
         requireNonNull(context, "`context` must not be null");
 
-        IssuerEntity issuerEntity = issuerService.findIssuerByUuid(UUID.fromString(nonceAuthentication.getIssuerUuid()))
-                .orElseThrow(() -> new NotFoundException("IssuerEntity not found"));
+        IssuerEntity issuerEntity = findIssuerOrThrow(nonceAuthentication);
 
         verifyNonceAuthOrThrow(nonceAuthentication, issuerEntity.getPublicKeyBase64());
 
@@ -146,6 +160,8 @@ public class AccessCertificateServiceImpl implements AccessCertificateService {
                 .orElseThrow(() -> new NotFoundException("VehicleEntity not found"));
 
         if (vehicleEntity.getIssuerId() != issuerEntity.getId()) {
+            log.warn("Mismatching issuer id for vehicle {}: {} != {}", context.getVehicleSerialNumber(),
+                    vehicleEntity.getIssuerId(), issuerEntity.getId());
             // do not expose information about existing vehicles - hence: NotFoundException
             throw new NotFoundException("VehicleEntity not found");
         }
@@ -172,8 +188,6 @@ public class AccessCertificateServiceImpl implements AccessCertificateService {
         }
 
         CreateAccessCertificateRequest r = CreateAccessCertificateRequestImpl.builder()
-                .issuer(issuerEntity)
-                .application(applicationEntity)
                 .device(deviceEntity)
                 .vehicle(vehicleEntity)
                 .validFrom(context.getValidityStart())
@@ -195,13 +209,60 @@ public class AccessCertificateServiceImpl implements AccessCertificateService {
                 .deviceId(deviceEntity.getId())
                 .validFrom(Date.from(r.getValidFrom().atZone(ZoneOffset.UTC).toInstant()))
                 .validUntil(Date.from(r.getValidUntil().atZone(ZoneOffset.UTC).toInstant()))
-                .signedDeviceAccessCertificateBase64(accessCertificate.getSignedDeviceAccessCertificateBase64())
-                .signedVehicleAccessCertificateBase64(accessCertificate.getSignedVehicleAccessCertificateBase64())
+                .deviceAccessCertificateBase64(accessCertificate.getDeviceAccessCertificateBase64())
+                .vehicleAccessCertificateBase64(accessCertificate.getVehicleAccessCertificateBase64())
                 .build();
 
         accessCertificateRepository.save(accessCertificateEntity);
 
         return Mono.just(accessCertificate);
+    }
+
+    @Override
+    public Mono<Boolean> addAccessCertificateSignatures(IssuerNonceAuthentication nonceAuthentication,
+                                                        AddAccessCertificateSignaturesContext context) {
+        requireNonNull(nonceAuthentication, "`nonceAuthentication` must not be null");
+        requireNonNull(context, "`context` must not be null");
+
+        IssuerEntity issuerEntity = findIssuerOrThrow(nonceAuthentication);
+        verifyNonceAuthOrThrow(nonceAuthentication, issuerEntity.getPublicKeyBase64());
+
+        AccessCertificateEntity accessCertificate = accessCertificateRepository
+                .findByUuid(context.getAccessCertificateId().toString())
+                .orElseThrow(() -> new NotFoundException("AccessCertificateEntity not found"));
+
+        if (accessCertificate.getIssuerId() != issuerEntity.getId()) {
+            log.warn("Mismatching issuer id for access cert {}: {} != {}", context.getAccessCertificateId(),
+                    accessCertificate.getIssuerId(), issuerEntity.getId());
+            // do not expose information about existing access certs - hence: NotFoundException
+            throw new NotFoundException("AccessCertificateEntity not found");
+        }
+
+        Optional.ofNullable(this.verifySignature(
+                accessCertificate.getVehicleAccessCertificateBase64(),
+                context.getVehicleAccessCertificateSignatureBase64(),
+                issuerEntity.getPublicKeyBase64()))
+                .map(Mono::block)
+                .filter(bool -> bool)
+                .orElseThrow(() -> new BadRequestException("vehicle access certificate signature is invalid"));
+
+        Optional.ofNullable(this.verifySignature(
+                accessCertificate.getDeviceAccessCertificateBase64(),
+                context.getDeviceAccessCertificateSignatureBase64(),
+                issuerEntity.getPublicKeyBase64()))
+                .map(Mono::block)
+                .filter(bool -> bool)
+                .orElseThrow(() -> new BadRequestException("device access certificate signature is invalid"));
+
+        AccessCertificateEntity updatedAccessCertificateWithSignatures = accessCertificate.toBuilder()
+                .vehicleAccessCertificateSignatureBase64(context.getVehicleAccessCertificateSignatureBase64())
+                .deviceAccessCertificateSignatureBase64(context.getDeviceAccessCertificateSignatureBase64())
+                .build();
+
+        accessCertificateRepository.save(updatedAccessCertificateWithSignatures);
+
+
+        return Mono.just(true);
     }
 
     @Override
@@ -211,9 +272,7 @@ public class AccessCertificateServiceImpl implements AccessCertificateService {
         requireNonNull(nonceAuthentication, "`nonceAuthentication` must not be null");
         requireNonNull(context, "`context` must not be null");
 
-        IssuerEntity issuerEntity = issuerService.findIssuerByUuid(UUID.fromString(nonceAuthentication.getIssuerUuid()))
-                .orElseThrow(() -> new NotFoundException("IssuerEntity not found"));
-
+        IssuerEntity issuerEntity = findIssuerOrThrow(nonceAuthentication);
         verifyNonceAuthOrThrow(nonceAuthentication, issuerEntity.getPublicKeyBase64());
 
         AccessCertificateEntity accessCertificate = accessCertificateRepository
@@ -221,6 +280,8 @@ public class AccessCertificateServiceImpl implements AccessCertificateService {
                 .orElseThrow(() -> new NotFoundException("AccessCertificateEntity not found"));
 
         if (accessCertificate.getIssuerId() != issuerEntity.getId()) {
+            log.warn("Mismatching issuer id for access cert {}: {} != {}", context.getAccessCertificateId(),
+                    accessCertificate.getIssuerId(), issuerEntity.getId());
             // do not expose information about existing access certs - hence: NotFoundException
             throw new NotFoundException("AccessCertificateEntity not found");
         }
@@ -228,6 +289,21 @@ public class AccessCertificateServiceImpl implements AccessCertificateService {
         accessCertificateRepository.delete(accessCertificate);
 
         return Mono.just(true);
+    }
+
+    @Override
+    public Mono<String> createSignature(String messageBase64, String privateKeyBase64) {
+        return amvAccessModule.createSignature(messageBase64, privateKeyBase64);
+    }
+
+    @Override
+    public Mono<Boolean> verifySignature(String messageBase64, String signatureBase64, String publicKeyBase64) {
+        return amvAccessModule.verifySignature(messageBase64, signatureBase64, publicKeyBase64);
+    }
+
+    private IssuerEntity findIssuerOrThrow(IssuerNonceAuthentication nonceAuthentication) {
+        return issuerService.findIssuerByUuid(UUID.fromString(nonceAuthentication.getIssuerUuid()))
+                .orElseThrow(() -> new NotFoundException("IssuerEntity not found"));
     }
 
     private void verifyNonceAuthOrThrow(NonceAuthentication nonceAuthentication, String publicKeyBase64) {
@@ -253,6 +329,8 @@ public class AccessCertificateServiceImpl implements AccessCertificateService {
 
         List<AccessCertificateEntity> validAccessCertificates = accessCertificates.stream()
                 .filter(a -> !a.isExpired())
+                .filter(a -> a.getSignedDeviceAccessCertificateBase64().isPresent())
+                .filter(a -> a.getSignedVehicleAccessCertificateBase64().isPresent())
                 .collect(Collectors.toList());
 
         return ImmutableList.copyOf(validAccessCertificates);

@@ -42,6 +42,7 @@ public class DemoServiceImpl implements DemoService {
     private static final String DEMO_USER_NAME = "access-demo-user";
     private static final String DEMO_USER_PASSWORD = "demodemodemo";
     private static final String DEMO_APP_NAME = "access-demo-application";
+    private static final String DEMO_APP_ID = "0000123456789abcdef00000";
     private static final String DEMO_APP_API_KEY = "demodemodemo";
     private static final String DEMO_VEHICLE_NAME = "access-demo-verticle";
     private static final String DEMO_DEVICE_NAME = "access-demo-device";
@@ -340,7 +341,7 @@ public class DemoServiceImpl implements DemoService {
     private ApplicationEntity createDemoApplication() {
         return createDemoApplication(DemoProperties.DemoApplication.builder()
                 .name(DEMO_APP_NAME)
-                .appId(SecureRandomUtils.generateRandomAppId().toLowerCase())
+                .appId(DEMO_APP_ID)
                 .apiKey(DEMO_APP_API_KEY)
                 .build());
     }
