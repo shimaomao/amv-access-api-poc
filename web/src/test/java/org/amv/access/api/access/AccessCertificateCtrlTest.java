@@ -1,6 +1,7 @@
 package org.amv.access.api.access;
 
 import org.amv.access.AmvAccessApplication;
+import org.amv.access.auth.NonceAuthentication;
 import org.amv.access.client.model.CreateAccessCertificateRequestDto;
 import org.amv.access.client.model.CreateAccessCertificateResponseDto;
 import org.amv.access.client.MoreHttpHeaders;
@@ -11,6 +12,7 @@ import org.amv.access.client.model.GetAccessCertificatesResponseDto;
 import org.amv.access.config.SqliteTestDatabaseConfig;
 import org.amv.access.demo.DemoService;
 import org.amv.access.demo.DeviceWithKeys;
+import org.amv.access.demo.NonceAuthHelper;
 import org.amv.access.exception.BadRequestException;
 import org.amv.access.exception.UnauthorizedException;
 import org.amv.access.model.ApplicationEntity;
@@ -59,12 +61,14 @@ public class AccessCertificateCtrlTest {
 
     private DeviceWithKeys deviceWithKeys;
     private IssuerEntity demoIssuer;
+    private NonceAuthHelper nonceAuthHelper;
 
     @Before
     public void setUp() {
+        this.nonceAuthHelper = new NonceAuthHelper(cryptotool);
         this.application = demoService.getOrCreateDemoApplication();
 
-        this.demoIssuer = demoService.getOrCreateDemoIssuer();
+        this.demoIssuer = demoService.getOrCreateDemoIssuer().getIssuer();
 
         this.deviceWithKeys = demoService.createDemoDeviceWithKeys(this.application);
     }
@@ -129,8 +133,9 @@ public class AccessCertificateCtrlTest {
     public void itShouldFailGetAccessCertificateIfNonceSignatureHeaderIsInvalid() throws Exception {
         DeviceEntity device = deviceWithKeys.getDevice();
 
-        String nonceBase64 = generateNonceWithRandomLengthBase64();
-        String nonceSignatureBase64 = createNonceSignatureBase64(deviceWithKeys.getKeys(), generateNonceWithRandomLengthBase64());
+        String nonceBase64 = nonceAuthHelper.createNonceWithRandomLengthBase64();
+        String nonceBase64ForFakeSignature = nonceAuthHelper.createNonceWithRandomLengthBase64();
+        String nonceSignatureBase64 = nonceAuthHelper.createNonceSignatureBase64(deviceWithKeys.getKeys(), nonceBase64ForFakeSignature);
 
         String devicePublicKey = CryptotoolUtils.decodeBase64AsHex(device.getPublicKeyBase64());
         Cryptotool.Validity signedNonceValidity = Optional.of(cryptotool.verifySignature(
@@ -171,22 +176,12 @@ public class AccessCertificateCtrlTest {
     public void itShouldGetEmptyAccessCertificateListSuccessfully() throws Exception {
         DeviceEntity device = deviceWithKeys.getDevice();
 
-        String nonceBase64 = generateNonceWithRandomLengthBase64();
-        String nonceSignatureBase64 = createNonceSignatureBase64(deviceWithKeys.getKeys(), CryptotoolUtils.decodeBase64AsHex(nonceBase64));
-
-        String devicePublicKey = CryptotoolUtils.decodeBase64AsHex(device.getPublicKeyBase64());
-        Cryptotool.Validity signedNonceValidity = Optional.of(cryptotool.verifySignature(
-                CryptotoolUtils.decodeBase64AsHex(nonceBase64),
-                CryptotoolUtils.decodeBase64AsHex(nonceSignatureBase64),
-                devicePublicKey))
-                .map(Mono::block)
-                .orElse(Cryptotool.Validity.INVALID);
-
-        assertThat("Sanity check", signedNonceValidity, is(Cryptotool.Validity.VALID));
+        NonceAuthentication nonceAuthentication = nonceAuthHelper
+                .createNonceAuthentication(deviceWithKeys.getKeys());
 
         HttpHeaders headers = new HttpHeaders();
-        headers.add(MoreHttpHeaders.AMV_NONCE, nonceBase64);
-        headers.add(MoreHttpHeaders.AMV_SIGNATURE, nonceSignatureBase64);
+        headers.add(MoreHttpHeaders.AMV_NONCE, nonceAuthentication.getNonceBase64());
+        headers.add(MoreHttpHeaders.AMV_SIGNATURE, nonceAuthentication.getNonceSignatureBase64());
 
         HttpEntity<CreateDeviceCertificateRequestDto> entity = new HttpEntity<>(headers);
 
@@ -264,23 +259,12 @@ public class AccessCertificateCtrlTest {
 
         assertThat(createAccessCertificateResponse.getStatusCode(), is(HttpStatus.OK));
 
-        String nonceBase64 = generateNonceWithRandomLengthBase64();
-        String nonceSignatureBase64 = createNonceSignatureBase64(deviceWithKeys.getKeys(), CryptotoolUtils.decodeBase64AsHex(nonceBase64));
-
-        String devicePublicKey = CryptotoolUtils.decodeBase64AsHex(device.getPublicKeyBase64());
-
-        Cryptotool.Validity signedNonceValidity = Optional.of(cryptotool.verifySignature(
-                CryptotoolUtils.decodeBase64AsHex(nonceBase64),
-                CryptotoolUtils.decodeBase64AsHex(nonceSignatureBase64),
-                devicePublicKey))
-                .map(Mono::block)
-                .orElse(Cryptotool.Validity.INVALID);
-
-        assertThat("Sanity check", signedNonceValidity, is(Cryptotool.Validity.VALID));
+        NonceAuthentication nonceAuthentication = nonceAuthHelper
+                .createNonceAuthentication(deviceWithKeys.getKeys());
 
         HttpHeaders headers = new HttpHeaders();
-        headers.add(MoreHttpHeaders.AMV_NONCE, nonceBase64);
-        headers.add(MoreHttpHeaders.AMV_SIGNATURE, nonceSignatureBase64);
+        headers.add(MoreHttpHeaders.AMV_NONCE, nonceAuthentication.getNonceBase64());
+        headers.add(MoreHttpHeaders.AMV_SIGNATURE, nonceAuthentication.getNonceSignatureBase64());
 
         HttpEntity<CreateDeviceCertificateRequestDto> entity = new HttpEntity<>(headers);
 
@@ -315,21 +299,5 @@ public class AccessCertificateCtrlTest {
                 .orElseThrow(IllegalStateException::new);
 
         assertThat(validity, is(Cryptotool.Validity.VALID));
-    }
-
-    private String generateNonceWithRandomLengthBase64() {
-        return generateNonceBase64(RandomUtils.nextInt(8, 32));
-    }
-
-    private String generateNonceBase64(int numberOfBytes) {
-        return CryptotoolUtils.SecureRandomUtils.generateRandomHexString(numberOfBytes);
-    }
-
-    private String createNonceSignatureBase64(Cryptotool.Keys keys, String nonce) {
-        return Optional.of(cryptotool.generateSignature(nonce, keys.getPrivateKey()))
-                .map(Mono::block)
-                .map(Cryptotool.Signature::getSignature)
-                .map(CryptotoolUtils::encodeHexAsBase64)
-                .orElseThrow(IllegalStateException::new);
     }
 }

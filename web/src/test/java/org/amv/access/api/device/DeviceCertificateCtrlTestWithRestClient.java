@@ -65,7 +65,7 @@ public class DeviceCertificateCtrlTestWithRestClient {
         this.application = demoService.getOrCreateDemoApplication();
 
         String baseUrl = String.format("http://localhost:%d/%s", port, servletContext.getContextPath());
-        this.deviceCertClient = Clients.deviceCertClient(Clients.simpleFeign(), baseUrl);
+        this.deviceCertClient = Clients.simpleDeviceCertClient(baseUrl);
     }
 
     @Test

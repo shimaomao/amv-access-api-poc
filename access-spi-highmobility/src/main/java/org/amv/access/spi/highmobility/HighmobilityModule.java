@@ -31,11 +31,11 @@ public class HighmobilityModule implements AmvAccessModuleSpi {
     }
 
     @Override
-    public Mono<Boolean> isValidNonceAuth(NonceAuthentication auth, Device device) {
+    public Mono<Boolean> isValidNonceAuth(NonceAuthentication auth, String publicKeyBase64) {
         requireNonNull(auth);
-        requireNonNull(device);
+        requireNonNull(publicKeyBase64);
 
-        String devicePublicKey = decodeBase64AsHex(device.getPublicKeyBase64());
+        String devicePublicKey = decodeBase64AsHex(publicKeyBase64);
         String nonce = decodeBase64AsHex(auth.getNonceBase64());
         String signature = decodeBase64AsHex(auth.getNonceSignatureBase64());
 
@@ -59,7 +59,9 @@ public class HighmobilityModule implements AmvAccessModuleSpi {
                 .block();
 
         Cryptotool.Signature hmSignature = cryptotool
-                .generateSignature(hmDeviceCertificate.getDeviceCertificate(), decodeBase64AsHex(issuer.getPrivateKeyBase64()))
+                .generateSignature(hmDeviceCertificate.getDeviceCertificate(), decodeBase64AsHex(issuer
+                        .getPrivateKeyBase64()
+                        .orElseThrow(IllegalArgumentException::new)))
                 .block();
 
         String signedDeviceCertificate = hmDeviceCertificate.getDeviceCertificate() + hmSignature.getSignature();
@@ -108,7 +110,8 @@ public class HighmobilityModule implements AmvAccessModuleSpi {
                 LocalDateTime.ofInstant(validUntil, ZoneOffset.UTC),
                 permissions.getPermissions()).block();
 
-        String issuerPrivateKeyInHex = decodeBase64AsHex(issuer.getPrivateKeyBase64());
+        String issuerPrivateKeyInHex = decodeBase64AsHex(issuer.getPrivateKeyBase64()
+                .orElseThrow(IllegalArgumentException::new));
         String deviceAccessCertificateSignature = Mono.just(deviceAccessCertificate)
                 .map(Cryptotool.AccessCertificate::getAccessCertificate)
                 .flatMapMany(cert -> cryptotool.generateSignature(cert, issuerPrivateKeyInHex))

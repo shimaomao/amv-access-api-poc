@@ -6,6 +6,8 @@ import lombok.NonNull;
 import lombok.Value;
 import org.amv.access.core.Issuer;
 
+import java.util.Optional;
+
 @Value
 @Builder(builderClassName = "Builder")
 public class IssuerImpl implements Issuer {
@@ -13,6 +15,11 @@ public class IssuerImpl implements Issuer {
     private String name;
     @NonNull
     private String publicKeyBase64;
-    @NonNull
+
     private String privateKeyBase64;
+
+    @Override
+    public Optional<String> getPrivateKeyBase64() {
+        return Optional.ofNullable(privateKeyBase64);
+    }
 }

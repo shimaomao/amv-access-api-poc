@@ -2,6 +2,8 @@ package org.amv.access.api.access;
 
 import com.google.common.collect.ImmutableList;
 import lombok.extern.slf4j.Slf4j;
+import org.amv.access.auth.DeviceNonceAuthentication;
+import org.amv.access.auth.IssuerNonceAuthentication;
 import org.amv.access.auth.NonceAuthentication;
 import org.amv.access.certificate.AccessCertificateService;
 import org.amv.access.core.AccessCertificate;
@@ -24,10 +26,7 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.time.ZoneOffset;
-import java.util.Date;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -74,15 +73,13 @@ public class AccessCertificateServiceImpl implements AccessCertificateService {
 
     @Override
     @Transactional
-    public Flux<AccessCertificate> getAccessCertificates(NonceAuthentication nonceAuthentication,
-                                                         GetAccessCertificateContext request) {
+    public Flux<AccessCertificate> getAccessCertificates(DeviceNonceAuthentication nonceAuthentication) {
         requireNonNull(nonceAuthentication, "`nonceAuthentication` must not be null");
-        requireNonNull(request, "`request` must not be null");
 
-        DeviceEntity device = deviceRepository.findBySerialNumber(request.getDeviceSerialNumber())
+        DeviceEntity device = deviceRepository.findBySerialNumber(nonceAuthentication.getDeviceSerialNumber())
                 .orElseThrow(() -> new NotFoundException("DeviceEntity not found"));
 
-        verifyNonceAuthOrThrow(nonceAuthentication, device);
+        verifyNonceAuthOrThrow(nonceAuthentication, device.getPublicKeyBase64());
 
         List<AccessCertificateEntity> accessCertificates = findValidAndRemoveExpired(device);
 
@@ -135,17 +132,26 @@ public class AccessCertificateServiceImpl implements AccessCertificateService {
 
     @Override
     @Transactional
-    public Mono<AccessCertificate> createAccessCertificate(CreateAccessCertificateContext context) {
+    public Mono<AccessCertificate> createAccessCertificate(IssuerNonceAuthentication nonceAuthentication,
+                                                           CreateAccessCertificateContext context) {
+        requireNonNull(nonceAuthentication, "`nonceAuthentication` must not be null");
         requireNonNull(context, "`context` must not be null");
 
-        ApplicationEntity applicationEntity = applicationRepository.findOneByAppId(context.getAppId())
-                .orElseThrow(() -> new NotFoundException("ApplicationEntity not found"));
+        IssuerEntity issuerEntity = issuerService.findIssuerByUuid(UUID.fromString(nonceAuthentication.getIssuerUuid()))
+                .orElseThrow(() -> new NotFoundException("IssuerEntity not found"));
+
+        verifyNonceAuthOrThrow(nonceAuthentication, issuerEntity.getPublicKeyBase64());
 
         VehicleEntity vehicleEntity = vehicleRepository.findOneBySerialNumber(context.getVehicleSerialNumber())
                 .orElseThrow(() -> new NotFoundException("VehicleEntity not found"));
 
-        IssuerEntity issuerEntity = issuerService.findIssuerById(vehicleEntity.getIssuerId())
-                .orElseThrow(() -> new NotFoundException("IssuerEntity not found"));
+        if (vehicleEntity.getIssuerId() != issuerEntity.getId()) {
+            // do not expose information about existing vehicles - hence: NotFoundException
+            throw new NotFoundException("VehicleEntity not found");
+        }
+
+        ApplicationEntity applicationEntity = applicationRepository.findOneByAppId(context.getAppId())
+                .orElseThrow(() -> new NotFoundException("ApplicationEntity not found"));
 
         DeviceEntity deviceEntity = deviceRepository.findBySerialNumber(context.getDeviceSerialNumber())
                 .orElseThrow(() -> new NotFoundException("DeviceEntity not found"));
@@ -200,26 +206,21 @@ public class AccessCertificateServiceImpl implements AccessCertificateService {
 
     @Override
     @Transactional
-    public Mono<Boolean> revokeAccessCertificate(NonceAuthentication nonceAuthentication,
+    public Mono<Boolean> revokeAccessCertificate(IssuerNonceAuthentication nonceAuthentication,
                                                  RevokeAccessCertificateContext context) {
         requireNonNull(nonceAuthentication, "`nonceAuthentication` must not be null");
         requireNonNull(context, "`context` must not be null");
 
-        DeviceEntity device = deviceRepository.findBySerialNumber(context.getDeviceSerialNumber())
-                .orElseThrow(() -> new NotFoundException("DeviceEntity not found"));
+        IssuerEntity issuerEntity = issuerService.findIssuerByUuid(UUID.fromString(nonceAuthentication.getIssuerUuid()))
+                .orElseThrow(() -> new NotFoundException("IssuerEntity not found"));
 
-        verifyNonceAuthOrThrow(nonceAuthentication, device);
-
-        if (!device.isEnabled()) {
-            log.warn("Allowing disabled device {} to revoke access certificate {}",
-                    device.getId(), context.getAccessCertificateId());
-        }
+        verifyNonceAuthOrThrow(nonceAuthentication, issuerEntity.getPublicKeyBase64());
 
         AccessCertificateEntity accessCertificate = accessCertificateRepository
                 .findByUuid(context.getAccessCertificateId().toString())
                 .orElseThrow(() -> new NotFoundException("AccessCertificateEntity not found"));
 
-        if (accessCertificate.getDeviceId() != device.getId()) {
+        if (accessCertificate.getIssuerId() != issuerEntity.getId()) {
             // do not expose information about existing access certs - hence: NotFoundException
             throw new NotFoundException("AccessCertificateEntity not found");
         }
@@ -229,8 +230,8 @@ public class AccessCertificateServiceImpl implements AccessCertificateService {
         return Mono.just(true);
     }
 
-    private void verifyNonceAuthOrThrow(NonceAuthentication nonceAuthentication, DeviceEntity device) {
-        boolean isValidNonce = Optional.of(amvAccessModule.isValidNonceAuth(nonceAuthentication, device))
+    private void verifyNonceAuthOrThrow(NonceAuthentication nonceAuthentication, String publicKeyBase64) {
+        boolean isValidNonce = Optional.of(amvAccessModule.isValidNonceAuth(nonceAuthentication, publicKeyBase64))
                 .map(Mono::block)
                 .orElse(false);
 

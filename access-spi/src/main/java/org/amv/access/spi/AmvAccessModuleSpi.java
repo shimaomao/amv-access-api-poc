@@ -8,7 +8,7 @@ import reactor.core.publisher.Mono;
 
 public interface AmvAccessModuleSpi {
 
-    Mono<Boolean> isValidNonceAuth(NonceAuthentication nonceAuthentication, Device device);
+    Mono<Boolean> isValidNonceAuth(NonceAuthentication nonceAuthentication, String publicKeyBase64);
 
     /**
      * Create a device certificate to be stored on the users device.

@@ -12,6 +12,7 @@ import org.springframework.data.annotation.CreatedDate;
 
 import javax.persistence.*;
 import java.util.Date;
+import java.util.Optional;
 
 
 @Data
@@ -34,6 +35,9 @@ public class IssuerEntity implements Issuer {
     @JsonProperty(value = "created_at")
     private Date createdAt;
 
+    @Column(name = "uuid")
+    private String uuid;
+
     @Column(name = "name", length = 4)
     private String name;
 
@@ -44,6 +48,9 @@ public class IssuerEntity implements Issuer {
     @JsonProperty(value = "public_key_base64")
     private String publicKeyBase64;
 
+    /**
+     * Only used for demo issuer
+     */
     @JsonProperty(value = "private_key_base64", access = JsonProperty.Access.WRITE_ONLY)
     @Column(name = "private_key_base64")
     @Convert(converter = CryptoConverter.class)
@@ -69,8 +76,8 @@ public class IssuerEntity implements Issuer {
     }
 
     @Override
-    public String getPrivateKeyBase64() {
-        return privateKeyBase64;
+    public Optional<String> getPrivateKeyBase64() {
+        return Optional.ofNullable(privateKeyBase64);
     }
 
     @Override

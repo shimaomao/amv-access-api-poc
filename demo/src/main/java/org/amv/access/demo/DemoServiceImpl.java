@@ -4,6 +4,9 @@ import com.google.common.base.Supplier;
 import com.google.common.base.Suppliers;
 import lombok.extern.slf4j.Slf4j;
 import org.amv.access.auth.ApplicationAuthenticationImpl;
+import org.amv.access.auth.IssuerNonceAuthentication;
+import org.amv.access.auth.IssuerNonceAuthenticationImpl;
+import org.amv.access.auth.NonceAuthentication;
 import org.amv.access.certificate.AccessCertificateService;
 import org.amv.access.certificate.DeviceCertificateService;
 import org.amv.access.certificate.DeviceCertificateService.CreateDeviceCertificateContext;
@@ -12,6 +15,8 @@ import org.amv.access.core.Device;
 import org.amv.access.core.DeviceCertificate;
 import org.amv.access.model.*;
 import org.amv.highmobility.cryptotool.Cryptotool;
+import org.amv.highmobility.cryptotool.CryptotoolImpl;
+import org.amv.highmobility.cryptotool.CryptotoolUtils;
 import org.amv.highmobility.cryptotool.CryptotoolUtils.SecureRandomUtils;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -23,6 +28,7 @@ import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.util.Optional;
+import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
 import static java.util.Objects.requireNonNull;
@@ -52,6 +58,7 @@ public class DemoServiceImpl implements DemoService {
 
     private final Supplier<DemoUser.DemoUserBuilder> demoUserBuilderSupplier = Suppliers
             .memoize(this::createDemoUserBuilder);
+    private final NonceAuthHelper nonceAuthHelper;
 
     public DemoServiceImpl(Cryptotool cryptotool,
                            PasswordEncoder passwordEncoder,
@@ -71,6 +78,8 @@ public class DemoServiceImpl implements DemoService {
         this.deviceRepository = requireNonNull(deviceRepository);
         this.deviceCertificateService = requireNonNull(deviceCertificateService);
         this.accessCertificateService = requireNonNull(accessCertificateService);
+
+        this.nonceAuthHelper = new NonceAuthHelper(cryptotool);
     }
 
     private void createDefaultDemoData() {
@@ -162,7 +171,9 @@ public class DemoServiceImpl implements DemoService {
                     device.getSerialNumber(),
                     demoVehicle.getSerialNumber());
 
-            return accessCertificateService.createAccessCertificate(AccessCertificateService.CreateAccessCertificateContext.builder()
+            IssuerNonceAuthentication issuerNonceAuthentication = createDemoIssuerNonceAuthentication();
+
+            return accessCertificateService.createAccessCertificate(issuerNonceAuthentication, AccessCertificateService.CreateAccessCertificateContext.builder()
                     .appId(demoApplication.getAppId())
                     .deviceSerialNumber(device.getSerialNumber())
                     .vehicleSerialNumber(demoVehicle.getSerialNumber())
@@ -186,12 +197,34 @@ public class DemoServiceImpl implements DemoService {
     }
 
     @Override
-    public IssuerEntity getOrCreateDemoIssuer() {
-        return issuerRepository.findByName(DEMO_ISSUER_NAME, new PageRequest(0, 1))
+    public IssuerNonceAuthentication createNonceAuthentication(IssuerWithKeys issuerWithKeys) {
+        NonceAuthentication nonceAuthentication = nonceAuthHelper.createNonceAuthentication(issuerWithKeys.getKeys());
+        IssuerNonceAuthentication issuerNonceAuthentication = IssuerNonceAuthenticationImpl.builder()
+                .issuerUuid(issuerWithKeys.getIssuer().getUuid())
+                .nonceAuthentication(nonceAuthentication)
+                .build();
+
+        return issuerNonceAuthentication;
+    }
+
+    @Override
+    public IssuerWithKeys getOrCreateDemoIssuer() {
+        IssuerEntity demoIssuer = issuerRepository.findByName(DEMO_ISSUER_NAME, new PageRequest(0, 1))
                 .getContent()
                 .stream()
                 .findFirst()
-                .orElseGet(this::createDemoIssuer);
+                .orElseGet(() -> this.createDemoIssuerWithKeys().getIssuer());
+
+        CryptotoolImpl.KeysImpl demoIssuerKeys = CryptotoolImpl.KeysImpl.builder()
+                .publicKey(CryptotoolUtils.decodeBase64AsHex(demoIssuer.getPublicKeyBase64()))
+                .privateKey(CryptotoolUtils.decodeBase64AsHex(demoIssuer.getPrivateKeyBase64()
+                        .orElseThrow(IllegalArgumentException::new)))
+                .build();
+
+        return IssuerWithKeys.builder()
+                .issuer(demoIssuer)
+                .keys(demoIssuerKeys)
+                .build();
     }
 
     public ApplicationEntity getOrCreateDemoApplication() {
@@ -220,8 +253,27 @@ public class DemoServiceImpl implements DemoService {
                 .orElseGet(this::createDemoDevice);
     }
 
+    private IssuerWithKeys createDemoIssuerWithKeys() {
+        Cryptotool.Keys keys = cryptotool.generateKeys().block();
+
+        IssuerEntity demoIssuer = createDemoIssuer(DemoProperties.DemoIssuer.builder()
+                .name(DEMO_ISSUER_NAME)
+                .publicKeyBase64(encodeHexAsBase64(keys.getPublicKey()))
+                .privateKeyBase64(encodeHexAsBase64(keys.getPrivateKey()))
+                .build());
+
+        log.info("created Issuer with keys: {}\n{}\n{}", demoIssuer,
+                keys.getPublicKey(),
+                keys.getPrivateKey());
+
+        return IssuerWithKeys.builder()
+                .issuer(demoIssuer)
+                .keys(keys)
+                .build();
+    }
+
     private VehicleEntity createDemoVehicle() {
-        return createDemoVehicle(getOrCreateDemoIssuer());
+        return createDemoVehicle(getOrCreateDemoIssuer().getIssuer());
     }
 
     private DeviceEntity createDemoDevice() {
@@ -260,20 +312,10 @@ public class DemoServiceImpl implements DemoService {
                 .build();
     }
 
-    private IssuerEntity createDemoIssuer() {
-        Cryptotool.Keys keys = cryptotool.generateKeys().block();
-
-        return createDemoIssuer(DemoProperties.DemoIssuer.builder()
-                .name(DEMO_ISSUER_NAME)
-                .publicKeyBase64(encodeHexAsBase64(keys.getPublicKey()))
-                .privateKeyBase64(encodeHexAsBase64(keys.getPrivateKey()))
-                .build());
-    }
-
-
     private IssuerEntity createDemoIssuer(DemoProperties.DemoIssuer demoIssuer) {
         IssuerEntity issuerEntity = IssuerEntity.builder()
                 .name(demoIssuer.getName())
+                .uuid(UUID.randomUUID().toString())
                 .createdAt(Date.from(Instant.EPOCH.plusSeconds(TimeUnit.DAYS.toSeconds(1))))
                 .publicKeyBase64(encodeHexAsBase64(decodeBase64AsHex(demoIssuer.getPublicKeyBase64())))
                 .privateKeyBase64(encodeHexAsBase64(decodeBase64AsHex(demoIssuer.getPrivateKeyBase64())))

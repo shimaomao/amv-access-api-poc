@@ -16,6 +16,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.sql.Date;
 import java.time.Instant;
 import java.util.Optional;
+import java.util.UUID;
 
 import static java.util.Objects.requireNonNull;
 
@@ -74,9 +75,10 @@ public class CertificateIssuerConfig {
 
             issuerRepository.save(IssuerEntity.builder()
                     .name(issuer.getName())
+                    .uuid(UUID.randomUUID().toString())
                     .createdAt(Date.from(Instant.now()))
                     .publicKeyBase64(issuer.getPublicKeyBase64())
-                    .privateKeyBase64(issuer.getPrivateKeyBase64())
+                    .privateKeyBase64(issuer.getPrivateKeyBase64().orElse(null))
                     .build());
 
             log.info("Issuer '{}' created successfully", issuer.getName());

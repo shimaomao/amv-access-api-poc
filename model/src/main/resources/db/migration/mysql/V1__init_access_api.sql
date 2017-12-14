@@ -28,6 +28,7 @@ create table if not exists `issuer` (
     `CREATED_AT` timestamp not null default current_timestamp,
     `UPDATED_AT` timestamp null,
     `ID` bigint not null AUTO_INCREMENT,
+    `UUID` varchar(63) not null,
     `ENABLED` integer not null default 1,
     `NAME` varchar(4) not null,
     `DESCRIPTION` varchar(1023) null,

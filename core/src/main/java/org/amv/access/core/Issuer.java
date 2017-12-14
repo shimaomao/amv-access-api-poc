@@ -10,7 +10,7 @@ public interface Issuer {
 
     String getPublicKeyBase64();
 
-    String getPrivateKeyBase64();
+    Optional<String> getPrivateKeyBase64();
 
     default String getNameInHex() {
         return Optional.ofNullable(getName())

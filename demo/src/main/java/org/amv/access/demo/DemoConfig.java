@@ -60,17 +60,4 @@ public class DemoConfig {
             }
         };
     }
-
-
-    @Bean
-    public DemoAccessCertificateVerticle demoAccessCertificateVerticle(EventBus eventBus,
-                                                                       DemoService demoService,
-                                                                       DeviceRepository deviceRepository,
-                                                                       AccessCertificateService accessCertificateService) {
-        return new DemoAccessCertificateVerticle(
-                eventBus,
-                demoService,
-                deviceRepository,
-                accessCertificateService);
-    }
 }

@@ -1,11 +1,11 @@
 package org.amv.access.demo;
 
 import com.google.common.annotations.VisibleForTesting;
+import org.amv.access.auth.IssuerNonceAuthentication;
 import org.amv.access.core.AccessCertificate;
 import org.amv.access.core.DeviceCertificate;
 import org.amv.access.model.ApplicationEntity;
 import org.amv.access.model.DeviceEntity;
-import org.amv.access.model.IssuerEntity;
 import org.amv.access.model.VehicleEntity;
 import reactor.core.publisher.Mono;
 
@@ -15,7 +15,13 @@ public interface DemoService {
 
     DemoUser getOrCreateDemoUser();
 
-    IssuerEntity getOrCreateDemoIssuer();
+    default IssuerNonceAuthentication createDemoIssuerNonceAuthentication() {
+        return createNonceAuthentication(getOrCreateDemoIssuer());
+    }
+
+    IssuerNonceAuthentication createNonceAuthentication(IssuerWithKeys issuerWithKeys);
+
+    IssuerWithKeys getOrCreateDemoIssuer();
 
     ApplicationEntity getOrCreateDemoApplication();
 
