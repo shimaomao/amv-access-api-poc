@@ -88,7 +88,6 @@ public class AccessCertificateEntity {
                 .orElse(true);
     }
 
-    @JsonIgnore
     public Optional<String> getVehicleAccessCertificateSignatureBase64() {
         return Optional.ofNullable(vehicleAccessCertificateSignatureBase64);
     }
@@ -100,7 +99,6 @@ public class AccessCertificateEntity {
                 .map(MoreBase64::encodeHexAsBase64);
     }
 
-    @JsonIgnore
     public Optional<String> getDeviceAccessCertificateSignatureBase64() {
         return Optional.ofNullable(deviceAccessCertificateSignatureBase64);
     }

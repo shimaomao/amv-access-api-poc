@@ -23,20 +23,29 @@ public class NonceAuthHelper {
 
     public NonceAuthentication createNonceAuthentication(Cryptotool.Keys keys) {
         String nonceBase64 = createNonceWithRandomLengthBase64();
-        String nonce = CryptotoolUtils.decodeBase64AsHex(nonceBase64);
-        String nonceSignatureBase64 = createNonceSignatureBase64(keys, nonce);
-
-        log.info("Create nonce authentication:\n{}\n{}\n{}",
-                keys.getPublicKey(),
-                nonceBase64, nonceSignatureBase64);
+        String nonceSignatureBase64 = createNonceSignatureBase64(keys, nonceBase64);
 
         String publicKey = keys.getPublicKey();
+
+        String nonce = CryptotoolUtils.decodeBase64AsHex(nonceBase64);
         Cryptotool.Validity signedNonceValidity = Optional.of(cryptotool.verifySignature(
                 nonce,
                 CryptotoolUtils.decodeBase64AsHex(nonceSignatureBase64),
                 publicKey))
                 .map(Mono::block)
                 .orElse(Cryptotool.Validity.INVALID);
+
+        if (log.isDebugEnabled()) {
+            log.debug("Create nonce authentication:\n" +
+                            "validity: {}\n" +
+                            "nonce: {}\n" +
+                            "nonce-signature: {}\n" +
+                            "public key: {}\n",
+                    signedNonceValidity,
+                    nonceBase64,
+                    nonceSignatureBase64,
+                    keys.getPublicKey());
+        }
 
         if (signedNonceValidity == Cryptotool.Validity.INVALID) {
             throw new IllegalStateException("Could not create valid nonce auth object");
@@ -56,8 +65,9 @@ public class NonceAuthHelper {
         return CryptotoolUtils.SecureRandomUtils.generateRandomHexString(numberOfBytes);
     }
 
-    public String createNonceSignatureBase64(Cryptotool.Keys keys, String nonce) {
-        return Optional.of(cryptotool.generateSignature(nonce, keys.getPrivateKey()))
+    public String createNonceSignatureBase64(Cryptotool.Keys keys, String nonceBase64) {
+        String nonceInHex = CryptotoolUtils.decodeBase64AsHex(nonceBase64);
+        return Optional.of(cryptotool.generateSignature(nonceInHex, keys.getPrivateKey()))
                 .map(Mono::block)
                 .map(Cryptotool.Signature::getSignature)
                 .map(CryptotoolUtils::encodeHexAsBase64)

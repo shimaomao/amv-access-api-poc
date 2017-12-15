@@ -365,4 +365,19 @@ public class AccessCertificateCtrlTest {
 
         assertThat(validity, is(Cryptotool.Validity.VALID));
     }
+
+    @Test
+    public void itShouldThrowExceptionOnMismatchingIssuerWhenCreatingAccessCertificates() {
+        // TODO: implement me
+    }
+
+    @Test
+    public void itShouldThrowExceptionIfAccessCertificateCouldNotBeFoundWhenAddingSignatures() {
+        // TODO: implement me
+    }
+
+    @Test
+    public void itShouldReturnNoAccessCertificatesForDisabledDevice() {
+        // TODO: implemnet me
+    }
 }

@@ -93,26 +93,9 @@ public class AccessCertificateServiceImpl implements AccessCertificateService {
             return Flux.empty();
         }
 
-        Map<Long, ApplicationEntity> applications = accessCertificates.stream()
-                .map(AccessCertificateEntity::getApplicationId)
-                .distinct()
-                .map(id -> Optional.ofNullable(applicationRepository.findOne(id)))
-                .map(v -> v.orElseThrow(() -> new NotFoundException("ApplicationEntity not found")))
-                .collect(Collectors.toMap(ApplicationEntity::getId, Function.identity()));
-
-        Map<Long, IssuerEntity> issuers = accessCertificates.stream()
-                .map(AccessCertificateEntity::getIssuerId)
-                .distinct()
-                .map(issuerService::findIssuerById)
-                .map(v -> v.orElseThrow(() -> new NotFoundException("IssuerEntity not found")))
-                .collect(Collectors.toMap(IssuerEntity::getId, Function.identity()));
-
-        Map<Long, VehicleEntity> vehicles = accessCertificates.stream()
-                .map(AccessCertificateEntity::getVehicleId)
-                .distinct()
-                .map(id -> Optional.ofNullable(vehicleRepository.findOne(id)))
-                .map(v -> v.orElseThrow(() -> new NotFoundException("VehicleEntity not found")))
-                .collect(Collectors.toMap(VehicleEntity::getId, Function.identity()));
+        Map<Long, ApplicationEntity> applications = fetchApplications(accessCertificates);
+        Map<Long, IssuerEntity> issuers = fetchIssuer(accessCertificates);
+        Map<Long, VehicleEntity> vehicles = fetchVehicles(accessCertificates);
 
         return Flux.fromIterable(accessCertificates)
                 .map(accessCertificateEntity -> {
@@ -123,17 +106,13 @@ public class AccessCertificateServiceImpl implements AccessCertificateService {
                     AccessCertificate accessCertificate = AccessCertificateImpl.builder()
                             .uuid(accessCertificateEntity.getUuid())
                             .name(vehicle.getName())
-                            //.issuer(issuer)
-                            //.application(application)
-                            //.device(device)
-                            //.vehicle(vehicle)
                             .deviceAccessCertificateBase64(accessCertificateEntity
                                     .getDeviceAccessCertificateBase64())
                             .vehicleAccessCertificateBase64(accessCertificateEntity
                                     .getVehicleAccessCertificateBase64())
                             .build();
 
-                    return SignedAccessCertificateImpl.builder()
+                    SignedAccessCertificateImpl signedAccessCertificate = SignedAccessCertificateImpl.builder()
                             .accessCertificate(accessCertificate)
                             .signedDeviceAccessCertificateBase64(accessCertificateEntity
                                     .getSignedDeviceAccessCertificateBase64()
@@ -142,6 +121,8 @@ public class AccessCertificateServiceImpl implements AccessCertificateService {
                                     .getSignedVehicleAccessCertificateBase64()
                                     .orElseThrow(IllegalStateException::new))
                             .build();
+
+                    return signedAccessCertificate;
                 });
     }
 
@@ -159,12 +140,7 @@ public class AccessCertificateServiceImpl implements AccessCertificateService {
         VehicleEntity vehicleEntity = vehicleRepository.findOneBySerialNumber(context.getVehicleSerialNumber())
                 .orElseThrow(() -> new NotFoundException("VehicleEntity not found"));
 
-        if (vehicleEntity.getIssuerId() != issuerEntity.getId()) {
-            log.warn("Mismatching issuer id for vehicle {}: {} != {}", context.getVehicleSerialNumber(),
-                    vehicleEntity.getIssuerId(), issuerEntity.getId());
-            // do not expose information about existing vehicles - hence: NotFoundException
-            throw new NotFoundException("VehicleEntity not found");
-        }
+        verifyMatchingVehicleIssuerOrThrow(issuerEntity, vehicleEntity);
 
         ApplicationEntity applicationEntity = applicationRepository.findOneByAppId(context.getAppId())
                 .orElseThrow(() -> new NotFoundException("ApplicationEntity not found"));
@@ -238,21 +214,15 @@ public class AccessCertificateServiceImpl implements AccessCertificateService {
             throw new NotFoundException("AccessCertificateEntity not found");
         }
 
-        Optional.ofNullable(this.verifySignature(
+        verifySignatureOrThrow(issuerEntity,
                 accessCertificate.getVehicleAccessCertificateBase64(),
                 context.getVehicleAccessCertificateSignatureBase64(),
-                issuerEntity.getPublicKeyBase64()))
-                .map(Mono::block)
-                .filter(bool -> bool)
-                .orElseThrow(() -> new BadRequestException("vehicle access certificate signature is invalid"));
+                "vehicle access certificate signature is invalid");
 
-        Optional.ofNullable(this.verifySignature(
+        verifySignatureOrThrow(issuerEntity,
                 accessCertificate.getDeviceAccessCertificateBase64(),
                 context.getDeviceAccessCertificateSignatureBase64(),
-                issuerEntity.getPublicKeyBase64()))
-                .map(Mono::block)
-                .filter(bool -> bool)
-                .orElseThrow(() -> new BadRequestException("device access certificate signature is invalid"));
+                "device access certificate signature is invalid");
 
         AccessCertificateEntity updatedAccessCertificateWithSignatures = accessCertificate.toBuilder()
                 .vehicleAccessCertificateSignatureBase64(context.getVehicleAccessCertificateSignatureBase64())
@@ -261,6 +231,9 @@ public class AccessCertificateServiceImpl implements AccessCertificateService {
 
         accessCertificateRepository.save(updatedAccessCertificateWithSignatures);
 
+        if (log.isDebugEnabled()) {
+            log.debug("saved access certificate: {}", updatedAccessCertificateWithSignatures);
+        }
 
         return Mono.just(true);
     }
@@ -304,6 +277,70 @@ public class AccessCertificateServiceImpl implements AccessCertificateService {
     private IssuerEntity findIssuerOrThrow(IssuerNonceAuthentication nonceAuthentication) {
         return issuerService.findIssuerByUuid(UUID.fromString(nonceAuthentication.getIssuerUuid()))
                 .orElseThrow(() -> new NotFoundException("IssuerEntity not found"));
+    }
+
+    private Map<Long, VehicleEntity> fetchVehicles(List<AccessCertificateEntity> accessCertificates) {
+        return accessCertificates.stream()
+                .map(AccessCertificateEntity::getVehicleId)
+                .distinct()
+                .map(id -> Optional.ofNullable(vehicleRepository.findOne(id)))
+                .map(v -> v.orElseThrow(() -> new NotFoundException("VehicleEntity not found")))
+                .collect(Collectors.toMap(VehicleEntity::getId, Function.identity()));
+    }
+
+    private Map<Long, IssuerEntity> fetchIssuer(List<AccessCertificateEntity> accessCertificates) {
+        return accessCertificates.stream()
+                .map(AccessCertificateEntity::getIssuerId)
+                .distinct()
+                .map(issuerService::findIssuerById)
+                .map(v -> v.orElseThrow(() -> new NotFoundException("IssuerEntity not found")))
+                .collect(Collectors.toMap(IssuerEntity::getId, Function.identity()));
+    }
+
+    private Map<Long, ApplicationEntity> fetchApplications(List<AccessCertificateEntity> accessCertificates) {
+        return accessCertificates.stream()
+                .map(AccessCertificateEntity::getApplicationId)
+                .distinct()
+                .map(id -> Optional.ofNullable(applicationRepository.findOne(id)))
+                .map(v -> v.orElseThrow(() -> new NotFoundException("ApplicationEntity not found")))
+                .collect(Collectors.toMap(ApplicationEntity::getId, Function.identity()));
+    }
+
+    private void verifySignatureOrThrow(IssuerEntity issuerEntity,
+                                        String messageBase64,
+                                        String signatureBase64,
+                                        String errorMessage) {
+        boolean isValidSignature = Optional.ofNullable(this.verifySignature(
+                messageBase64,
+                signatureBase64,
+                issuerEntity.getPublicKeyBase64()))
+                .map(Mono::block)
+                .orElse(false);
+
+        if (!isValidSignature) {
+            throw new BadRequestException(errorMessage);
+        }
+
+        if (log.isDebugEnabled()) {
+            log.debug("verified adding signature:\n" +
+                            "issuer name: {}\n" +
+                            "message: {}\n" +
+                            "signature: {}",
+                    issuerEntity.getName(),
+                    messageBase64,
+                    signatureBase64);
+        }
+    }
+
+    private void verifyMatchingVehicleIssuerOrThrow(IssuerEntity issuerEntity, VehicleEntity vehicleEntity) {
+        if (vehicleEntity.getIssuerId() != issuerEntity.getId()) {
+            log.warn("Mismatching issuer id for vehicle {}: {} != {}",
+                    vehicleEntity.getSerialNumber(),
+                    vehicleEntity.getIssuerId(),
+                    issuerEntity.getId());
+            // do not expose information about existing vehicles - hence: NotFoundException
+            throw new NotFoundException("VehicleEntity not found");
+        }
     }
 
     private void verifyNonceAuthOrThrow(NonceAuthentication nonceAuthentication, String publicKeyBase64) {

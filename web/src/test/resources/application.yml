@@ -1,6 +1,10 @@
 spring.application.name: 'amv-access-api'
 spring.profiles.active: test
 
+logging.level.root: WARN
+logging.level.org.springframework.web: INFO
+logging.level.org.amv.access: DEBUG
+
 app.name: AMV Access API (test)
 app.description: AMV Access API Gateway
 

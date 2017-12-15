@@ -247,9 +247,7 @@ public class AccessCertificateCtrl {
         requireNonNull(accessCertificateId);
         requireNonNull(request);
 
-        log.info("Add signature to access certificate {}", accessCertificateId);
-
-        IssuerNonceAuthenticationImpl issuerNonceAuthentication = IssuerNonceAuthenticationImpl.builder()
+        IssuerNonceAuthentication issuerNonceAuthentication = IssuerNonceAuthenticationImpl.builder()
                 .nonceAuthentication(nonceAuthentication)
                 .issuerUuid(issuerUuid)
                 .build();
@@ -259,6 +257,10 @@ public class AccessCertificateCtrl {
                 .vehicleAccessCertificateSignatureBase64(request.getVehicleAccessCertificateSignatureBase64())
                 .deviceAccessCertificateSignatureBase64(request.getDeviceAccessCertificateSignatureBase64())
                 .build();
+
+        if (log.isDebugEnabled()) {
+            log.debug("PUT signatures to access certificate {} by issuer {}", accessCertificateId, issuerUuid);
+        }
 
         ResponseEntity<Boolean> response = accessCertificateService
                 .addAccessCertificateSignatures(issuerNonceAuthentication, context)
@@ -304,13 +306,13 @@ public class AccessCertificateCtrl {
         CreateAccessCertificateRequestDto createAccessCertificateRequestDto =
                 requireNonNull(request.getRequest());
 
-        log.info("Create access certificates with application {} for device {} and vehicle {}",
+        log.info("Create demo access certificates with application {} for device {} and vehicle {}",
                 createAccessCertificateRequestDto.getAppId(),
                 createAccessCertificateRequestDto.getDeviceSerialNumber(),
                 createAccessCertificateRequestDto.getVehicleSerialNumber());
 
         if (!deviceSerialNumber.equalsIgnoreCase(createAccessCertificateRequestDto.getDeviceSerialNumber())) {
-            throw new BadRequestException("Device Serial Numbers do not match");
+            throw new BadRequestException("Device serial numbers do not match");
         }
 
         BindException errors = new BindException(createAccessCertificateRequestDto, "createAccessCertificateRequest");
