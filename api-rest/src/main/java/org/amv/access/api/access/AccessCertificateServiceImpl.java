@@ -95,14 +95,10 @@ public class AccessCertificateServiceImpl implements AccessCertificateService {
             return Flux.empty();
         }
 
-        Map<Long, ApplicationEntity> applications = fetchApplications(accessCertificates);
-        Map<Long, IssuerEntity> issuers = fetchIssuer(accessCertificates);
         Map<Long, VehicleEntity> vehicles = fetchVehicles(accessCertificates);
 
         return Flux.fromIterable(accessCertificates)
                 .map(accessCertificateEntity -> {
-                    IssuerEntity issuer = issuers.get(accessCertificateEntity.getIssuerId());
-                    ApplicationEntity application = applications.get(accessCertificateEntity.getApplicationId());
                     VehicleEntity vehicle = vehicles.get(accessCertificateEntity.getVehicleId());
 
                     AccessCertificate accessCertificate = AccessCertificateImpl.builder()
@@ -298,24 +294,6 @@ public class AccessCertificateServiceImpl implements AccessCertificateService {
                 .map(id -> Optional.ofNullable(vehicleRepository.findOne(id)))
                 .map(v -> v.orElseThrow(() -> new NotFoundException("VehicleEntity not found")))
                 .collect(Collectors.toMap(VehicleEntity::getId, Function.identity()));
-    }
-
-    private Map<Long, IssuerEntity> fetchIssuer(List<AccessCertificateEntity> accessCertificates) {
-        return accessCertificates.stream()
-                .map(AccessCertificateEntity::getIssuerId)
-                .distinct()
-                .map(issuerService::findIssuerById)
-                .map(v -> v.orElseThrow(() -> new NotFoundException("IssuerEntity not found")))
-                .collect(Collectors.toMap(IssuerEntity::getId, Function.identity()));
-    }
-
-    private Map<Long, ApplicationEntity> fetchApplications(List<AccessCertificateEntity> accessCertificates) {
-        return accessCertificates.stream()
-                .map(AccessCertificateEntity::getApplicationId)
-                .distinct()
-                .map(id -> Optional.ofNullable(applicationRepository.findOne(id)))
-                .map(v -> v.orElseThrow(() -> new NotFoundException("ApplicationEntity not found")))
-                .collect(Collectors.toMap(ApplicationEntity::getId, Function.identity()));
     }
 
     private void verifySignatureOrThrow(IssuerEntity issuerEntity,

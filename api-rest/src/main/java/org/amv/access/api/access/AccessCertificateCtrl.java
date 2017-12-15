@@ -10,6 +10,7 @@ import org.amv.access.auth.NonceAuthentication;
 import org.amv.access.certificate.AccessCertificateService;
 import org.amv.access.certificate.AccessCertificateService.AddAccessCertificateSignaturesContext;
 import org.amv.access.certificate.AccessCertificateService.CreateAccessCertificateContext;
+import org.amv.access.certificate.AccessCertificateService.RevokeAccessCertificateContext;
 import org.amv.access.client.MoreHttpHeaders;
 import org.amv.access.client.model.*;
 import org.amv.access.client.model.CreateAccessCertificateResponseDto.AccessCertificateSigningRequestDto;
@@ -105,8 +106,7 @@ public class AccessCertificateCtrl {
         return response;
     }
 
-    /*
-    @DeleteMapping("/issuer/{issuerName}/access_certificates/{accessCertificateId}")
+    @DeleteMapping("/issuer/{issuerUuid}/access_certificates/{accessCertificateId}")
     @ApiOperation(
             value = "Revoke an access certificate"
     )
@@ -123,26 +123,30 @@ public class AccessCertificateCtrl {
     @PrometheusTimeMethod(name = "access_certificate_ctrl_revoke_access_certificate", help = "")
     public ResponseEntity<Boolean> revokeAccessCertificate(
             NonceAuthentication nonceAuthentication,
-            @ApiParam(required = true) @PathVariable("issuerName") String issuerName,
+            @ApiParam(required = true) @PathVariable("issuerUuid") String issuerUuid,
             @ApiParam(required = true) @PathVariable("accessCertificateId") UUID accessCertificateId) {
         requireNonNull(nonceAuthentication);
-        requireNonNull(issuerName);
+        requireNonNull(issuerUuid);
         requireNonNull(accessCertificateId);
 
-        log.info("Revoke access certificate {} of issuer {}", accessCertificateId.toString(), issuerName);
+        log.info("Revoke access certificate {} of issuer {}", accessCertificateId.toString(), issuerUuid);
+
+        IssuerNonceAuthenticationImpl issuerNonceAuth = IssuerNonceAuthenticationImpl.builder()
+                .nonceAuthentication(nonceAuthentication)
+                .issuerUuid(issuerUuid)
+                .build();
 
         RevokeAccessCertificateContext revokeAccessCertificateContext = RevokeAccessCertificateContext.builder()
-                .deviceSerialNumber(deviceSerialNumber.toLowerCase())
                 .accessCertificateId(accessCertificateId)
                 .build();
 
         ResponseEntity<Boolean> response = accessCertificateService
-                .revokeAccessCertificate(nonceAuthentication, revokeAccessCertificateContext)
+                .revokeAccessCertificate(issuerNonceAuth, revokeAccessCertificateContext)
                 .map(result -> ResponseEntity.status(HttpStatus.NO_CONTENT).body(result))
                 .block();
 
         return response;
-    }*/
+    }
 
     /**
      * Create an access certificate

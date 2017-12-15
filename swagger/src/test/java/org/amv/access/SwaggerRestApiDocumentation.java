@@ -3,6 +3,7 @@ package org.amv.access;
 import com.google.common.base.Charsets;
 import io.github.robwin.markup.builder.MarkupLanguage;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -42,7 +43,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
         },
         webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT
 )
-@ActiveProfiles(profiles = "test")
+@ActiveProfiles(profiles = "documentation")
+@Ignore("enable on demand")
 public class SwaggerRestApiDocumentation {
 
     @Autowired
