@@ -121,7 +121,6 @@ public class AccessCertificateCtrlTest {
         assertThat(errorInfoDto.getDetail(), is("amv-api-signature header is missing"));
     }
 
-
     @Test
     public void itShouldFailGetAccessCertificateIfNonceSignatureHeaderIsInvalid() throws Exception {
         DeviceEntity device = deviceWithKeys.getDevice();
@@ -203,6 +202,17 @@ public class AccessCertificateCtrlTest {
 
         assertThat(signingRequest.getVehicleAccessCertificate(), is(notNullValue()));
         assertThat(isBase64(signingRequest.getVehicleAccessCertificate()), is(true));
+    }
+
+    @Test
+    public void itShouldNotIncludeUnsignedAccessCertificatesInResponse() throws Exception {
+        itShouldCreateAccessCertificate();
+
+        List<AccessCertificateDto> accessCertificates = executeFetchAccessCertificatesRequest(deviceWithKeys)
+                .getBody()
+                .getAccessCertificates();
+
+        assertThat(accessCertificates, hasSize(0));
     }
 
     @Test

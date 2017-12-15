@@ -6,10 +6,8 @@ import org.amv.access.AmvAccessApplication;
 import org.amv.access.auth.NonceAuthentication;
 import org.amv.access.client.AccessCertClient;
 import org.amv.access.client.Clients;
-import org.amv.access.client.model.CreateAccessCertificateRequestDto;
-import org.amv.access.client.model.CreateAccessCertificateResponseDto;
+import org.amv.access.client.model.*;
 import org.amv.access.client.model.CreateAccessCertificateResponseDto.AccessCertificateSigningRequestDto;
-import org.amv.access.client.model.GetAccessCertificatesResponseDto;
 import org.amv.access.config.SqliteTestDatabaseConfig;
 import org.amv.access.demo.DemoService;
 import org.amv.access.demo.DeviceWithKeys;
@@ -19,9 +17,9 @@ import org.amv.access.model.ApplicationEntity;
 import org.amv.access.model.DeviceEntity;
 import org.amv.access.model.VehicleEntity;
 import org.amv.highmobility.cryptotool.Cryptotool;
+import org.amv.highmobility.cryptotool.CryptotoolUtils;
 import org.junit.Assert;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -29,9 +27,13 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.HttpStatus;
 import org.springframework.test.context.junit4.SpringRunner;
+import reactor.core.publisher.Mono;
 
 import javax.servlet.ServletContext;
+import java.util.List;
+import java.util.Optional;
 
+import static org.amv.highmobility.cryptotool.CryptotoolUtils.decodeBase64AsHex;
 import static org.apache.commons.codec.binary.Base64.isBase64;
 import static org.hamcrest.Matchers.*;
 import static org.junit.Assert.assertThat;
@@ -83,6 +85,7 @@ public class AccessCertificateCtrlWithRestClient {
             GetAccessCertificatesResponseDto execute = accessCertClient
                     .fetchAccessCertificates("", "", device.getSerialNumber())
                     .execute();
+
             Assert.fail("Should have thrown exception.");
         } catch (HystrixRuntimeException e) {
             assertThat(e.getCause(), is(notNullValue()));
@@ -93,26 +96,10 @@ public class AccessCertificateCtrlWithRestClient {
 
     @Test
     public void itShouldGetEmptyAccessCertificateListSuccessfully() throws Exception {
-        DeviceEntity device = deviceWithKeys.getDevice();
-
-        NonceAuthentication nonceAuthentication = nonceAuthHelper
-                .createNonceAuthentication(deviceWithKeys.getKeys());
-
-        GetAccessCertificatesResponseDto body = accessCertClient.fetchAccessCertificates(
-                nonceAuthentication.getNonceBase64(),
-                nonceAuthentication.getNonceSignatureBase64(),
-                device.getSerialNumber())
-                .execute();
+        GetAccessCertificatesResponseDto body = executeFetchAccessCertificateRequest(deviceWithKeys);
 
         assertThat(body, is(notNullValue()));
         assertThat(body.getAccessCertificates(), is(empty()));
-    }
-
-
-    @Test
-    @Ignore("not implemented yet")
-    public void itShouldRevokeAccessCertificate() throws Exception {
-        // TODO: implement me
     }
 
     @Test
@@ -126,15 +113,7 @@ public class AccessCertificateCtrlWithRestClient {
                 .vehicleSerialNumber(vehicle.getSerialNumber())
                 .build();
 
-        NonceAuthentication nonceAuthentication = nonceAuthHelper
-                .createNonceAuthentication(demoIssuer.getKeys());
-
-        CreateAccessCertificateResponseDto response = accessCertClient
-                .createAccessCertificate(nonceAuthentication.getNonceBase64(),
-                        nonceAuthentication.getNonceSignatureBase64(),
-                        demoIssuer.getIssuer().getUuid(),
-                        request)
-                .execute();
+        CreateAccessCertificateResponseDto response = executeCreateAccessCertificateRequest(demoIssuer, request);
 
         assertThat(response, is(notNullValue()));
 
@@ -147,52 +126,128 @@ public class AccessCertificateCtrlWithRestClient {
         assertThat(isBase64(signingRequest.getVehicleAccessCertificate()), is(true));
     }
 
-/*
     @Test
-    public void itShouldCreateAndThenFetchAllAccessCertificates() throws Exception {
+    public void itShouldCreateAndThenSignAccessCertificate() throws Exception {
         VehicleEntity vehicle = demoService.getOrCreateDemoVehicle();
         DeviceEntity device = deviceWithKeys.getDevice();
 
-        LocalDateTime validFrom = LocalDateTime.now();
-        LocalDateTime validUntil = validFrom.plusMinutes(RandomUtils.nextInt(10, 1_000_000));
-
-        CreateAccessCertificateRequestDto createAccessCertificateRequest = CreateAccessCertificateRequestDto.builder()
+        CreateAccessCertificateRequestDto createRequest = CreateAccessCertificateRequestDto.builder()
                 .appId(application.getAppId())
                 .deviceSerialNumber(device.getSerialNumber())
                 .vehicleSerialNumber(vehicle.getSerialNumber())
-                .validityStart(validFrom.toInstant(ZoneOffset.UTC))
-                .validityEnd(validUntil.toInstant(ZoneOffset.UTC))
                 .build();
 
-        ResponseEntity<CreateAccessCertificateResponseDto> createAccessCertificateResponse = restTemplate
-                .postForEntity("/api/v1/device/{deviceSerialNumber}/access_certificates",
-                        createAccessCertificateRequest,
-                        CreateAccessCertificateResponseDto.class,
-                        device.getSerialNumber());
+        CreateAccessCertificateResponseDto createResponse = executeCreateAccessCertificateRequest(demoIssuer, createRequest);
 
-        assertThat(createAccessCertificateResponse.getStatusCode(), is(HttpStatus.OK));
+        AccessCertificateSigningRequestDto signingRequest = createResponse.getAccessCertificateSigningRequest();
 
-        NonceAuthentication nonceAuthentication = nonceAuthHelper
-                .createNonceAuthentication(deviceWithKeys.getKeys());
+        String vehicleAccessCertSignatureBase64 = Optional.ofNullable(cryptotool
+                .generateSignature(decodeBase64AsHex(signingRequest.getVehicleAccessCertificate()),
+                        demoIssuer.getKeys().getPrivateKey()))
+                .map(Mono::block)
+                .map(Cryptotool.Signature::getSignature)
+                .map(CryptotoolUtils::encodeHexAsBase64)
+                .orElseThrow(IllegalStateException::new);
 
-        HttpHeaders headers = new HttpHeaders();
-        headers.add(MoreHttpHeaders.AMV_NONCE, nonceAuthentication.getNonceBase64());
-        headers.add(MoreHttpHeaders.AMV_SIGNATURE, nonceAuthentication.getNonceSignatureBase64());
+        String deviceAccessCertSignatureBase64 = Optional.ofNullable(cryptotool
+                .generateSignature(decodeBase64AsHex(signingRequest.getDeviceAccessCertificate()),
+                        demoIssuer.getKeys().getPrivateKey()))
+                .map(Mono::block)
+                .map(Cryptotool.Signature::getSignature)
+                .map(CryptotoolUtils::encodeHexAsBase64)
+                .orElseThrow(IllegalStateException::new);
 
-        HttpEntity<CreateDeviceCertificateRequestDto> entity = new HttpEntity<>(headers);
+        UpdateAccessCertificateSignatureRequestDto putBody = UpdateAccessCertificateSignatureRequestDto.builder()
+                .deviceAccessCertificateSignatureBase64(deviceAccessCertSignatureBase64)
+                .vehicleAccessCertificateSignatureBase64(vehicleAccessCertSignatureBase64)
+                .build();
 
-        ResponseEntity<GetAccessCertificatesResponseDto> getAccessCertificateResponse = restTemplate
-                .exchange("/api/v1/device/{deviceSerialNumber}/access_certificates",
-                        HttpMethod.GET, entity, GetAccessCertificatesResponseDto.class,
-                        device.getSerialNumber());
+        Boolean addAccessCertificateSignatureResponse = executeAddAccessCertificateSignaturesRequest(
+                demoIssuer, signingRequest.getId(), putBody
+        );
 
-        assertThat(getAccessCertificateResponse.getStatusCode(), is(HttpStatus.OK));
+        assertThat(addAccessCertificateSignatureResponse, is(notNullValue()));
+        assertThat(addAccessCertificateSignatureResponse, equalTo(true));
+    }
 
-        GetAccessCertificatesResponseDto body = getAccessCertificateResponse.getBody();
-        assertThat(body, is(notNullValue()));
+    @Test
+    public void itShouldCreateAndThenFetchAllAccessCertificates() throws Exception {
+        itShouldCreateAndThenSignAccessCertificate();
+
+        GetAccessCertificatesResponseDto body = executeFetchAccessCertificateRequest(deviceWithKeys);
 
         List<AccessCertificateDto> accessCertificates = body.getAccessCertificates();
         assertThat(accessCertificates, is(notNullValue()));
         assertThat(accessCertificates, hasSize(1));
-    }*/
+    }
+
+    @Test
+    public void itShouldRevokeAccessCertificate() throws Exception {
+        itShouldCreateAndThenFetchAllAccessCertificates();
+
+        List<AccessCertificateDto> accessCertificatesBeforeRevocation = executeFetchAccessCertificateRequest(deviceWithKeys)
+                .getAccessCertificates();
+
+        AccessCertificateDto firstAccessCertificate = accessCertificatesBeforeRevocation
+                .stream()
+                .findFirst()
+                .orElseThrow(() -> new IllegalStateException("There should be at least one cert by now."));
+
+        executeRevokeAccessCertificateRequest(demoIssuer, firstAccessCertificate.getId());
+
+        List<AccessCertificateDto> accessCertificatesAfterRevocation = executeFetchAccessCertificateRequest(deviceWithKeys)
+                .getAccessCertificates();
+
+        assertThat(accessCertificatesAfterRevocation.size() + 1, is(accessCertificatesBeforeRevocation.size()));
+    }
+
+    private GetAccessCertificatesResponseDto executeFetchAccessCertificateRequest(DeviceWithKeys deviceWithKeys) {
+        NonceAuthentication nonceAuthentication = nonceAuthHelper
+                .createNonceAuthentication(deviceWithKeys.getKeys());
+
+        return accessCertClient.fetchAccessCertificates(
+                nonceAuthentication.getNonceBase64(),
+                nonceAuthentication.getNonceSignatureBase64(),
+                deviceWithKeys.getDevice().getSerialNumber())
+                .execute();
+    }
+
+    private CreateAccessCertificateResponseDto executeCreateAccessCertificateRequest(IssuerWithKeys issuerWithKeys,
+                                                                                     CreateAccessCertificateRequestDto request) {
+        NonceAuthentication nonceAuthentication = nonceAuthHelper
+                .createNonceAuthentication(issuerWithKeys.getKeys());
+
+        return accessCertClient.createAccessCertificate(nonceAuthentication.getNonceBase64(),
+                nonceAuthentication.getNonceSignatureBase64(),
+                issuerWithKeys.getIssuer().getUuid(),
+                request)
+                .execute();
+    }
+
+
+    private Boolean executeAddAccessCertificateSignaturesRequest(IssuerWithKeys issuerWithKeys,
+                                                                 String accessCertificateId,
+                                                                 UpdateAccessCertificateSignatureRequestDto request) {
+        NonceAuthentication issuerNonceAuthentication = nonceAuthHelper
+                .createNonceAuthentication(issuerWithKeys.getKeys());
+
+        return accessCertClient.addAccessCertificateSignature(issuerNonceAuthentication.getNonceBase64(),
+                issuerNonceAuthentication.getNonceSignatureBase64(),
+                issuerWithKeys.getIssuer().getUuid(),
+                accessCertificateId, request)
+                .execute();
+    }
+
+    private Void executeRevokeAccessCertificateRequest(IssuerWithKeys issuerWithKeys,
+                                                       String accessCertificateId) {
+        NonceAuthentication nonceAuthentication = nonceAuthHelper
+                .createNonceAuthentication(issuerWithKeys.getKeys());
+
+        return accessCertClient.revokeAccessCertificate(nonceAuthentication.getNonceBase64(),
+                nonceAuthentication.getNonceSignatureBase64(),
+                issuerWithKeys.getIssuer().getUuid(),
+                accessCertificateId)
+                .execute();
+    }
+
 }
