@@ -53,32 +53,4 @@ public class SimpleAccessCertClient implements AccessCertClient {
             }
         });
     }
-
-    @Override
-    public Observable<Boolean> revokeAccessCertificate(final String nonce,
-                                                    final String signedNonce,
-                                                    final String deviceSerialNumber,
-                                                    final String accessCertificateId) {
-        return Observable.fromCallable(new Callable<Boolean>() {
-            @Override
-            public Boolean call() throws Exception {
-                String url = String.format("%s/api/v1/device/%s/access_certificates/%s", baseUrl, deviceSerialNumber, accessCertificateId);
-
-                Request request = new Request.Builder()
-                        .addHeader(MoreHttpHeaders.AMV_NONCE, nonce)
-                        .addHeader(MoreHttpHeaders.AMV_SIGNATURE, signedNonce)
-                        .url(url)
-                        .delete()
-                        .build();
-
-                Response response = null;
-                try {
-                    response = client.newCall(request).execute();
-                    return true;
-                } finally {
-                    Util.closeQuietly(response);
-                }
-            }
-        });
-    }
 }

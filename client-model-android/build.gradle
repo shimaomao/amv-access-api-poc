@@ -1,4 +1,4 @@
-description = 'java6 based models for the AMV access rest interface'
+description = 'android client models for the AMV access rest interface'
 
 buildscript {
     ext {

@@ -12,9 +12,4 @@ public interface AccessCertClient extends AccessApiClient {
     Observable<GetAccessCertificatesResponseDto> fetchAccessCertificates(String nonce,
                                                                          String signedNonce,
                                                                          String deviceSerialNumber);
-
-    Observable<Boolean> revokeAccessCertificate(String nonce,
-                                             String signedNonce,
-                                             String deviceSerialNumber,
-                                             String accessCertificateId);
 }

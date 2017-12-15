@@ -1,4 +1,4 @@
-description = 'a simple java6 based client for the AMV access rest interface'
+description = 'a simple android client for the AMV access rest interface'
 
 
 buildscript {
@@ -12,7 +12,7 @@ sourceCompatibility = 1.6
 targetCompatibility = 1.6
 
 dependencies {
-    compile project(':client-model-java6')
+    compile project(':client-model-android')
 
     compile "com.squareup.okhttp3:okhttp:${okhttpVersion}"
     compile "io.reactivex.rxjava2:rxjava:${rxjavaVersion}"

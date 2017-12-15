@@ -3,7 +3,6 @@ description = 'a simple client for the AMV access rest interface'
 buildscript {
     ext {
         feignVersion = '9.5.1'
-        springBootVersion = '1.5.8.RELEASE'
     }
 }
 
