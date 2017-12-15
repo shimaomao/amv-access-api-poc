@@ -7,7 +7,6 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.Setter;
 import lombok.experimental.Tolerate;
-import org.amv.access.util.MoreBase64;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
@@ -35,44 +34,50 @@ public class AccessCertificateEntity {
     //@GenericGenerator(name = "uuid2", strategy = "uuid2")
     //@Column(columnDefinition = "BINARY(16)")
     //private UUID uuid;
-    @Column(name = "uuid")
+    @Column(name = "uuid", updatable = false, nullable = false)
     private String uuid;
 
     @CreatedDate
-    @Column(name = "created_at", insertable = true, updatable = false)
+    @Column(name = "created_at", updatable = false)
     @Temporal(TemporalType.TIMESTAMP)
     @JsonProperty(value = "created_at")
     private Date createdAt;
 
-    @Column(name = "issuer_id")
+    @Column(name = "issuer_id", updatable = false)
     private long issuerId;
 
-    @Column(name = "application_id")
+    @Column(name = "application_id", updatable = false)
     private long applicationId;
 
-    @Column(name = "device_id")
+    @Column(name = "device_id", updatable = false)
     private long deviceId;
 
-    @Column(name = "vehicle_id")
+    @Column(name = "vehicle_id", updatable = false)
     private long vehicleId;
 
-    @Column(name = "valid_from")
+    @Column(name = "valid_from", updatable = false, nullable = false)
     private Date validFrom;
 
-    @Column(name = "valid_until")
+    @Column(name = "valid_until", updatable = false, nullable = false)
     private Date validUntil;
 
-    @Column(name = "vehicle_access_certificate_base64")
-    private String vehicleAccessCertificateBase64;
-
-    @Column(name = "device_access_certificate_base64")
+    @Column(name = "device_access_certificate_base64", updatable = false, nullable = false)
     private String deviceAccessCertificateBase64;
+
+    @Column(name = "device_access_certificate_signature_base64")
+    private String deviceAccessCertificateSignatureBase64;
+
+    @Column(name = "signed_device_access_certificate_base64")
+    private String signedDeviceAccessCertificateBase64;
+
+    @Column(name = "vehicle_access_certificate_base64", updatable = false, nullable = false)
+    private String vehicleAccessCertificateBase64;
 
     @Column(name = "vehicle_access_certificate_signature_base64")
     private String vehicleAccessCertificateSignatureBase64;
 
-    @Column(name = "device_access_certificate_signature_base64")
-    private String deviceAccessCertificateSignatureBase64;
+    @Column(name = "signed_vehicle_access_certificate_base64")
+    private String signedVehicleAccessCertificateBase64;
 
     @Tolerate
     protected AccessCertificateEntity() {
@@ -93,10 +98,7 @@ public class AccessCertificateEntity {
     }
 
     public Optional<String> getSignedVehicleAccessCertificateBase64() {
-        return getVehicleAccessCertificateSignatureBase64()
-                .map(MoreBase64::decodeBase64AsHex)
-                .map(signatureHex -> MoreBase64.decodeBase64AsHex(vehicleAccessCertificateBase64) + signatureHex)
-                .map(MoreBase64::encodeHexAsBase64);
+        return Optional.ofNullable(signedVehicleAccessCertificateBase64);
     }
 
     public Optional<String> getDeviceAccessCertificateSignatureBase64() {
@@ -104,9 +106,6 @@ public class AccessCertificateEntity {
     }
 
     public Optional<String> getSignedDeviceAccessCertificateBase64() {
-        return getDeviceAccessCertificateSignatureBase64()
-                .map(MoreBase64::decodeBase64AsHex)
-                .map(signatureHex -> MoreBase64.decodeBase64AsHex(deviceAccessCertificateBase64) + signatureHex)
-                .map(MoreBase64::encodeHexAsBase64);
+        return Optional.ofNullable(signedDeviceAccessCertificateBase64);
     }
 }

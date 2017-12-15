@@ -108,10 +108,12 @@ create table if not exists `access_certificate` (
     `APPLICATION_ID` bigint not null,
     `VEHICLE_ID` bigint not null,
     `DEVICE_ID` bigint not null,
-    `VEHICLE_ACCESS_CERTIFICATE_BASE64` varchar(1023) not null,
     `DEVICE_ACCESS_CERTIFICATE_BASE64` varchar(1023) not null,
-    `VEHICLE_ACCESS_CERTIFICATE_SIGNATURE_BASE64` varchar(1023) null,
     `DEVICE_ACCESS_CERTIFICATE_SIGNATURE_BASE64` varchar(1023) null,
+    `SIGNED_DEVICE_ACCESS_CERTIFICATE_BASE64` varchar(2047) null,
+    `VEHICLE_ACCESS_CERTIFICATE_BASE64` varchar(1023) not null,
+    `VEHICLE_ACCESS_CERTIFICATE_SIGNATURE_BASE64` varchar(1023) null,
+    `SIGNED_VEHICLE_ACCESS_CERTIFICATE_BASE64` varchar(2047) null,
     foreign key (`ISSUER_ID`)
       references issuer(`ID`)
       on update cascade on delete restrict,
