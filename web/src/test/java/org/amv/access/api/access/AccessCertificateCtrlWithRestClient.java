@@ -208,8 +208,8 @@ public class AccessCertificateCtrlWithRestClient {
         return accessCertClient.fetchAccessCertificates(
                 nonceAuthentication.getNonceBase64(),
                 nonceAuthentication.getNonceSignatureBase64(),
-                deviceWithKeys.getDevice().getSerialNumber())
-                .execute();
+                deviceWithKeys.getDevice().getSerialNumber()
+        ).execute();
     }
 
     private CreateAccessCertificateResponseDto executeCreateAccessCertificateRequest(IssuerWithKeys issuerWithKeys,
@@ -220,8 +220,8 @@ public class AccessCertificateCtrlWithRestClient {
         return accessCertClient.createAccessCertificate(nonceAuthentication.getNonceBase64(),
                 nonceAuthentication.getNonceSignatureBase64(),
                 issuerWithKeys.getIssuer().getUuid(),
-                request)
-                .execute();
+                request
+        ).execute();
     }
 
 
@@ -234,8 +234,9 @@ public class AccessCertificateCtrlWithRestClient {
         return accessCertClient.addAccessCertificateSignature(issuerNonceAuthentication.getNonceBase64(),
                 issuerNonceAuthentication.getNonceSignatureBase64(),
                 issuerWithKeys.getIssuer().getUuid(),
-                accessCertificateId, request)
-                .execute();
+                accessCertificateId,
+                request
+        ).execute();
     }
 
     private Void executeRevokeAccessCertificateRequest(IssuerWithKeys issuerWithKeys,
@@ -246,8 +247,8 @@ public class AccessCertificateCtrlWithRestClient {
         return accessCertClient.revokeAccessCertificate(nonceAuthentication.getNonceBase64(),
                 nonceAuthentication.getNonceSignatureBase64(),
                 issuerWithKeys.getIssuer().getUuid(),
-                accessCertificateId)
-                .execute();
+                accessCertificateId
+        ).execute();
     }
 
 }

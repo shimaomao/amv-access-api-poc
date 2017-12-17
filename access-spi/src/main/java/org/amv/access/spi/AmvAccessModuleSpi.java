@@ -3,6 +3,7 @@ package org.amv.access.spi;
 import org.amv.access.auth.NonceAuthentication;
 import org.amv.access.core.AccessCertificate;
 import org.amv.access.core.DeviceCertificate;
+import org.amv.access.core.SignedAccessCertificate;
 import reactor.core.publisher.Mono;
 
 public interface AmvAccessModuleSpi {
@@ -26,7 +27,11 @@ public interface AmvAccessModuleSpi {
      */
     Mono<AccessCertificate> createAccessCertificate(CreateAccessCertificateRequest accessCertificateRequest);
 
-    Mono<String> createSignature(String messageBase64, String privateKeyBase64);
+    Mono<SignedAccessCertificate> signAccessCertificate(SignCertificateRequest signCertificateRequest);
 
+    // TODO: maybe remove
+    Mono<String> generateSignature(String messageBase64, String privateKeyBase64);
+
+    // TODO: maybe remove
     Mono<Boolean> verifySignature(String messageBase64, String signatureBase64, String publicKeyBase64);
 }

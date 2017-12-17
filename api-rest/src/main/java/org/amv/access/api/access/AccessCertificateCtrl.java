@@ -11,10 +11,12 @@ import org.amv.access.certificate.AccessCertificateService;
 import org.amv.access.certificate.AccessCertificateService.AddAccessCertificateSignaturesContext;
 import org.amv.access.certificate.AccessCertificateService.CreateAccessCertificateContext;
 import org.amv.access.certificate.AccessCertificateService.RevokeAccessCertificateContext;
+import org.amv.access.certificate.SignedAccessCertificateResource;
 import org.amv.access.client.MoreHttpHeaders;
 import org.amv.access.client.model.*;
 import org.amv.access.client.model.CreateAccessCertificateResponseDto.AccessCertificateSigningRequestDto;
 import org.amv.access.core.AccessCertificate;
+import org.amv.access.core.SignedAccessCertificate;
 import org.amv.access.demo.DemoService;
 import org.amv.access.exception.AmvAccessRuntimeException;
 import org.amv.access.exception.BadRequestException;
@@ -88,12 +90,15 @@ public class AccessCertificateCtrl {
 
         ResponseEntity<GetAccessCertificatesResponseDto> response = accessCertificateService
                 .getAccessCertificates(deviceNonceAuth)
-                .map(accessCertificate -> AccessCertificateDto.builder()
-                        .id(accessCertificate.getAccessCertificate().getUuid())
-                        .name(accessCertificate.getAccessCertificate().getName())
-                        .deviceAccessCertificate(accessCertificate.getSignedDeviceAccessCertificateBase64())
-                        .vehicleAccessCertificate(accessCertificate.getSignedVehicleAccessCertificateBase64())
-                        .build())
+                .map(accessCertificateResource -> {
+                    SignedAccessCertificate signedAccessCertificate = accessCertificateResource.getSignedAccessCertificate();
+                    return AccessCertificateDto.builder()
+                            .id(accessCertificateResource.getUuid().toString())
+                            .name(accessCertificateResource.getName())
+                            .deviceAccessCertificate(signedAccessCertificate.getSignedDeviceAccessCertificateBase64())
+                            .vehicleAccessCertificate(signedAccessCertificate.getSignedVehicleAccessCertificateBase64())
+                            .build();
+                })
                 .collectList()
                 .switchIfEmpty(Mono.just(Collections.emptyList()))
                 .map(accessCertificateDto -> GetAccessCertificatesResponseDto.builder()
@@ -203,13 +208,16 @@ public class AccessCertificateCtrl {
 
         ResponseEntity<CreateAccessCertificateResponseDto> response = accessCertificateService
                 .createAccessCertificate(issuerNonceAuth, context)
-                .map(accessCertificate -> CreateAccessCertificateResponseDto.builder()
-                        .accessCertificateSigningRequest(AccessCertificateSigningRequestDto.builder()
-                                .id(accessCertificate.getUuid())
-                                .deviceAccessCertificate(accessCertificate.getDeviceAccessCertificateBase64())
-                                .vehicleAccessCertificate(accessCertificate.getVehicleAccessCertificateBase64())
-                                .build())
-                        .build())
+                .map(accessCertificateResource -> {
+                    AccessCertificate accessCertificate = accessCertificateResource.getAccessCertificate();
+                    return CreateAccessCertificateResponseDto.builder()
+                            .accessCertificateSigningRequest(AccessCertificateSigningRequestDto.builder()
+                                    .id(accessCertificateResource.getUuid().toString())
+                                    .deviceAccessCertificate(accessCertificate.getDeviceAccessCertificateBase64())
+                                    .vehicleAccessCertificate(accessCertificate.getVehicleAccessCertificateBase64())
+                                    .build())
+                            .build();
+                })
                 .map(ResponseEntity::ok)
                 .switchIfEmpty(Mono.fromCallable(() -> ResponseEntity
                         .status(HttpStatus.INTERNAL_SERVER_ERROR)
@@ -285,6 +293,7 @@ public class AccessCertificateCtrl {
      * @param request            The payload
      * @return true if the certificate has been created successfully
      */
+
     @PostMapping("/device/{deviceSerialNumber}/access_certificates")
     @ApiOperation(
             value = "Create an access certificate by providing an issuers private key - this endpoint is disabled in production mode.",
@@ -335,11 +344,75 @@ public class AccessCertificateCtrl {
                 .validityEnd(createAccessCertificateRequestDto.getValidityEnd())
                 .build();
 
-        AccessCertificate accessCertificate = Optional.ofNullable(accessCertificateService
+        SignedAccessCertificateResource signedAccessCertificateResource = Optional.ofNullable(accessCertificateService
+                .createAccessCertificate(issuerNonceAuthentication, createAccessCertificateContext)
+                .then(resource -> accessCertificateService.signAccessCertificate(resource, request.getIssuerPrivateKeyBase64())))
+                .map(Mono::block)
+                .orElseThrow(() -> new AmvAccessRuntimeException("Could not create access certificate",
+                        new IllegalStateException("Access certificate is not present")));
+
+        log.info("Successfully signed access certificate {}", signedAccessCertificateResource.getUuid());
+
+        return ResponseEntity.ok(true);
+    }
+    /*
+    @PostMapping("/device/{deviceSerialNumber}/access_certificates")
+    @ApiOperation(
+            value = "Create an access certificate by providing an issuers private key - this endpoint is disabled in production mode.",
+            produces = MediaType.APPLICATION_JSON_UTF8_VALUE,
+            consumes = MediaType.APPLICATION_JSON_UTF8_VALUE
+    )
+    @ApiResponses({
+            @ApiResponse(code = OK_200, message = "Success", response = Boolean.class)
+    })
+    @ResponseStatus(HttpStatus.OK)
+    @PrometheusTimeMethod(name = "access_certificate_ctrl_create_access_certificate_demo", help = "")
+    public ResponseEntity<Boolean> createAccessCertificateDemo(
+            @ApiParam(required = true) @PathVariable("deviceSerialNumber") String deviceSerialNumber,
+            @ApiParam(required = true) @RequestBody DemoCreateAccessCertificateRequestDto request) {
+
+        boolean enableUnauthorizedAccess = !environment.acceptsProfiles("production");
+        if (!enableUnauthorizedAccess) {
+            return ResponseEntity.status(HttpStatus.METHOD_NOT_ALLOWED).build();
+        }
+
+        requireNonNull(deviceSerialNumber);
+        requireNonNull(request);
+        CreateAccessCertificateRequestDto createAccessCertificateRequestDto =
+                requireNonNull(request.getRequest());
+
+        log.info("Create demo access certificates with application {} for device {} and vehicle {}",
+                createAccessCertificateRequestDto.getAppId(),
+                createAccessCertificateRequestDto.getDeviceSerialNumber(),
+                createAccessCertificateRequestDto.getVehicleSerialNumber());
+
+        if (!deviceSerialNumber.equalsIgnoreCase(createAccessCertificateRequestDto.getDeviceSerialNumber())) {
+            throw new BadRequestException("Device serial numbers do not match");
+        }
+
+        BindException errors = new BindException(createAccessCertificateRequestDto, "createAccessCertificateRequest");
+        createAccessCertificateRequestValidator.validate(createAccessCertificateRequestDto, errors);
+        if (errors.hasErrors()) {
+            throw new BadRequestException(errors.getMessage());
+        }
+
+        IssuerNonceAuthentication issuerNonceAuthentication = demoService.createDemoIssuerNonceAuthentication();
+
+        CreateAccessCertificateContext createAccessCertificateContext = CreateAccessCertificateContext.builder()
+                .appId(createAccessCertificateRequestDto.getAppId().toLowerCase())
+                .deviceSerialNumber(createAccessCertificateRequestDto.getDeviceSerialNumber().toLowerCase())
+                .vehicleSerialNumber(createAccessCertificateRequestDto.getVehicleSerialNumber().toLowerCase())
+                .validityStart(createAccessCertificateRequestDto.getValidityStart())
+                .validityEnd(createAccessCertificateRequestDto.getValidityEnd())
+                .build();
+
+        AccessCertificateResource accessCertificateResource = Optional.ofNullable(accessCertificateService
                 .createAccessCertificate(issuerNonceAuthentication, createAccessCertificateContext))
                 .map(Mono::block)
                 .orElseThrow(() -> new AmvAccessRuntimeException("Could not create access certificate",
                         new IllegalStateException("Access certificate is not present")));
+
+        AccessCertificate accessCertificate = accessCertificateResource.getAccessCertificate();
 
         String vehicleAccessCertSignatureBase64 = Optional.ofNullable(accessCertificateService
                 .createSignature(accessCertificate.getVehicleAccessCertificateBase64(), request.getIssuerPrivateKeyBase64()))
@@ -352,7 +425,7 @@ public class AccessCertificateCtrl {
                 .orElseThrow(() -> new IllegalStateException("Could not create vehicle access cert signature"));
 
         AddAccessCertificateSignaturesContext addAccessCertificateSignaturesContext = AddAccessCertificateSignaturesContext.builder()
-                .accessCertificateId(UUID.fromString(accessCertificate.getUuid()))
+                .accessCertificateId(accessCertificateResource.getUuid())
                 .vehicleAccessCertificateSignatureBase64(vehicleAccessCertSignatureBase64)
                 .deviceAccessCertificateSignatureBase64(deviceAccessCertSignatureBase64)
                 .build();
@@ -366,5 +439,5 @@ public class AccessCertificateCtrl {
                 .block();
 
         return response;
-    }
+    }*/
 }

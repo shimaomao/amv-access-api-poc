@@ -13,10 +13,13 @@ import org.amv.access.core.Issuer;
 public class DeviceCertificateImpl implements DeviceCertificate {
     @NonNull
     private Issuer issuer;
+
     @NonNull
     private Application application;
+
     @NonNull
     private Device device;
+
     @NonNull
     private String signedDeviceCertificateBase64;
 }

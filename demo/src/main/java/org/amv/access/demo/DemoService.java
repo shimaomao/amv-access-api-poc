@@ -2,6 +2,8 @@ package org.amv.access.demo;
 
 import com.google.common.annotations.VisibleForTesting;
 import org.amv.access.auth.IssuerNonceAuthentication;
+import org.amv.access.certificate.AccessCertificateResource;
+import org.amv.access.certificate.SignedAccessCertificateResource;
 import org.amv.access.core.AccessCertificate;
 import org.amv.access.core.DeviceCertificate;
 import org.amv.access.model.ApplicationEntity;
@@ -32,5 +34,5 @@ public interface DemoService {
     @VisibleForTesting
     DeviceWithKeys createDemoDeviceWithKeys(ApplicationEntity applicationEntity);
 
-    Mono<AccessCertificate> createDemoAccessCertificateIfNecessary(DeviceCertificate deviceCertificate);
+    Mono<SignedAccessCertificateResource> createDemoAccessCertificateIfNecessary(DeviceCertificate deviceCertificate);
 }

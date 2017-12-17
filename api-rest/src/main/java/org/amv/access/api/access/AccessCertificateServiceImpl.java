@@ -5,10 +5,13 @@ import lombok.extern.slf4j.Slf4j;
 import org.amv.access.auth.DeviceNonceAuthentication;
 import org.amv.access.auth.IssuerNonceAuthentication;
 import org.amv.access.auth.NonceAuthentication;
+import org.amv.access.certificate.AccessCertificateResource;
 import org.amv.access.certificate.AccessCertificateService;
+import org.amv.access.certificate.SignedAccessCertificateResource;
+import org.amv.access.certificate.impl.AccessCertificateResourceImpl;
+import org.amv.access.certificate.impl.SignedAccessCertificateResourceImpl;
 import org.amv.access.core.AccessCertificate;
 import org.amv.access.core.SignedAccessCertificate;
-import org.amv.access.core.impl.AccessCertificateImpl;
 import org.amv.access.core.impl.SignedAccessCertificateImpl;
 import org.amv.access.exception.BadRequestException;
 import org.amv.access.exception.NotFoundException;
@@ -18,8 +21,10 @@ import org.amv.access.issuer.IssuerService;
 import org.amv.access.model.*;
 import org.amv.access.spi.AmvAccessModuleSpi;
 import org.amv.access.spi.CreateAccessCertificateRequest;
+import org.amv.access.spi.SignCertificateRequest;
 import org.amv.access.spi.highmobility.AmvPermissionsAdapter;
 import org.amv.access.spi.model.CreateAccessCertificateRequestImpl;
+import org.amv.access.spi.model.SignCertificateRequestImpl;
 import org.amv.highmobility.cryptotool.Cryptotool;
 import org.amv.highmobility.cryptotool.PermissionsImpl;
 import org.springframework.data.domain.PageRequest;
@@ -77,7 +82,7 @@ public class AccessCertificateServiceImpl implements AccessCertificateService {
 
     @Override
     @Transactional
-    public Flux<SignedAccessCertificate> getAccessCertificates(DeviceNonceAuthentication nonceAuthentication) {
+    public Flux<SignedAccessCertificateResource> getAccessCertificates(DeviceNonceAuthentication nonceAuthentication) {
         requireNonNull(nonceAuthentication, "`nonceAuthentication` must not be null");
 
         DeviceEntity device = deviceRepository.findBySerialNumber(nonceAuthentication.getDeviceSerialNumber())
@@ -101,33 +106,38 @@ public class AccessCertificateServiceImpl implements AccessCertificateService {
                 .map(accessCertificateEntity -> {
                     VehicleEntity vehicle = vehicles.get(accessCertificateEntity.getVehicleId());
 
-                    AccessCertificate accessCertificate = AccessCertificateImpl.builder()
-                            .uuid(accessCertificateEntity.getUuid())
-                            .name(vehicle.getName())
+                    SignedAccessCertificateImpl signedAccessCertificate = SignedAccessCertificateImpl.builder()
                             .deviceAccessCertificateBase64(accessCertificateEntity
                                     .getDeviceAccessCertificateBase64())
-                            .vehicleAccessCertificateBase64(accessCertificateEntity
-                                    .getVehicleAccessCertificateBase64())
-                            .build();
-
-                    SignedAccessCertificateImpl signedAccessCertificate = SignedAccessCertificateImpl.builder()
-                            .accessCertificate(accessCertificate)
+                            .deviceAccessCertificateSignatureBase64(accessCertificateEntity
+                                    .getDeviceAccessCertificateSignatureBase64()
+                                    .orElseThrow(IllegalStateException::new))
                             .signedDeviceAccessCertificateBase64(accessCertificateEntity
                                     .getSignedDeviceAccessCertificateBase64()
+                                    .orElseThrow(IllegalStateException::new))
+                            .vehicleAccessCertificateBase64(accessCertificateEntity
+                                    .getVehicleAccessCertificateBase64())
+                            .vehicleAccessCertificateSignatureBase64(accessCertificateEntity
+                                    .getVehicleAccessCertificateSignatureBase64()
                                     .orElseThrow(IllegalStateException::new))
                             .signedVehicleAccessCertificateBase64(accessCertificateEntity
                                     .getSignedVehicleAccessCertificateBase64()
                                     .orElseThrow(IllegalStateException::new))
                             .build();
 
-                    return signedAccessCertificate;
+                    SignedAccessCertificateResource signedAccessCertificateResource = SignedAccessCertificateResourceImpl.builder()
+                            .uuid(UUID.fromString(accessCertificateEntity.getUuid()))
+                            .name(vehicle.getName())
+                            .signedAccessCertificate(signedAccessCertificate)
+                            .build();
+                    return signedAccessCertificateResource;
                 });
     }
 
     @Override
     @Transactional
-    public Mono<AccessCertificate> createAccessCertificate(IssuerNonceAuthentication nonceAuthentication,
-                                                           CreateAccessCertificateContext context) {
+    public Mono<AccessCertificateResource> createAccessCertificate(IssuerNonceAuthentication nonceAuthentication,
+                                                                   CreateAccessCertificateContext context) {
         requireNonNull(nonceAuthentication, "`nonceAuthentication` must not be null");
         requireNonNull(context, "`context` must not be null");
 
@@ -176,7 +186,7 @@ public class AccessCertificateServiceImpl implements AccessCertificateService {
                 .orElseThrow(() -> new IllegalStateException("Could not create access certificate for " + context));
 
         AccessCertificateEntity accessCertificateEntity = AccessCertificateEntity.builder()
-                .uuid(accessCertificate.getUuid())
+                .uuid(UUID.randomUUID().toString())
                 .issuerId(issuerEntity.getId())
                 .applicationId(applicationEntity.getId())
                 .vehicleId(vehicleEntity.getId())
@@ -189,7 +199,11 @@ public class AccessCertificateServiceImpl implements AccessCertificateService {
 
         accessCertificateRepository.save(accessCertificateEntity);
 
-        return Mono.just(accessCertificate);
+        return Mono.just(AccessCertificateResourceImpl.builder()
+                .uuid(UUID.fromString(accessCertificateEntity.getUuid()))
+                .name(vehicleEntity.getName())
+                .accessCertificate(accessCertificate)
+                .build());
     }
 
     @Override
@@ -273,8 +287,46 @@ public class AccessCertificateServiceImpl implements AccessCertificateService {
     }
 
     @Override
+    @Transactional
+    public Mono<SignedAccessCertificateResource> signAccessCertificate(AccessCertificateResource accessCertificateResource,
+                                                                       String privateKeyBase64) {
+        AccessCertificateEntity accessCertificateEntity = accessCertificateRepository
+                .findByUuid(accessCertificateResource.getUuid().toString())
+                .orElseThrow(() -> new NotFoundException("AccessCertificateEntity not found"));
+
+        SignCertificateRequest signCertificateRequest = SignCertificateRequestImpl.builder()
+                .privateKeyBase64(privateKeyBase64)
+                .accessCertificate(accessCertificateResource.getAccessCertificate())
+                .build();
+
+        SignedAccessCertificateResource signedAccessCertificateResource = Optional.ofNullable(amvAccessModule
+                .signAccessCertificate(signCertificateRequest))
+                .map(Mono::block)
+                .map(signedAccessCertificate -> SignedAccessCertificateResourceImpl.builder()
+                        .uuid(accessCertificateResource.getUuid())
+                        .name(accessCertificateResource.getName())
+                        .signedAccessCertificate(signedAccessCertificate)
+                        .build())
+                .orElseThrow(() -> new IllegalStateException("Error while signing access certificate"));
+
+        SignedAccessCertificate signedAccessCertificate = signedAccessCertificateResource
+                .getSignedAccessCertificate();
+
+        AccessCertificateEntity updatedAccessCertificateEntity = accessCertificateEntity.toBuilder()
+                .deviceAccessCertificateSignatureBase64(signedAccessCertificate.getDeviceAccessCertificateSignatureBase64())
+                .signedDeviceAccessCertificateBase64(signedAccessCertificate.getSignedDeviceAccessCertificateBase64())
+                .vehicleAccessCertificateSignatureBase64(signedAccessCertificate.getVehicleAccessCertificateSignatureBase64())
+                .signedVehicleAccessCertificateBase64(signedAccessCertificate.getSignedVehicleAccessCertificateBase64())
+                .build();
+
+        accessCertificateRepository.save(updatedAccessCertificateEntity);
+
+        return Mono.just(signedAccessCertificateResource);
+    }
+
+    @Override
     public Mono<String> createSignature(String messageBase64, String privateKeyBase64) {
-        return amvAccessModule.createSignature(messageBase64, privateKeyBase64);
+        return amvAccessModule.generateSignature(messageBase64, privateKeyBase64);
     }
 
     @Override

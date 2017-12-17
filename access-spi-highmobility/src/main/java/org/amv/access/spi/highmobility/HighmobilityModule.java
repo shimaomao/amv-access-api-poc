@@ -5,17 +5,19 @@ import org.amv.access.auth.NonceAuthentication;
 import org.amv.access.core.*;
 import org.amv.access.core.impl.AccessCertificateImpl;
 import org.amv.access.core.impl.DeviceCertificateImpl;
+import org.amv.access.core.impl.SignedAccessCertificateImpl;
 import org.amv.access.spi.AmvAccessModuleSpi;
 import org.amv.access.spi.CreateAccessCertificateRequest;
 import org.amv.access.spi.CreateDeviceCertificateRequest;
+import org.amv.access.spi.SignCertificateRequest;
+import org.amv.access.util.MoreBase64;
 import org.amv.highmobility.cryptotool.Cryptotool;
-import org.amv.highmobility.cryptotool.CryptotoolUtils;
 import reactor.core.publisher.Mono;
 
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
-import java.util.UUID;
+import java.util.Optional;
 
 import static java.util.Objects.requireNonNull;
 import static org.amv.highmobility.cryptotool.CryptotoolUtils.decodeBase64AsHex;
@@ -25,9 +27,11 @@ import static org.amv.highmobility.cryptotool.CryptotoolUtils.encodeHexAsBase64;
 public class HighmobilityModule implements AmvAccessModuleSpi {
 
     private final Cryptotool cryptotool;
+    private final SignatureService signatureService;
 
-    public HighmobilityModule(Cryptotool cryptotool) {
+    public HighmobilityModule(Cryptotool cryptotool, SignatureService signatureService) {
         this.cryptotool = requireNonNull(cryptotool);
+        this.signatureService = requireNonNull(signatureService);
     }
 
     @Override
@@ -51,6 +55,7 @@ public class HighmobilityModule implements AmvAccessModuleSpi {
         Application application = requireNonNull(deviceCertificateRequest.getApplication());
         Device device = requireNonNull(deviceCertificateRequest.getDevice());
 
+        String issuerPublicKeyBase64 = issuer.getPublicKeyBase64();
         String issuerPrivateKeyBase64 = issuer.getPrivateKeyBase64()
                 .orElseThrow(() -> new IllegalArgumentException("Issuer private key is not present"));
 
@@ -61,12 +66,17 @@ public class HighmobilityModule implements AmvAccessModuleSpi {
                         decodeBase64AsHex(device.getPublicKeyBase64()))
                 .block();
 
-        String hmDeviceCertificateBase64 = encodeHexAsBase64(hmDeviceCertificate.getDeviceCertificate());
+        String deviceCertificateBase64 = encodeHexAsBase64(hmDeviceCertificate.getDeviceCertificate());
 
-        String hmSignatureBase64 = this.createSignature(hmDeviceCertificateBase64, issuerPrivateKeyBase64)
+        String signatureBase64OrNull = signatureService.generateSignature(deviceCertificateBase64, issuerPrivateKeyBase64)
                 .block();
 
-        String signedDeviceCertificate = hmDeviceCertificate.getDeviceCertificate() + decodeBase64AsHex(hmSignatureBase64);
+        Optional.ofNullable(signatureBase64OrNull)
+                .map(signatureBase64 -> signatureService.verifySignature(deviceCertificateBase64, signatureBase64, issuerPublicKeyBase64))
+                .map(Mono::block)
+                .orElseThrow(() -> new IllegalArgumentException("Could not verify device cert signature"));
+
+        String signedDeviceCertificate = hmDeviceCertificate.getDeviceCertificate() + decodeBase64AsHex(signatureBase64OrNull);
         String signedDeviceCertificateBase64 = encodeHexAsBase64(signedDeviceCertificate);
 
         DeviceCertificate deviceCertificate = DeviceCertificateImpl.builder()
@@ -110,8 +120,6 @@ public class HighmobilityModule implements AmvAccessModuleSpi {
                 permissions.getPermissions()).block();
 
         AccessCertificate accessCertificate = AccessCertificateImpl.builder()
-                .uuid(UUID.randomUUID().toString())
-                .name(vehicle.getName())
                 .deviceAccessCertificateBase64(encodeHexAsBase64(deviceAccessCertificate.getAccessCertificate()))
                 .vehicleAccessCertificateBase64(encodeHexAsBase64(vehicleAccessCertificate.getAccessCertificate()))
                 .build();
@@ -120,22 +128,78 @@ public class HighmobilityModule implements AmvAccessModuleSpi {
     }
 
     @Override
-    public Mono<String> createSignature(String messageBase64, String privateKeyBase64) {
-        String messageInHex = decodeBase64AsHex(messageBase64);
-        String issuerPrivateKeyInHex = decodeBase64AsHex(privateKeyBase64);
+    public Mono<SignedAccessCertificate> signAccessCertificate(SignCertificateRequest signCertificateRequest) {
+        requireNonNull(signCertificateRequest);
 
-        return cryptotool.generateSignature(messageInHex, issuerPrivateKeyInHex)
-                .map(Cryptotool.Signature::getSignature)
-                .map(CryptotoolUtils::encodeHexAsBase64);
+        AccessCertificate accessCertificate = signCertificateRequest.getAccessCertificate();
+        String privateKeyBase64 = signCertificateRequest.getPrivateKeyBase64();
+
+        String deviceAccessCertificateBase64 = accessCertificate.getDeviceAccessCertificateBase64();
+        String deviceAccessCertSignatureBase64 = Optional.ofNullable(signatureService
+                .generateSignature(deviceAccessCertificateBase64, privateKeyBase64))
+                .map(Mono::block)
+                .orElseThrow(() -> new IllegalStateException("Could not create device access cert signature"));
+
+        String signedDeviceAccessCertBase64 = MoreBase64.encodeHexAsBase64(
+                MoreBase64.decodeBase64AsHex(accessCertificate.getDeviceAccessCertificateBase64()) +
+                        MoreBase64.decodeBase64AsHex(deviceAccessCertSignatureBase64));
+
+        String vehicleAccessCertificateBase64 = accessCertificate.getVehicleAccessCertificateBase64();
+        String vehicleAccessCertSignatureBase64 = Optional.ofNullable(signatureService
+                .generateSignature(vehicleAccessCertificateBase64, privateKeyBase64))
+                .map(Mono::block)
+                .orElseThrow(() -> new IllegalStateException("Could not create vehicle access cert signature"));
+
+        String signedVehicleAccessCertBase64 = MoreBase64.encodeHexAsBase64(
+                MoreBase64.decodeBase64AsHex(accessCertificate.getVehicleAccessCertificateBase64()) +
+                        MoreBase64.decodeBase64AsHex(vehicleAccessCertSignatureBase64));
+
+        if (signCertificateRequest.getPublicKeyBase64().isPresent()) {
+            String publicKeyBase64 = signCertificateRequest.getPublicKeyBase64().get();
+
+            verifySignatureOrThrow(deviceAccessCertificateBase64,
+                    deviceAccessCertSignatureBase64,
+                    publicKeyBase64,
+                    "device access certificate signature is invalid");
+
+            verifySignatureOrThrow(vehicleAccessCertificateBase64,
+                    vehicleAccessCertSignatureBase64,
+                    publicKeyBase64,
+                    "vehicle access certificate signature is invalid");
+        }
+
+        return Mono.just(SignedAccessCertificateImpl.builder()
+                .deviceAccessCertificateBase64(deviceAccessCertificateBase64)
+                .deviceAccessCertificateSignatureBase64(deviceAccessCertSignatureBase64)
+                .signedDeviceAccessCertificateBase64(signedDeviceAccessCertBase64)
+                .vehicleAccessCertificateBase64(vehicleAccessCertificateBase64)
+                .vehicleAccessCertificateSignatureBase64(vehicleAccessCertSignatureBase64)
+                .signedVehicleAccessCertificateBase64(signedVehicleAccessCertBase64)
+                .build());
+    }
+
+    @Override
+    public Mono<String> generateSignature(String messageBase64, String privateKeyBase64) {
+        return signatureService.generateSignature(messageBase64, privateKeyBase64);
     }
 
     @Override
     public Mono<Boolean> verifySignature(String messageBase64, String signatureBase64, String publicKeyBase64) {
-        String messageInHex = decodeBase64AsHex(messageBase64);
-        String signatureInHex = decodeBase64AsHex(signatureBase64);
-        String publicKeyInHex = decodeBase64AsHex(publicKeyBase64);
+        return signatureService.verifySignature(messageBase64, signatureBase64, publicKeyBase64);
+    }
 
-        return cryptotool.verifySignature(messageInHex, signatureInHex, publicKeyInHex)
-                .map(s -> s == Cryptotool.Validity.VALID);
+
+    private void verifySignatureOrThrow(String messageBase64,
+                                        String signatureBase64,
+                                        String publicKeyBase64,
+                                        String errorMessage) {
+        boolean isValidSignature = Optional.ofNullable(signatureService
+                .verifySignature(messageBase64, signatureBase64, publicKeyBase64))
+                .map(Mono::block)
+                .orElse(false);
+
+        if (!isValidSignature) {
+            throw new IllegalStateException(errorMessage);
+        }
     }
 }

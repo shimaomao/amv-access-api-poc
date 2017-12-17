@@ -8,12 +8,14 @@ import org.amv.access.auth.IssuerNonceAuthentication;
 import org.amv.access.auth.IssuerNonceAuthenticationImpl;
 import org.amv.access.auth.NonceAuthentication;
 import org.amv.access.certificate.AccessCertificateService;
+import org.amv.access.certificate.AccessCertificateService.CreateAccessCertificateContext;
 import org.amv.access.certificate.DeviceCertificateService;
 import org.amv.access.certificate.DeviceCertificateService.CreateDeviceCertificateContext;
-import org.amv.access.core.AccessCertificate;
+import org.amv.access.certificate.SignedAccessCertificateResource;
 import org.amv.access.core.Device;
 import org.amv.access.core.DeviceCertificate;
 import org.amv.access.model.*;
+import org.amv.access.util.MoreBase64;
 import org.amv.highmobility.cryptotool.Cryptotool;
 import org.amv.highmobility.cryptotool.CryptotoolImpl;
 import org.amv.highmobility.cryptotool.CryptotoolUtils;
@@ -153,7 +155,7 @@ public class DemoServiceImpl implements DemoService {
     }
 
     @Override
-    public Mono<AccessCertificate> createDemoAccessCertificateIfNecessary(DeviceCertificate deviceCertificate) {
+    public Mono<SignedAccessCertificateResource> createDemoAccessCertificateIfNecessary(DeviceCertificate deviceCertificate) {
         ApplicationEntity demoApplication = this.getOrCreateDemoApplication();
 
         boolean isDeviceCertificateForDemoApplication = demoApplication.getAppId()
@@ -165,8 +167,11 @@ public class DemoServiceImpl implements DemoService {
 
             return Mono.empty();
         } else {
+            IssuerWithKeys issuerWithKeys = this.getOrCreateDemoIssuer();
             VehicleEntity demoVehicle = this.getOrCreateDemoVehicle();
             Device device = deviceCertificate.getDevice();
+
+            String issuerPrivateKeyBase64 = MoreBase64.encodeHexAsBase64(issuerWithKeys.getKeys().getPrivateKey());
 
             log.info("Creating demo access certificate for device {} and vehicle {}",
                     device.getSerialNumber(),
@@ -174,13 +179,26 @@ public class DemoServiceImpl implements DemoService {
 
             IssuerNonceAuthentication issuerNonceAuthentication = createDemoIssuerNonceAuthentication();
 
-            return accessCertificateService.createAccessCertificate(issuerNonceAuthentication, AccessCertificateService.CreateAccessCertificateContext.builder()
+            CreateAccessCertificateContext createAccessCertificateContext = CreateAccessCertificateContext.builder()
                     .appId(demoApplication.getAppId())
                     .deviceSerialNumber(device.getSerialNumber())
                     .vehicleSerialNumber(demoVehicle.getSerialNumber())
                     .validityStart(LocalDateTime.now().minusDays(2).toInstant(ZoneOffset.UTC))
                     .validityEnd(LocalDateTime.now().plusYears(2).toInstant(ZoneOffset.UTC))
-                    .build());
+                    .build();
+            
+            Optional<SignedAccessCertificateResource> signedAccessCertificateResource = Optional.ofNullable(accessCertificateService
+                    .createAccessCertificate(issuerNonceAuthentication, createAccessCertificateContext)
+                    .then(resource -> accessCertificateService.signAccessCertificate(resource, issuerPrivateKeyBase64)))
+                    .map(Mono::block);
+
+            if (!signedAccessCertificateResource.isPresent()) {
+                log.warn("Could not create demo access certificate for device {}", device.getSerialNumber());
+            } else {
+                log.info("Successfully created demo access certificate for device {}", device.getSerialNumber());
+            }
+
+            return Mono.justOrEmpty(signedAccessCertificateResource);
         }
     }
 

@@ -1,6 +1,8 @@
 package org.amv.access.config;
 
 import org.amv.access.spi.highmobility.HighmobilityModule;
+import org.amv.access.spi.highmobility.SignatureService;
+import org.amv.access.spi.highmobility.SignatureServiceImpl;
 import org.amv.highmobility.cryptotool.*;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -14,9 +16,21 @@ import static java.util.Objects.requireNonNull;
 @Configuration
 public class HighmobilityConfig {
 
+
     @Bean
-    public BinaryExecutor binaryExecutor() throws URISyntaxException, IOException {
-        return BinaryExecutorImpl.createDefault();
+    public HighmobilityModule highmobilityModule(Cryptotool cryptotool, SignatureService signatureService) {
+        return new HighmobilityModule(cryptotool, signatureService);
+    }
+
+    @Bean
+    public SignatureService signatureServiceImpl(Cryptotool cryptotool) {
+        return new SignatureServiceImpl(cryptotool);
+    }
+
+    @Bean
+    public Cryptotool cryptotool(CryptotoolOptions cryptotoolOptions) {
+        requireNonNull(cryptotoolOptions, "`cryptotoolOptions` must not be null");
+        return new CryptotoolImpl(cryptotoolOptions);
     }
 
     @Bean
@@ -37,13 +51,8 @@ public class HighmobilityConfig {
     }
 
     @Bean
-    public Cryptotool cryptotool(CryptotoolOptions cryptotoolOptions) {
-        requireNonNull(cryptotoolOptions, "`cryptotoolOptions` must not be null");
-        return new CryptotoolImpl(cryptotoolOptions);
+    public BinaryExecutor binaryExecutor() throws URISyntaxException, IOException {
+        return BinaryExecutorImpl.createDefault();
     }
 
-    @Bean
-    public HighmobilityModule highmobilityModule(Cryptotool cryptotool) {
-        return new HighmobilityModule(cryptotool);
-    }
 }
