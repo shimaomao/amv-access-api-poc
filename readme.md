@@ -68,6 +68,12 @@ e.g. `findbugs`, `checkstyle`, `javadoc` - tasks which results are not essential
 ```
 
 ## Development
+### Maven Local
+Publish to local maven repository
+```bash
+$ ./gradlew releaseCheck build publishToMavenLocal -x test -Prelease.stage=SNAPSHOT -Prelease.scope=patch -Pminimal
+```
+
 ### Spring Boot
 Run the application with active `development` profile
 ```bash
@@ -83,7 +89,20 @@ $ ./gradlew clean build -Pminimal && java -jar web/build/libs/amv-access-api-web
 Check application is up and running
 ```bash
 $ curl localhost:9001/manage/health
-{"status":"UP","diskSpace":{"status":"UP","total":397635555328,"free":328389529600,"threshold":10485760}}}
+{
+  "status" : "UP",
+  "diskSpace" : {
+    "status" : "UP",
+    "total" : 511740735488,
+    "free" : 277131235328,
+    "threshold" : 10485760
+  },
+  "db" : {
+    "status" : "UP",
+    "database" : "MySQL",
+    "hello" : 1
+  }
+}
 ```
 
 ### IDE
