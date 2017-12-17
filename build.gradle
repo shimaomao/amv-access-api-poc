@@ -53,6 +53,13 @@ contacts {
     }
 }
 
+publishing.publications {
+    // prevent maven publish from complaining about empty groupId
+    nebula(MavenPublication) {
+        groupId group
+    }
+}
+
 subprojects {
     apply plugin: 'java'
     apply plugin: 'maven'
