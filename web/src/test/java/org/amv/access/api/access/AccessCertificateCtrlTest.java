@@ -2,7 +2,7 @@ package org.amv.access.api.access;
 
 import org.amv.access.AmvAccessApplication;
 import org.amv.access.auth.NonceAuthentication;
-import org.amv.access.client.MoreHttpHeaders;
+import org.amv.access.client.android.MoreHttpHeaders;
 import org.amv.access.client.model.*;
 import org.amv.access.client.model.CreateAccessCertificateResponseDto.AccessCertificateSigningRequestDto;
 import org.amv.access.config.SqliteTestDatabaseConfig;

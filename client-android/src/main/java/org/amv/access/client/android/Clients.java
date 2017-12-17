@@ -1,4 +1,4 @@
-package org.amv.access.client.java6;
+package org.amv.access.client.android;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;

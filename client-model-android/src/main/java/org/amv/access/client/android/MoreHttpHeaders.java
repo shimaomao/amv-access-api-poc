@@ -1,4 +1,4 @@
-package org.amv.access.client;
+package org.amv.access.client.android;
 
 public final class MoreHttpHeaders {
     public static final String X_REASON = "X-Reason";

@@ -1,8 +1,8 @@
-package org.amv.access.client.java6;
+package org.amv.access.client.android;
 
 
 import io.reactivex.Observable;
-import org.amv.access.client.model.java6.GetAccessCertificatesResponseDto;
+import org.amv.access.client.android.model.GetAccessCertificatesResponseDto;
 
 /**
  * A client for accessing the <i>access_certificate</i> endpoint.
