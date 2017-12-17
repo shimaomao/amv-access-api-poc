@@ -44,9 +44,6 @@ public class JpaConfig {
         return properties;
     }
 
-    /**
-     * Entity manager
-     */
     @Bean
     public LocalContainerEntityManagerFactoryBean entityManagerFactory() {
         // JPA settings
@@ -64,9 +61,6 @@ public class JpaConfig {
         return factory;
     }
 
-    /**
-     * Transaction Management: Using JPA for transactions
-     */
     @Bean
     public PlatformTransactionManager transactionManager() {
         EntityManagerFactory entityManagerFactory = entityManagerFactory().getObject();
@@ -74,10 +68,6 @@ public class JpaConfig {
         return txManager;
     }
 
-    /**
-     * Make sure instances of HibernateException are translated to Spring's
-     * DataAccessException.
-     */
     @Bean
     public HibernateExceptionTranslator exceptionTranslation() {
         return new HibernateExceptionTranslator();

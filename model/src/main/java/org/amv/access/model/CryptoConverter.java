@@ -14,11 +14,11 @@ import java.util.Base64;
  * <p>
  * Usage in JPA entity:
  * <pre><code>
- * @Entity
- * @Table(name = "my_entity")
+ * &#064;Entity
+ * &#064;Table(name = "my_entity")
  * public class MyEntity {
- *   @Column(name = "value")
- *   @Convert(converter = CryptoConverter.class)
+ *   &#064;Column(name = "value")
+ *   &#064;Convert(converter = CryptoConverter.class)
  *   private String value;
  * }
  * </code></pre>

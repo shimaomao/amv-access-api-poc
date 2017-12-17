@@ -156,6 +156,7 @@ public class AccessCertificateCtrl {
     /**
      * Create an access certificate
      *
+     * @param nonceAuthentication               The authentication object
      * @param issuerUuid                        The UUID of the issuer
      * @param createAccessCertificateRequestDto The payload
      * @return An access certificate
@@ -230,6 +231,7 @@ public class AccessCertificateCtrl {
     /**
      * Add a signature to an access certificate.
      *
+     * @param nonceAuthentication The authentication object
      * @param issuerUuid          The UUID of the issuer
      * @param accessCertificateId The UUID of the access certificate
      * @param request             The payload
