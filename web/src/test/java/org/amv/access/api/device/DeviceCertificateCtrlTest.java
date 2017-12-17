@@ -98,7 +98,7 @@ public class DeviceCertificateCtrlTest {
         String keyWithIllegalChars = "@@_KEY_WITH_ILLEGAL_CHARACTERS_@@";
 
         HttpHeaders headers = new HttpHeaders();
-        headers.add(HttpHeaders.AUTHORIZATION, keyWithIllegalChars);
+        headers.add(HttpHeaders.AUTHORIZATION, String.format("%s:%s", application.getAppId(), keyWithIllegalChars));
         HttpEntity<CreateDeviceCertificateRequestDto> entity = new HttpEntity<>(body, headers);
 
         ResponseEntity<ErrorResponseDto> responseEntity = restTemplate
@@ -131,7 +131,7 @@ public class DeviceCertificateCtrlTest {
         String nonExistingApiKey = application.getApiKey() + "123";
 
         HttpHeaders headers = new HttpHeaders();
-        headers.add(HttpHeaders.AUTHORIZATION, nonExistingApiKey);
+        headers.add(HttpHeaders.AUTHORIZATION, String.format("%s:%s", application.getAppId(), nonExistingApiKey));
         HttpEntity<CreateDeviceCertificateRequestDto> entity = new HttpEntity<>(body, headers);
 
         ResponseEntity<ErrorResponseDto> responseEntity = restTemplate
@@ -162,7 +162,7 @@ public class DeviceCertificateCtrlTest {
                 .build();
 
         HttpHeaders headers = new HttpHeaders();
-        headers.add(HttpHeaders.AUTHORIZATION, application.getApiKey());
+        headers.add(HttpHeaders.AUTHORIZATION, String.format("%s:%s", application.getAppId(), application.getApiKey()));
         HttpEntity<CreateDeviceCertificateRequestDto> entity = new HttpEntity<>(body, headers);
 
         ResponseEntity<CreateDeviceCertificateResponseDto> responseEntity = restTemplate

@@ -25,11 +25,16 @@ import static java.util.Objects.requireNonNull;
 public class ApplicationAuthenticationArgumentResolver implements HandlerMethodArgumentResolver {
 
     @FunctionalInterface
-    public interface ApiKeyResolver {
-        Mono<Application> findByApiKey(String apiKey);
+    public interface ApplicationResolver {
+        Mono<Application> find(String appId, String apiKey);
     }
 
     private static final String HEADER_NAME = HttpHeaders.AUTHORIZATION;
+
+    private static final CharMatcher APP_ID_MATCHER = CharMatcher.inRange('a', 'z')
+            .or(CharMatcher.inRange('A', 'Z'))
+            .or(CharMatcher.inRange('0', '9'))
+            .precomputed();
 
     private static final CharMatcher API_KEY_MATCHER = CharMatcher.anyOf("-")
             .or(CharMatcher.inRange('a', 'z'))
@@ -37,10 +42,10 @@ public class ApplicationAuthenticationArgumentResolver implements HandlerMethodA
             .or(CharMatcher.inRange('0', '9'))
             .precomputed();
 
-    private final ApiKeyResolver apiKeyResolver;
+    private final ApplicationResolver applicationResolver;
 
-    public ApplicationAuthenticationArgumentResolver(ApiKeyResolver apiKeyResolver) {
-        this.apiKeyResolver = requireNonNull(apiKeyResolver);
+    public ApplicationAuthenticationArgumentResolver(ApplicationResolver applicationResolver) {
+        this.applicationResolver = requireNonNull(applicationResolver);
     }
 
     @Override
@@ -49,15 +54,36 @@ public class ApplicationAuthenticationArgumentResolver implements HandlerMethodA
     }
 
     @Override
-    public Object resolveArgument(MethodParameter parameter, ModelAndViewContainer mavContainer, NativeWebRequest webRequest, WebDataBinderFactory binderFactory) throws Exception {
-        String apiKey = Optional.ofNullable(webRequest)
+    public Object resolveArgument(MethodParameter parameter,
+                                  ModelAndViewContainer mavContainer,
+                                  NativeWebRequest webRequest,
+                                  WebDataBinderFactory binderFactory) throws Exception {
+        Optional<String> authorizationHeaderValueOrEmpty = Optional.ofNullable(webRequest)
                 .map(s -> s.getHeaderValues(HEADER_NAME))
                 .map(Arrays::stream).orElseGet(Stream::empty)
-                .findFirst()
+                .findFirst();
+
+        if (!authorizationHeaderValueOrEmpty.isPresent()) {
+            throw new BadRequestException(HEADER_NAME + " header is invalid or missing");
+        }
+
+        String authorizationHeaderValue = authorizationHeaderValueOrEmpty.get();
+
+        String[] authorizationHeaderValueParts = authorizationHeaderValue.split(":", 2);
+
+        if (authorizationHeaderValueParts.length != 2) {
+            throw new BadRequestException(HEADER_NAME + " header is invalid or missing");
+        }
+
+        String appId = Optional.ofNullable(authorizationHeaderValueParts[0])
+                .filter(this::isValidAppId)
+                .orElseThrow(() -> new BadRequestException(HEADER_NAME + " header is invalid or missing"));
+
+        String apiKey = Optional.ofNullable(authorizationHeaderValueParts[1])
                 .filter(this::isValidApiKey)
                 .orElseThrow(() -> new BadRequestException(HEADER_NAME + " header is invalid or missing"));
 
-        Application application = Optional.of(apiKeyResolver.findByApiKey(apiKey))
+        Application application = Optional.of(applicationResolver.find(appId, apiKey))
                 .map(app -> app.onErrorMap(e -> new UnauthorizedException(e.getMessage(), e)))
                 .map(Mono::block)
                 .orElseThrow(() -> new UnauthorizedException("ApplicationEntity not found"));
@@ -67,9 +93,17 @@ public class ApplicationAuthenticationArgumentResolver implements HandlerMethodA
                 .build();
     }
 
+    private boolean isValidAppId(String appId) {
+        int appIdLength = appId.length();
+        boolean hasValidLength = appIdLength == 24;
+        boolean hasValidChars = APP_ID_MATCHER.matchesAllOf(appId);
+
+        return hasValidLength && hasValidChars;
+    }
+
     private boolean isValidApiKey(String key) {
         int keyLength = key.length();
-        boolean hasValidLength = 8 <= keyLength && keyLength <= 1024;
+        boolean hasValidLength = 8 <= keyLength && keyLength <= 255;
         boolean hasValidChars = API_KEY_MATCHER.matchesAllOf(key);
 
         return hasValidLength && hasValidChars;

@@ -75,11 +75,12 @@ public class DeviceCertificateCtrlTestWithAndroidRestClient {
         CreateDeviceCertificateRequestDto body = new CreateDeviceCertificateRequestDto();
         body.device_public_key = publicKeyBase64;
 
+        String appId = application.getAppId();
         String nonExistingApiKey = application.getApiKey() + "123";
 
         try {
             this.deviceCertClient
-                    .createDeviceCertificate(nonExistingApiKey, body)
+                    .createDeviceCertificate(appId, nonExistingApiKey, body)
                     .blockingSingle();
 
             Assert.fail("Should have thrown exception.");
@@ -105,7 +106,7 @@ public class DeviceCertificateCtrlTestWithAndroidRestClient {
         body.device_public_key = publicKeyBase64;
 
         CreateDeviceCertificateResponseDto response = this.deviceCertClient
-                .createDeviceCertificate(application.getApiKey(), body)
+                .createDeviceCertificate(application.getAppId(), application.getApiKey(), body)
                 .blockingSingle();
 
         assertThat(response, is(notNullValue()));

@@ -20,10 +20,11 @@ public interface DeviceCertClient extends AccessApiClient {
 
     @Headers({
             CONTENT_TYPE + ": " + "application/json;charset=UTF-8",
-            AUTHORIZATION + ": " + "{apiKey}"
+            AUTHORIZATION + ": " + "{appId}:{apiKey}"
     })
     @RequestLine("POST /api/v1/device_certificates")
     HystrixCommand<CreateDeviceCertificateResponseDto> createDeviceCertificate(
+            @Param("appId") String appId,
             @Param("apiKey") String apiKey,
             CreateDeviceCertificateRequestDto createDeviceCertificateRequest);
 }

@@ -20,8 +20,7 @@ create table if not exists `application` (
     `APP_ID` varchar(24) not null,
     `API_KEY` varchar(255) not null,
     primary key (`ID`),
-    unique key `INDEX_APP_APP_ID_UNIQUE` (`APP_ID`),
-    unique key `INDEX_APP_API_KEY_UNIQUE` (`API_KEY`)
+    unique key `INDEX_APP_APP_ID_UNIQUE` (`APP_ID`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 create table if not exists `issuer` (

@@ -18,6 +18,7 @@ import static org.junit.Assert.assertThat;
 public class DeviceCertClientIT {
 
     private static final String BASE_ENDPOINT = "https://www.example.com";
+    private static final String DEMO_APP_ID = "0000123456789abcdef00000";
     private static final String DEMO_API_KEY = "demodemodemo";
     private static final String ANY_PUBLIC_KEY = "QJ+HNttBDWrYkJfelkH8EfZkR/7uDCdZgIC0vkthqVNxZ51Q6tsh20mNPPWFlhPGgXau+LZm/O44btkkmLxgSA==";
 
@@ -30,7 +31,7 @@ public class DeviceCertClientIT {
                 .build();
 
         HystrixCommand<CreateDeviceCertificateResponseDto> deviceCertificateRequest = sut
-                .createDeviceCertificate(DEMO_API_KEY, request);
+                .createDeviceCertificate(DEMO_APP_ID, DEMO_API_KEY, request);
 
         CreateDeviceCertificateResponseDto deviceCertificateResponse = deviceCertificateRequest.execute();
 
@@ -47,7 +48,7 @@ public class DeviceCertClientIT {
                 .devicePublicKey(ANY_PUBLIC_KEY)
                 .build();
 
-        sut.createDeviceCertificate(DEMO_API_KEY, request)
+        sut.createDeviceCertificate(DEMO_APP_ID, DEMO_API_KEY, request)
                 .toObservable()
                 .subscribe(response -> {
                     log.info("Ok, got: {}", response);

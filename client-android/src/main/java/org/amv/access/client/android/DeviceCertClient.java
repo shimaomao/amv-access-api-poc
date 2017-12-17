@@ -10,6 +10,7 @@ import org.amv.access.client.android.model.CreateDeviceCertificateResponseDto;
 public interface DeviceCertClient extends AccessApiClient {
 
     Observable<CreateDeviceCertificateResponseDto> createDeviceCertificate(
+            String appId,
             String apiKey,
             CreateDeviceCertificateRequestDto createDeviceCertificateRequest);
 }

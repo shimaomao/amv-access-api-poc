@@ -22,6 +22,7 @@ import static org.junit.Assert.assertThat;
 
 public class DeviceCertClientTest {
 
+    private static final String RANDOM_APP_ID = RandomStringUtils.randomNumeric(24);
     private static final String RANDOM_API_KEY = RandomStringUtils.randomAlphanumeric(10);
 
     @Test
@@ -47,7 +48,7 @@ public class DeviceCertClientTest {
                 .build();
 
         HystrixCommand<CreateDeviceCertificateResponseDto> deviceCertificateRequest = sut
-                .createDeviceCertificate(RANDOM_API_KEY, request);
+                .createDeviceCertificate(RANDOM_APP_ID, RANDOM_API_KEY, request);
 
         CreateDeviceCertificateResponseDto deviceCertificateResponse = deviceCertificateRequest.execute();
 
@@ -78,7 +79,7 @@ public class DeviceCertClientTest {
         CreateDeviceCertificateRequestDto request = CreateDeviceCertificateRequestDto.builder()
                 .build();
         HystrixCommand<CreateDeviceCertificateResponseDto> deviceCertificateRequest = sut
-                .createDeviceCertificate(RANDOM_API_KEY, request);
+                .createDeviceCertificate(RANDOM_APP_ID, RANDOM_API_KEY, request);
 
         try {
             deviceCertificateRequest.execute();

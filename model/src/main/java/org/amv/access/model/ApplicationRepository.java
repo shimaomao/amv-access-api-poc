@@ -13,7 +13,5 @@ public interface ApplicationRepository extends JpaRepository<ApplicationEntity, 
 
     Optional<ApplicationEntity> findOneByAppId(@Param("appId") String appId);
 
-    Optional<ApplicationEntity> findOneByApiKey(@Param("apiKey") String apiKey);
-
     Page<ApplicationEntity> findByName(@Param("name") String name, Pageable page);
 }

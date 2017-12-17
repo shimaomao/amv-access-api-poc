@@ -77,11 +77,12 @@ public class DeviceCertificateCtrlTestWithRestClient {
                 .devicePublicKey(publicKeyBase64)
                 .build();
 
+        String appId = application.getAppId();
         String nonExistingApiKey = application.getApiKey() + "123";
 
         try {
             this.deviceCertClient
-                    .createDeviceCertificate(nonExistingApiKey, body)
+                    .createDeviceCertificate(appId, nonExistingApiKey, body)
                     .execute();
 
             Assert.fail("Should have thrown exception.");
@@ -102,7 +103,7 @@ public class DeviceCertificateCtrlTestWithRestClient {
                 .build();
 
         CreateDeviceCertificateResponseDto response = this.deviceCertClient
-                .createDeviceCertificate(application.getApiKey(), body)
+                .createDeviceCertificate(application.getAppId(), application.getApiKey(), body)
                 .execute();
         assertThat(response, is(notNullValue()));
 

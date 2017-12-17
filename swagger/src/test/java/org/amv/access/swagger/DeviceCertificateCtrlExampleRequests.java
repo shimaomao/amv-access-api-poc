@@ -3,6 +3,7 @@ package org.amv.access.swagger;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import org.amv.access.api.auth.ApplicationAuthenticationArgumentResolver;
+import org.amv.access.api.auth.ApplicationAuthenticationArgumentResolver.ApplicationResolver;
 import org.amv.access.api.device.DeviceCertificateCtrl;
 import org.amv.access.certificate.DeviceCertificateService;
 import org.amv.access.client.model.CreateDeviceCertificateRequestDto;
@@ -60,14 +61,14 @@ public class DeviceCertificateCtrlExampleRequests {
         RestDocumentationResultHandler document = document("{method-name}",
                 preprocessRequest(prettyPrint()), preprocessResponse(prettyPrint()));
 
-        ApplicationAuthenticationArgumentResolver.ApiKeyResolver apiKeyResolver = apiKey ->
+        ApplicationResolver applicationResolver = (appId, apiKey) ->
                 Mono.just(new ApplicationEntity() {{
                     setAppId("demo");
                     setApiKey("demodemodemo");
                 }});
 
         this.mvc = MockMvcBuilders.standaloneSetup(sut)
-                .setCustomArgumentResolvers(new ApplicationAuthenticationArgumentResolver(apiKeyResolver))
+                .setCustomArgumentResolvers(new ApplicationAuthenticationArgumentResolver(applicationResolver))
                 .apply(documentationConfiguration(this.restDocumentation))
                 .alwaysDo(document)
                 .alwaysDo(print())
@@ -97,7 +98,7 @@ public class DeviceCertificateCtrlExampleRequests {
 
         this.mvc.perform(post("/api/v1/device_certificates")
                 .content(mapper.writeValueAsString(body))
-                .header(HttpHeaders.AUTHORIZATION, "demodemodemo")
+                .header(HttpHeaders.AUTHORIZATION, "111111111111111111111111:demodemodemo")
                 .contentType(MediaType.APPLICATION_JSON_UTF8_VALUE)
                 .accept(MediaType.APPLICATION_JSON_UTF8_VALUE)
                 .with(setupRequest()))
