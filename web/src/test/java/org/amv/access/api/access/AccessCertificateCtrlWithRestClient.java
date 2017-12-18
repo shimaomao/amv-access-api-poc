@@ -12,10 +12,11 @@ import org.amv.access.config.SqliteTestDatabaseConfig;
 import org.amv.access.demo.DemoService;
 import org.amv.access.demo.DeviceWithKeys;
 import org.amv.access.demo.IssuerWithKeys;
-import org.amv.access.demo.NonceAuthHelper;
 import org.amv.access.model.ApplicationEntity;
 import org.amv.access.model.DeviceEntity;
 import org.amv.access.model.VehicleEntity;
+import org.amv.access.spi.highmobility.NonceAuthenticationService;
+import org.amv.access.spi.highmobility.NonceAuthenticationServiceImpl;
 import org.amv.highmobility.cryptotool.Cryptotool;
 import org.amv.highmobility.cryptotool.CryptotoolUtils;
 import org.junit.Assert;
@@ -61,12 +62,12 @@ public class AccessCertificateCtrlWithRestClient {
 
     private DeviceWithKeys deviceWithKeys;
     private IssuerWithKeys demoIssuer;
-    private NonceAuthHelper nonceAuthHelper;
+    private NonceAuthenticationService nonceAuthService;
     private AccessCertClient accessCertClient;
 
     @Before
     public void setUp() {
-        this.nonceAuthHelper = new NonceAuthHelper(cryptotool);
+        this.nonceAuthService = new NonceAuthenticationServiceImpl(cryptotool);
         this.application = demoService.getOrCreateDemoApplication();
 
         this.demoIssuer = demoService.getOrCreateDemoIssuer();
@@ -202,7 +203,7 @@ public class AccessCertificateCtrlWithRestClient {
     }
 
     private GetAccessCertificatesResponseDto executeFetchAccessCertificateRequest(DeviceWithKeys deviceWithKeys) {
-        NonceAuthentication nonceAuthentication = nonceAuthHelper
+        NonceAuthentication nonceAuthentication = nonceAuthService
                 .createNonceAuthentication(deviceWithKeys.getKeys());
 
         return accessCertClient.fetchAccessCertificates(
@@ -214,7 +215,7 @@ public class AccessCertificateCtrlWithRestClient {
 
     private CreateAccessCertificateResponseDto executeCreateAccessCertificateRequest(IssuerWithKeys issuerWithKeys,
                                                                                      CreateAccessCertificateRequestDto request) {
-        NonceAuthentication nonceAuthentication = nonceAuthHelper
+        NonceAuthentication nonceAuthentication = nonceAuthService
                 .createNonceAuthentication(issuerWithKeys.getKeys());
 
         return accessCertClient.createAccessCertificate(nonceAuthentication.getNonceBase64(),
@@ -228,7 +229,7 @@ public class AccessCertificateCtrlWithRestClient {
     private Boolean executeAddAccessCertificateSignaturesRequest(IssuerWithKeys issuerWithKeys,
                                                                  String accessCertificateId,
                                                                  UpdateAccessCertificateSignatureRequestDto request) {
-        NonceAuthentication issuerNonceAuthentication = nonceAuthHelper
+        NonceAuthentication issuerNonceAuthentication = nonceAuthService
                 .createNonceAuthentication(issuerWithKeys.getKeys());
 
         return accessCertClient.addAccessCertificateSignature(issuerNonceAuthentication.getNonceBase64(),
@@ -241,7 +242,7 @@ public class AccessCertificateCtrlWithRestClient {
 
     private Void executeRevokeAccessCertificateRequest(IssuerWithKeys issuerWithKeys,
                                                        String accessCertificateId) {
-        NonceAuthentication nonceAuthentication = nonceAuthHelper
+        NonceAuthentication nonceAuthentication = nonceAuthService
                 .createNonceAuthentication(issuerWithKeys.getKeys());
 
         return accessCertClient.revokeAccessCertificate(nonceAuthentication.getNonceBase64(),

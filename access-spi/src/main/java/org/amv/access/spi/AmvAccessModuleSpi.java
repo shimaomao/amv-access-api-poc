@@ -29,9 +29,7 @@ public interface AmvAccessModuleSpi {
 
     Mono<SignedAccessCertificate> signAccessCertificate(SignCertificateRequest signCertificateRequest);
 
-    // TODO: maybe remove
     Mono<String> generateSignature(String messageBase64, String privateKeyBase64);
 
-    // TODO: maybe remove
     Mono<Boolean> verifySignature(String messageBase64, String signatureBase64, String publicKeyBase64);
 }

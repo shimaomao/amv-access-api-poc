@@ -9,12 +9,13 @@ import org.amv.access.config.SqliteTestDatabaseConfig;
 import org.amv.access.demo.DemoService;
 import org.amv.access.demo.DeviceWithKeys;
 import org.amv.access.demo.IssuerWithKeys;
-import org.amv.access.demo.NonceAuthHelper;
 import org.amv.access.exception.BadRequestException;
 import org.amv.access.exception.UnauthorizedException;
 import org.amv.access.model.ApplicationEntity;
 import org.amv.access.model.DeviceEntity;
 import org.amv.access.model.VehicleEntity;
+import org.amv.access.spi.highmobility.NonceAuthenticationService;
+import org.amv.access.spi.highmobility.NonceAuthenticationServiceImpl;
 import org.amv.highmobility.cryptotool.Cryptotool;
 import org.amv.highmobility.cryptotool.CryptotoolUtils;
 import org.junit.Before;
@@ -54,11 +55,11 @@ public class AccessCertificateCtrlTest {
 
     private DeviceWithKeys deviceWithKeys;
     private IssuerWithKeys demoIssuer;
-    private NonceAuthHelper nonceAuthHelper;
+    private NonceAuthenticationService nonceAuthService;
 
     @Before
     public void setUp() {
-        this.nonceAuthHelper = new NonceAuthHelper(cryptotool);
+        this.nonceAuthService = new NonceAuthenticationServiceImpl(cryptotool);
         this.application = demoService.getOrCreateDemoApplication();
 
         this.demoIssuer = demoService.getOrCreateDemoIssuer();
@@ -125,14 +126,17 @@ public class AccessCertificateCtrlTest {
     public void itShouldFailGetAccessCertificateIfNonceSignatureHeaderIsInvalid() throws Exception {
         DeviceEntity device = deviceWithKeys.getDevice();
 
-        String nonceBase64 = nonceAuthHelper.createNonceWithRandomLengthBase64();
-        String nonceBase64ForFakeSignature = nonceAuthHelper.createNonceWithRandomLengthBase64();
-        String nonceSignatureBase64 = nonceAuthHelper.createNonceSignatureBase64(deviceWithKeys.getKeys(), nonceBase64ForFakeSignature);
+        String nonceBase64 = nonceAuthService
+                .createNonceAuthentication(deviceWithKeys.getKeys())
+                .getNonceBase64();
+        String mismatchingNonceSignatureBase64 = nonceAuthService
+                .createNonceAuthentication(deviceWithKeys.getKeys())
+                .getNonceSignatureBase64();
 
         String devicePublicKey = decodeBase64AsHex(device.getPublicKeyBase64());
         Cryptotool.Validity signedNonceValidity = Optional.of(cryptotool.verifySignature(
                 decodeBase64AsHex(nonceBase64),
-                decodeBase64AsHex(nonceSignatureBase64),
+                decodeBase64AsHex(mismatchingNonceSignatureBase64),
                 devicePublicKey))
                 .map(Mono::block)
                 .orElse(Cryptotool.Validity.VALID);
@@ -141,7 +145,7 @@ public class AccessCertificateCtrlTest {
 
         HttpHeaders headers = new HttpHeaders();
         headers.add(MoreHttpHeaders.AMV_NONCE, nonceBase64);
-        headers.add(MoreHttpHeaders.AMV_SIGNATURE, nonceSignatureBase64);
+        headers.add(MoreHttpHeaders.AMV_SIGNATURE, mismatchingNonceSignatureBase64);
 
         HttpEntity<?> entity = new HttpEntity<>(headers);
 
@@ -355,7 +359,7 @@ public class AccessCertificateCtrlTest {
     private ResponseEntity<CreateAccessCertificateResponseDto> executeCreateAccessCertificateRequest(
             IssuerWithKeys issuerWithKeys, CreateAccessCertificateRequestDto request) {
 
-        NonceAuthentication issuerNonceAuthentication = nonceAuthHelper
+        NonceAuthentication issuerNonceAuthentication = nonceAuthService
                 .createNonceAuthentication(issuerWithKeys.getKeys());
 
         HttpHeaders headers = new HttpHeaders();
@@ -377,7 +381,7 @@ public class AccessCertificateCtrlTest {
             IssuerWithKeys issuerWithKeys, String accessCertificateId,
             UpdateAccessCertificateSignatureRequestDto request) {
 
-        NonceAuthentication issuerNonceAuthentication = nonceAuthHelper
+        NonceAuthentication issuerNonceAuthentication = nonceAuthService
                 .createNonceAuthentication(issuerWithKeys.getKeys());
 
         HttpHeaders headers = new HttpHeaders();
@@ -400,7 +404,7 @@ public class AccessCertificateCtrlTest {
 
     private ResponseEntity<GetAccessCertificatesResponseDto> executeFetchAccessCertificatesRequest(
             DeviceWithKeys deviceWithKeys) {
-        NonceAuthentication deviceNonceAuthentication = nonceAuthHelper
+        NonceAuthentication deviceNonceAuthentication = nonceAuthService
                 .createNonceAuthentication(deviceWithKeys.getKeys());
 
         HttpHeaders fetchRequestHeaders = new HttpHeaders();
@@ -419,7 +423,7 @@ public class AccessCertificateCtrlTest {
 
     private ResponseEntity<Boolean> executeRevokeAccessCertificateRequest(IssuerWithKeys issuerWithKeys,
                                                                           String accessCertificateId) {
-        NonceAuthentication issuerNonceAuthentication = nonceAuthHelper
+        NonceAuthentication issuerNonceAuthentication = nonceAuthService
                 .createNonceAuthentication(issuerWithKeys.getKeys());
 
         HttpHeaders headers = new HttpHeaders();

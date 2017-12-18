@@ -15,6 +15,8 @@ import org.amv.access.certificate.SignedAccessCertificateResource;
 import org.amv.access.core.Device;
 import org.amv.access.core.DeviceCertificate;
 import org.amv.access.model.*;
+import org.amv.access.spi.highmobility.NonceAuthenticationService;
+import org.amv.access.spi.highmobility.NonceAuthenticationServiceImpl;
 import org.amv.access.util.MoreBase64;
 import org.amv.highmobility.cryptotool.Cryptotool;
 import org.amv.highmobility.cryptotool.CryptotoolImpl;
@@ -61,7 +63,7 @@ public class DemoServiceImpl implements DemoService {
 
     private final Supplier<DemoUser.DemoUserBuilder> demoUserBuilderSupplier = Suppliers
             .memoize(this::createDemoUserBuilder);
-    private final NonceAuthHelper nonceAuthHelper;
+    private final NonceAuthenticationService nonceAuthService;
 
     public DemoServiceImpl(Cryptotool cryptotool,
                            PasswordEncoder passwordEncoder,
@@ -82,7 +84,7 @@ public class DemoServiceImpl implements DemoService {
         this.deviceCertificateService = requireNonNull(deviceCertificateService);
         this.accessCertificateService = requireNonNull(accessCertificateService);
 
-        this.nonceAuthHelper = new NonceAuthHelper(cryptotool);
+        this.nonceAuthService = new NonceAuthenticationServiceImpl(cryptotool);
     }
 
     private void createDefaultDemoData() {
@@ -217,7 +219,7 @@ public class DemoServiceImpl implements DemoService {
 
     @Override
     public IssuerNonceAuthentication createNonceAuthentication(IssuerWithKeys issuerWithKeys) {
-        NonceAuthentication nonceAuthentication = nonceAuthHelper.createNonceAuthentication(issuerWithKeys.getKeys());
+        NonceAuthentication nonceAuthentication = nonceAuthService.createNonceAuthentication(issuerWithKeys.getKeys());
         IssuerNonceAuthentication issuerNonceAuthentication = IssuerNonceAuthenticationImpl.builder()
                 .issuerUuid(issuerWithKeys.getIssuer().getUuid())
                 .nonceAuthentication(nonceAuthentication)

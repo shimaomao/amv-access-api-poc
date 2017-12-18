@@ -6,6 +6,7 @@ import io.swagger.annotations.*;
 import lombok.extern.slf4j.Slf4j;
 import org.amv.access.auth.ApplicationAuthentication;
 import org.amv.access.certificate.DeviceCertificateService;
+import org.amv.access.certificate.DeviceCertificateService.CreateDeviceCertificateContext;
 import org.amv.access.client.model.CreateDeviceCertificateRequestDto;
 import org.amv.access.client.model.CreateDeviceCertificateResponseDto;
 import org.amv.access.client.model.DeviceCertificateDto;
@@ -65,7 +66,7 @@ public class DeviceCertificateCtrl {
         requireNonNull(requestBody);
         requireNonNull(requestBody.getDevicePublicKey());
 
-        DeviceCertificateService.CreateDeviceCertificateContext createDeviceCertificateContext = DeviceCertificateService.CreateDeviceCertificateContext.builder()
+        CreateDeviceCertificateContext createDeviceCertificateContext = CreateDeviceCertificateContext.builder()
                 .appId(auth.getApplication().getAppId())
                 .devicePublicKeyBase64(requestBody.getDevicePublicKey())
                 .deviceName(RandomStringUtils.randomAlphabetic(16))

@@ -26,13 +26,14 @@ public class NonceAuthenticationServiceImpl implements NonceAuthenticationServic
         String nonceBase64 = createNonceWithRandomLengthBase64();
         String nonceSignatureBase64 = createNonceSignatureBase64(keys, nonceBase64);
 
-        String publicKey = keys.getPublicKey();
+        String publicKeyInHex = keys.getPublicKey();
 
-        String nonce = CryptotoolUtils.decodeBase64AsHex(nonceBase64);
+        String nonceInHex = CryptotoolUtils.decodeBase64AsHex(nonceBase64);
+        String signatureInHex = CryptotoolUtils.decodeBase64AsHex(nonceSignatureBase64);
         Cryptotool.Validity signedNonceValidity = Optional.of(cryptotool.verifySignature(
-                nonce,
-                CryptotoolUtils.decodeBase64AsHex(nonceSignatureBase64),
-                publicKey))
+                nonceInHex,
+                signatureInHex,
+                publicKeyInHex))
                 .map(Mono::block)
                 .orElse(Cryptotool.Validity.INVALID);
 

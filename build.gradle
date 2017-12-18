@@ -66,7 +66,7 @@ subprojects {
     apply plugin: 'nebula.project'
     apply plugin: 'nebula.info'
     apply plugin: 'io.franzbecker.gradle-lombok'
-    apply plugin: 'checkstyle'
+    //apply plugin: 'checkstyle'
     apply plugin: 'findbugs'
     apply plugin: 'com.jfrog.bintray'
 
@@ -83,7 +83,7 @@ subprojects {
 
         if (!enableAdditionalLongRunningTasks) {
             findbugsMain.enabled = false
-            checkstyleMain.enabled = false
+            //checkstyleMain.enabled = false
             javadoc.enabled = false
         }
     }

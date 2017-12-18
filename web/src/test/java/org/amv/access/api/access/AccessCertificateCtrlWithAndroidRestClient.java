@@ -10,9 +10,10 @@ import org.amv.access.client.android.model.GetAccessCertificatesResponseDto;
 import org.amv.access.config.SqliteTestDatabaseConfig;
 import org.amv.access.demo.DemoService;
 import org.amv.access.demo.DeviceWithKeys;
-import org.amv.access.demo.NonceAuthHelper;
 import org.amv.access.model.ApplicationEntity;
 import org.amv.access.model.DeviceEntity;
+import org.amv.access.spi.highmobility.NonceAuthenticationService;
+import org.amv.access.spi.highmobility.NonceAuthenticationServiceImpl;
 import org.amv.highmobility.cryptotool.Cryptotool;
 import org.junit.Assert;
 import org.junit.Before;
@@ -51,12 +52,12 @@ public class AccessCertificateCtrlWithAndroidRestClient {
     private ApplicationEntity application;
 
     private DeviceWithKeys deviceWithKeys;
-    private NonceAuthHelper nonceAuthHelper;
+    private NonceAuthenticationService nonceAuthService;
     private AccessCertClient accessCertClient;
 
     @Before
     public void setUp() {
-        this.nonceAuthHelper = new NonceAuthHelper(cryptotool);
+        this.nonceAuthService = new NonceAuthenticationServiceImpl(cryptotool);
         this.application = demoService.getOrCreateDemoApplication();
 
         this.deviceWithKeys = demoService.createDemoDeviceWithKeys(this.application);
@@ -97,7 +98,7 @@ public class AccessCertificateCtrlWithAndroidRestClient {
     }
 
     private GetAccessCertificatesResponseDto executeFetchAccessCertificateRequest(DeviceWithKeys deviceWithKeys) {
-        NonceAuthentication nonceAuthentication = nonceAuthHelper
+        NonceAuthentication nonceAuthentication = nonceAuthService
                 .createNonceAuthentication(deviceWithKeys.getKeys());
 
         return accessCertClient.fetchAccessCertificates(
