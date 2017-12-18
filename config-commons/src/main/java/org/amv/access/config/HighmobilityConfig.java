@@ -1,6 +1,7 @@
 package org.amv.access.config;
 
 import org.amv.access.spi.highmobility.HighmobilityModule;
+import org.amv.access.spi.highmobility.NonceAuthenticationServiceImpl;
 import org.amv.access.spi.highmobility.SignatureService;
 import org.amv.access.spi.highmobility.SignatureServiceImpl;
 import org.amv.highmobility.cryptotool.*;

@@ -7,7 +7,7 @@ import feign.RequestLine;
 import org.amv.access.client.model.CreateAccessCertificateRequestDto;
 import org.amv.access.client.model.CreateAccessCertificateResponseDto;
 import org.amv.access.client.model.GetAccessCertificatesResponseDto;
-import org.amv.access.client.model.UpdateAccessCertificateSignatureRequestDto;
+import org.amv.access.client.model.UpdateAccessCertificateRequestDto;
 
 import static com.google.common.net.HttpHeaders.CONTENT_TYPE;
 
@@ -51,7 +51,7 @@ public interface AccessCertClient extends AccessApiClient {
             @Param("signedNonce") String signedNonce,
             @Param("issuerUuid") String issuerUuid,
             @Param("accessCertificateId") String accessCertificateId,
-            UpdateAccessCertificateSignatureRequestDto body);
+            UpdateAccessCertificateRequestDto body);
 
     @Headers({
             MoreHttpHeaders.AMV_NONCE + ": " + "{nonce}",

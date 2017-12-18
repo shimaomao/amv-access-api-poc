@@ -16,7 +16,7 @@ public interface AccessCertificateService {
 
     Mono<AccessCertificateResource> createAccessCertificate(IssuerNonceAuthentication auth, CreateAccessCertificateContext request);
 
-    Mono<Boolean> addAccessCertificateSignatures(IssuerNonceAuthentication auth, AddAccessCertificateSignaturesContext request);
+    Mono<Boolean> addAccessCertificateSignatures(IssuerNonceAuthentication auth, UpdateAccessCertificateSignaturesContext request);
 
     Mono<Boolean> revokeAccessCertificate(IssuerNonceAuthentication nonceAuthentication, RevokeAccessCertificateContext request);
 
@@ -35,13 +35,17 @@ public interface AccessCertificateService {
 
     @Value
     @Builder(builderClassName = "Builder")
-    class AddAccessCertificateSignaturesContext {
+    class UpdateAccessCertificateSignaturesContext {
         @NonNull
         private UUID accessCertificateId;
         @NonNull
         private String vehicleAccessCertificateSignatureBase64;
         @NonNull
+        private String signedVehicleAccessCertificateBase64;
+        @NonNull
         private String deviceAccessCertificateSignatureBase64;
+        @NonNull
+        private String signedDeviceAccessCertificateBase64;
     }
 
 

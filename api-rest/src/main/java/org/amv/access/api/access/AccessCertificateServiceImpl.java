@@ -38,8 +38,6 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import static java.util.Objects.requireNonNull;
-import static org.amv.access.util.MoreBase64.decodeBase64AsHex;
-import static org.amv.access.util.MoreBase64.encodeHexAsBase64;
 
 @Slf4j
 public class AccessCertificateServiceImpl implements AccessCertificateService {
@@ -208,7 +206,7 @@ public class AccessCertificateServiceImpl implements AccessCertificateService {
 
     @Override
     public Mono<Boolean> addAccessCertificateSignatures(IssuerNonceAuthentication nonceAuthentication,
-                                                        AddAccessCertificateSignaturesContext context) {
+                                                        UpdateAccessCertificateSignaturesContext context) {
         requireNonNull(nonceAuthentication, "`nonceAuthentication` must not be null");
         requireNonNull(context, "`context` must not be null");
 
@@ -236,19 +234,11 @@ public class AccessCertificateServiceImpl implements AccessCertificateService {
                 context.getDeviceAccessCertificateSignatureBase64(),
                 "device access certificate signature is invalid");
 
-        String signedVehicleAccessCertBase64 = encodeHexAsBase64(
-                decodeBase64AsHex(accessCertificate.getVehicleAccessCertificateBase64()) +
-                        decodeBase64AsHex(context.getVehicleAccessCertificateSignatureBase64()));
-
-        String signedDeviceAccessCertBase64 = encodeHexAsBase64(
-                decodeBase64AsHex(accessCertificate.getDeviceAccessCertificateBase64()) +
-                        decodeBase64AsHex(context.getDeviceAccessCertificateSignatureBase64()));
-
         AccessCertificateEntity updatedAccessCertificateWithSignatures = accessCertificate.toBuilder()
                 .vehicleAccessCertificateSignatureBase64(context.getVehicleAccessCertificateSignatureBase64())
-                .signedVehicleAccessCertificateBase64(signedVehicleAccessCertBase64)
+                .signedVehicleAccessCertificateBase64(context.getSignedVehicleAccessCertificateBase64())
                 .deviceAccessCertificateSignatureBase64(context.getDeviceAccessCertificateSignatureBase64())
-                .signedDeviceAccessCertificateBase64(signedDeviceAccessCertBase64)
+                .signedDeviceAccessCertificateBase64(context.getSignedDeviceAccessCertificateBase64())
                 .build();
 
         accessCertificateRepository.save(updatedAccessCertificateWithSignatures);

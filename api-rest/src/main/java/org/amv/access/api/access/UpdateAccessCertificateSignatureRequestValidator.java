@@ -4,15 +4,10 @@ import lombok.Builder;
 import lombok.NonNull;
 import lombok.Value;
 import lombok.extern.slf4j.Slf4j;
-import org.amv.access.client.model.CreateAccessCertificateRequestDto;
-import org.amv.access.client.model.UpdateAccessCertificateSignatureRequestDto;
+import org.amv.access.client.model.UpdateAccessCertificateRequestDto;
 import org.amv.access.model.IssuerEntity;
 import org.springframework.validation.Errors;
-import org.springframework.validation.ValidationUtils;
 import org.springframework.validation.Validator;
-
-import java.time.LocalDateTime;
-import java.time.ZoneOffset;
 
 @Slf4j
 public class UpdateAccessCertificateSignatureRequestValidator implements Validator {
@@ -22,7 +17,7 @@ public class UpdateAccessCertificateSignatureRequestValidator implements Validat
         @NonNull
         private IssuerEntity issuerEntity;
         @NonNull
-        private UpdateAccessCertificateSignatureRequestDto request;
+        private UpdateAccessCertificateRequestDto request;
     }
 
     @Override

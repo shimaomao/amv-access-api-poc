@@ -8,9 +8,9 @@ import org.amv.access.auth.IssuerNonceAuthentication;
 import org.amv.access.auth.IssuerNonceAuthenticationImpl;
 import org.amv.access.auth.NonceAuthentication;
 import org.amv.access.certificate.AccessCertificateService;
-import org.amv.access.certificate.AccessCertificateService.AddAccessCertificateSignaturesContext;
 import org.amv.access.certificate.AccessCertificateService.CreateAccessCertificateContext;
 import org.amv.access.certificate.AccessCertificateService.RevokeAccessCertificateContext;
+import org.amv.access.certificate.AccessCertificateService.UpdateAccessCertificateSignaturesContext;
 import org.amv.access.certificate.SignedAccessCertificateResource;
 import org.amv.access.client.MoreHttpHeaders;
 import org.amv.access.client.model.*;
@@ -251,12 +251,12 @@ public class AccessCertificateCtrl {
             @ApiResponse(code = OK_200, message = "Success", response = Boolean.class)
     })
     @ResponseStatus(HttpStatus.OK)
-    @PrometheusTimeMethod(name = "access_certificate_ctrl_create_access_certificate", help = "")
-    public ResponseEntity<Boolean> addAccessCertificateSignature(
+    @PrometheusTimeMethod(name = "access_certificate_ctrl_update_access_certificate_signatures", help = "")
+    public ResponseEntity<Boolean> updateAccessCertificateSignatures(
             NonceAuthentication nonceAuthentication,
             @ApiParam(required = true) @PathVariable("issuerUuid") String issuerUuid,
             @ApiParam(required = true) @PathVariable("accessCertificateId") UUID accessCertificateId,
-            @ApiParam(required = true) @RequestBody UpdateAccessCertificateSignatureRequestDto request) {
+            @ApiParam(required = true) @RequestBody UpdateAccessCertificateRequestDto request) {
         requireNonNull(issuerUuid);
         requireNonNull(accessCertificateId);
         requireNonNull(request);
@@ -266,10 +266,12 @@ public class AccessCertificateCtrl {
                 .issuerUuid(issuerUuid)
                 .build();
 
-        AddAccessCertificateSignaturesContext context = AddAccessCertificateSignaturesContext.builder()
+        UpdateAccessCertificateSignaturesContext context = UpdateAccessCertificateSignaturesContext.builder()
                 .accessCertificateId(accessCertificateId)
                 .vehicleAccessCertificateSignatureBase64(request.getVehicleAccessCertificateSignatureBase64())
+                .signedVehicleAccessCertificateBase64(request.getSignedVehicleAccessCertificateBase64())
                 .deviceAccessCertificateSignatureBase64(request.getDeviceAccessCertificateSignatureBase64())
+                .signedDeviceAccessCertificateBase64(request.getSignedDeviceAccessCertificateBase64())
                 .build();
 
         if (log.isDebugEnabled()) {
