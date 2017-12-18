@@ -45,7 +45,7 @@ public class HighmobilityConfig {
 
             @Override
             public Duration getCommandTimeout() {
-                return Duration.ofSeconds(10L);
+                return Duration.ofSeconds(15L);
             }
         };
     }

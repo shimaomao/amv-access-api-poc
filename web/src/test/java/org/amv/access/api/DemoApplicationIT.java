@@ -1,6 +1,7 @@
 package org.amv.access.api;
 
 import org.amv.access.AmvAccessApplication;
+import org.amv.access.auth.NonceAuthentication;
 import org.amv.access.client.AccessCertClient;
 import org.amv.access.client.Clients;
 import org.amv.access.client.DeviceCertClient;
@@ -9,11 +10,12 @@ import org.amv.access.core.Issuer;
 import org.amv.access.database.EmbeddedMySqlConfig;
 import org.amv.access.demo.DemoService;
 import org.amv.access.model.ApplicationEntity;
+import org.amv.access.spi.highmobility.NonceAuthenticationService;
+import org.amv.access.spi.highmobility.NonceAuthenticationServiceImpl;
 import org.amv.access.util.MoreHex;
 import org.amv.access.util.OperationSystemHelper;
 import org.amv.highmobility.cryptotool.Cryptotool;
 import org.amv.highmobility.cryptotool.CryptotoolUtils;
-import org.apache.commons.lang3.RandomUtils;
 import org.junit.Assume;
 import org.junit.Before;
 import org.junit.BeforeClass;
@@ -44,6 +46,7 @@ import static org.junit.Assert.assertThat;
 )
 @ActiveProfiles("embedded-mysql-application-it")
 public class DemoApplicationIT {
+
     @BeforeClass
     public static void skipWindowsOs() {
         Assume.assumeFalse(OperationSystemHelper.isWindows());
@@ -70,8 +73,11 @@ public class DemoApplicationIT {
 
     private ApplicationEntity application;
 
+    private NonceAuthenticationService nonceAuthService;
+
     @Before
     public void setUp() {
+        this.nonceAuthService = new NonceAuthenticationServiceImpl(cryptotool);
         this.application = demoService.getOrCreateDemoApplication();
 
         String baseUrl = String.format("http://localhost:%d/%s", port, servletContext.getContextPath());
@@ -123,31 +129,13 @@ public class DemoApplicationIT {
         assertThat(MoreHex.isHex(deviceSerialNumberInHex), is(true));
 
         // ---- fetch access certificate
-        String nonceBase64 = generateNonceWithRandomLengthBase64();
-        String nonceSignatureBase64 = createNonceSignatureBase64(keys, CryptotoolUtils.decodeBase64AsHex(nonceBase64));
+        NonceAuthentication nonceAuthentication = nonceAuthService.createNonceAuthentication(keys);
 
         GetAccessCertificatesResponseDto accessCertResponse = this.accessCertClient
-                .fetchAccessCertificates(nonceBase64, nonceSignatureBase64, deviceSerialNumberInHex)
+                .fetchAccessCertificates(nonceAuthentication.getNonceBase64(), nonceAuthentication.getNonceSignatureBase64(), deviceSerialNumberInHex)
                 .execute();
 
         List<AccessCertificateDto> accessCertificates = accessCertResponse.getAccessCertificates();
         assertThat(accessCertificates, hasSize(1));
-    }
-
-
-    private String generateNonceWithRandomLengthBase64() {
-        return generateNonceBase64(RandomUtils.nextInt(8, 32));
-    }
-
-    private String generateNonceBase64(int numberOfBytes) {
-        return CryptotoolUtils.SecureRandomUtils.generateRandomHexString(numberOfBytes);
-    }
-
-    private String createNonceSignatureBase64(Cryptotool.Keys keys, String nonce) {
-        return Optional.of(cryptotool.generateSignature(nonce, keys.getPrivateKey()))
-                .map(Mono::block)
-                .map(Cryptotool.Signature::getSignature)
-                .map(CryptotoolUtils::encodeHexAsBase64)
-                .orElseThrow(IllegalStateException::new);
     }
 }
