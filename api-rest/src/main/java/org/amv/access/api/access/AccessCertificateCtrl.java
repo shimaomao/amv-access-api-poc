@@ -18,8 +18,14 @@ import org.amv.access.client.model.CreateAccessCertificateResponseDto.AccessCert
 import org.amv.access.core.AccessCertificate;
 import org.amv.access.core.SignedAccessCertificate;
 import org.amv.access.demo.DemoService;
+import org.amv.access.demo.IssuerWithKeys;
 import org.amv.access.exception.AmvAccessRuntimeException;
 import org.amv.access.exception.BadRequestException;
+import org.amv.access.exception.NotFoundException;
+import org.amv.access.issuer.IssuerService;
+import org.amv.access.model.IssuerEntity;
+import org.amv.access.util.MoreBase64;
+import org.amv.highmobility.cryptotool.CryptotoolImpl;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.env.Environment;
 import org.springframework.http.HttpStatus;
@@ -43,6 +49,7 @@ public class AccessCertificateCtrl {
 
     private final Environment environment;
     private final DemoService demoService;
+    private final IssuerService issuerService;
     private final CreateAccessCertificateRequestValidator createAccessCertificateRequestValidator;
     private final AccessCertificateService accessCertificateService;
 
@@ -50,10 +57,12 @@ public class AccessCertificateCtrl {
     public AccessCertificateCtrl(
             Environment environment,
             DemoService demoService,
+            IssuerService issuerService,
             CreateAccessCertificateRequestValidator createAccessCertificateRequestValidator,
             AccessCertificateService accessCertificateService) {
         this.environment = requireNonNull(environment);
         this.demoService = requireNonNull(demoService);
+        this.issuerService = requireNonNull(issuerService);
         this.createAccessCertificateRequestValidator = requireNonNull(createAccessCertificateRequestValidator);
         this.accessCertificateService = requireNonNull(accessCertificateService);
     }
@@ -293,12 +302,11 @@ public class AccessCertificateCtrl {
      * Create an access certificate without being authorized.
      * This method throws an error in production environments.
      *
-     * @param deviceSerialNumber The serial number of the device
-     * @param request            The payload
+     * @param request The payload
      * @return true if the certificate has been created successfully
      */
 
-    @PostMapping("/device/{deviceSerialNumber}/access_certificates")
+    @PostMapping("/demo/access_certificates")
     @ApiOperation(
             value = "Create an access certificate by providing an issuers private key - this endpoint is disabled in production mode.",
             produces = MediaType.APPLICATION_JSON_UTF8_VALUE,
@@ -310,7 +318,6 @@ public class AccessCertificateCtrl {
     @ResponseStatus(HttpStatus.OK)
     @PrometheusTimeMethod(name = "access_certificate_ctrl_create_access_certificate_demo", help = "")
     public ResponseEntity<Boolean> createAccessCertificateDemo(
-            @ApiParam(required = true) @PathVariable("deviceSerialNumber") String deviceSerialNumber,
             @ApiParam(required = true) @RequestBody DemoCreateAccessCertificateRequestDto request) {
 
         boolean enableUnauthorizedAccess = !environment.acceptsProfiles("production");
@@ -318,19 +325,13 @@ public class AccessCertificateCtrl {
             return ResponseEntity.status(HttpStatus.METHOD_NOT_ALLOWED).build();
         }
 
-        requireNonNull(deviceSerialNumber);
         requireNonNull(request);
-        CreateAccessCertificateRequestDto createAccessCertificateRequestDto =
-                requireNonNull(request.getRequest());
+        CreateAccessCertificateRequestDto createAccessCertificateRequestDto = requireNonNull(request.getRequest());
 
         log.info("Create demo access certificates with application {} for device {} and vehicle {}",
                 createAccessCertificateRequestDto.getAppId(),
                 createAccessCertificateRequestDto.getDeviceSerialNumber(),
                 createAccessCertificateRequestDto.getVehicleSerialNumber());
-
-        if (!deviceSerialNumber.equalsIgnoreCase(createAccessCertificateRequestDto.getDeviceSerialNumber())) {
-            throw new BadRequestException("Device serial numbers do not match");
-        }
 
         BindException errors = new BindException(createAccessCertificateRequestDto, "createAccessCertificateRequest");
         createAccessCertificateRequestValidator.validate(createAccessCertificateRequestDto, errors);
@@ -338,7 +339,16 @@ public class AccessCertificateCtrl {
             throw new BadRequestException(errors.getMessage());
         }
 
-        IssuerNonceAuthentication issuerNonceAuthentication = demoService.createDemoIssuerNonceAuthentication();
+        IssuerEntity issuerEntity = issuerService.findIssuerByUuid(UUID.fromString(request.getIssuerId()))
+                .orElseThrow(() -> new NotFoundException("IssuerEntity not found"));
+
+        IssuerNonceAuthentication issuerNonceAuthentication = demoService.createNonceAuthentication(IssuerWithKeys.builder()
+                .keys(CryptotoolImpl.KeysImpl.builder()
+                        .privateKey(MoreBase64.decodeBase64AsHex(request.getIssuerPrivateKeyBase64()))
+                        .publicKey(MoreBase64.decodeBase64AsHex(issuerEntity.getPublicKeyBase64()))
+                        .build())
+                .issuer(issuerEntity)
+                .build());
 
         CreateAccessCertificateContext createAccessCertificateContext = CreateAccessCertificateContext.builder()
                 .appId(createAccessCertificateRequestDto.getAppId().toLowerCase())
