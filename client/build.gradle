@@ -15,9 +15,11 @@ dependencies {
 
     compile "io.github.openfeign:feign-core:${feignVersion}"
     compile "io.github.openfeign:feign-okhttp:${feignVersion}"
-    compile "io.github.openfeign:feign-hystrix:${feignVersion}"
     compile "io.github.openfeign:feign-slf4j:${feignVersion}"
     compile "io.github.openfeign:feign-jackson:${feignVersion}"
+    compile("io.github.openfeign:feign-hystrix:${feignVersion}") {
+        exclude group: 'commons-logging', module: 'commons-logging'
+    }
 
     testCompile 'com.marvinformatics.feign:feign-mock:0.6'
 

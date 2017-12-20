@@ -4,7 +4,7 @@ dependencies {
     compile group: 'io.projectreactor', name: 'reactor-core', version: '3.0.7.RELEASE'
 
     compile "com.google.guava:guava:${guavaVersion}"
-    compile 'commons-codec:commons-codec:1.10'
+    compile "commons-codec:commons-codec:${commonsCodecVersion}"
 
 }
 
