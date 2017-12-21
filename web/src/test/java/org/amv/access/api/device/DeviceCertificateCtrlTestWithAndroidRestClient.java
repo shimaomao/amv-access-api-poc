@@ -75,7 +75,7 @@ public class DeviceCertificateCtrlTestWithAndroidRestClient {
         CreateDeviceCertificateRequestDto body = new CreateDeviceCertificateRequestDto();
         body.device_public_key = publicKeyBase64;
 
-        String appId = application.getAppId();
+        String appId = application.getAppId().toHex();
         String nonExistingApiKey = application.getApiKey() + "123";
 
         try {
@@ -106,7 +106,7 @@ public class DeviceCertificateCtrlTestWithAndroidRestClient {
         body.device_public_key = publicKeyBase64;
 
         CreateDeviceCertificateResponseDto response = this.deviceCertClient
-                .createDeviceCertificate(application.getAppId(), application.getApiKey(), body)
+                .createDeviceCertificate(application.getAppId().toHex(), application.getApiKey(), body)
                 .blockingSingle();
 
         assertThat(response, is(notNullValue()));
@@ -140,7 +140,7 @@ public class DeviceCertificateCtrlTestWithAndroidRestClient {
         String devicePublicKeyInHex = deviceCertificate.substring(50, deviceCertificate.length());
 
         assertThat(issuerNameInHex, is(issuer.getNameInHex()));
-        assertThat(applicationIdInHex, is(application.getAppId()));
+        assertThat(applicationIdInHex, is(application.getAppId().toHex()));
         assertThat(MoreHex.isHex(deviceSerialNumberInHex), is(true));
         assertThat(devicePublicKeyInHex, is(equalToIgnoringCase(keys.getPublicKey())));
     }

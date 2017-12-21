@@ -9,7 +9,9 @@ import lombok.Setter;
 import lombok.experimental.Tolerate;
 import org.amv.access.core.Device;
 import org.amv.access.core.Key;
+import org.amv.access.core.SerialNumber;
 import org.amv.access.core.impl.KeyImpl;
+import org.amv.access.core.impl.SerialNumberImpl;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
@@ -67,8 +69,8 @@ public class DeviceEntity implements Device {
     }
 
     @Override
-    public String getSerialNumber() {
-        return serialNumber;
+    public SerialNumber getSerialNumber() {
+        return SerialNumberImpl.fromHex(serialNumber);
     }
 
     @Override

@@ -3,7 +3,7 @@ package org.amv.access.core;
 public interface Device {
     String getName();
 
-    String getSerialNumber();
+    SerialNumber getSerialNumber();
 
     Key getPublicKey();
 }

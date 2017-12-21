@@ -84,7 +84,7 @@ public class AccessCertificateCtrlTest {
         ResponseEntity<ErrorResponseDto> responseEntity = restTemplate
                 .exchange("/api/v1/device/{deviceSerialNumber}/access_certificates",
                         HttpMethod.GET, entity, ErrorResponseDto.class,
-                        device.getSerialNumber());
+                        device.getSerialNumber().toHex());
 
         assertThat(responseEntity.getStatusCode(), is(HttpStatus.BAD_REQUEST));
 
@@ -112,7 +112,7 @@ public class AccessCertificateCtrlTest {
         ResponseEntity<ErrorResponseDto> responseEntity = restTemplate
                 .exchange("/api/v1/device/{deviceSerialNumber}/access_certificates",
                         HttpMethod.GET, entity, ErrorResponseDto.class,
-                        device.getSerialNumber());
+                        device.getSerialNumber().toHex());
 
         assertThat(responseEntity.getStatusCode(), is(HttpStatus.BAD_REQUEST));
 
@@ -155,7 +155,7 @@ public class AccessCertificateCtrlTest {
         ResponseEntity<ErrorResponseDto> responseEntity = restTemplate
                 .exchange("/api/v1/device/{deviceSerialNumber}/access_certificates",
                         HttpMethod.GET, entity, ErrorResponseDto.class,
-                        device.getSerialNumber());
+                        device.getSerialNumber().toHex());
 
         assertThat(responseEntity.getStatusCode(), is(HttpStatus.UNAUTHORIZED));
 
@@ -189,9 +189,9 @@ public class AccessCertificateCtrlTest {
         DeviceEntity device = deviceWithKeys.getDevice();
 
         CreateAccessCertificateRequestDto request = CreateAccessCertificateRequestDto.builder()
-                .appId(application.getAppId())
-                .deviceSerialNumber(device.getSerialNumber())
-                .vehicleSerialNumber(vehicle.getSerialNumber())
+                .appId(application.getAppId().toHex())
+                .deviceSerialNumber(device.getSerialNumber().toHex())
+                .vehicleSerialNumber(vehicle.getSerialNumber().toHex())
                 .build();
 
         ResponseEntity<CreateAccessCertificateResponseDto> createAccessCertificateResponse =
@@ -228,9 +228,9 @@ public class AccessCertificateCtrlTest {
         DeviceEntity device = deviceWithKeys.getDevice();
 
         CreateAccessCertificateRequestDto postBody = CreateAccessCertificateRequestDto.builder()
-                .appId(application.getAppId())
-                .deviceSerialNumber(device.getSerialNumber())
-                .vehicleSerialNumber(vehicle.getSerialNumber())
+                .appId(application.getAppId().toHex())
+                .deviceSerialNumber(device.getSerialNumber().toHex())
+                .vehicleSerialNumber(vehicle.getSerialNumber().toHex())
                 .build();
 
         ResponseEntity<CreateAccessCertificateResponseDto> createAccessCertificateResponse =
@@ -417,7 +417,7 @@ public class AccessCertificateCtrlTest {
         ResponseEntity<GetAccessCertificatesResponseDto> getAccessCertificateResponse = restTemplate
                 .exchange("/api/v1/device/{deviceSerialNumber}/access_certificates",
                         HttpMethod.GET, fetchEntity, GetAccessCertificatesResponseDto.class,
-                        deviceWithKeys.getDevice().getSerialNumber());
+                        deviceWithKeys.getDevice().getSerialNumber().toHex());
 
         return getAccessCertificateResponse;
     }

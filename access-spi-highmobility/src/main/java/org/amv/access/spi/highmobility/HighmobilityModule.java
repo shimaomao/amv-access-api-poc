@@ -61,8 +61,8 @@ public class HighmobilityModule implements AmvAccessModuleSpi {
 
         Cryptotool.DeviceCertificate hmDeviceCertificate = cryptotool
                 .createDeviceCertificate(issuer.getNameInHex(),
-                        application.getAppId(),
-                        device.getSerialNumber(),
+                        application.getAppId().toHex(),
+                        device.getSerialNumber().toHex(),
                         device.getPublicKey().toHex())
                 .block();
 
@@ -101,17 +101,17 @@ public class HighmobilityModule implements AmvAccessModuleSpi {
         Instant validUntil = requireNonNull(accessCertificateRequest.getValidUntil());
 
         Cryptotool.AccessCertificate deviceAccessCertificate = cryptotool.createAccessCertificate(
-                vehicle.getSerialNumber(),
+                vehicle.getSerialNumber().toHex(),
                 vehicle.getPublicKey().toHex(),
-                device.getSerialNumber(),
+                device.getSerialNumber().toHex(),
                 LocalDateTime.ofInstant(validFrom, ZoneOffset.UTC),
                 LocalDateTime.ofInstant(validUntil, ZoneOffset.UTC),
                 permissions.getPermissions()).block();
 
         Cryptotool.AccessCertificate vehicleAccessCertificate = cryptotool.createAccessCertificate(
-                device.getSerialNumber(),
+                device.getSerialNumber().toHex(),
                 device.getPublicKey().toHex(),
-                vehicle.getSerialNumber(),
+                vehicle.getSerialNumber().toHex(),
                 LocalDateTime.ofInstant(validFrom, ZoneOffset.UTC),
                 LocalDateTime.ofInstant(validUntil, ZoneOffset.UTC),
                 permissions.getPermissions()).block();

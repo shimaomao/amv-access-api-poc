@@ -8,6 +8,8 @@ import lombok.Data;
 import lombok.Setter;
 import lombok.experimental.Tolerate;
 import org.amv.access.core.Application;
+import org.amv.access.core.SerialNumber;
+import org.amv.access.core.impl.SerialNumberImpl;
 import org.springframework.data.annotation.CreatedDate;
 
 import javax.persistence.*;
@@ -59,6 +61,11 @@ public class ApplicationEntity implements Application {
     @Tolerate
     protected ApplicationEntity() {
 
+    }
+
+    @Override
+    public SerialNumber getAppId() {
+        return SerialNumberImpl.fromHex(appId);
     }
 
     @Override

@@ -100,7 +100,7 @@ public class DemoApplicationIT {
 
         // ---- create device certificate
         CreateDeviceCertificateResponseDto deviceCertResponse = this.deviceCertClient
-                .createDeviceCertificate(application.getAppId(), application.getApiKey(), body)
+                .createDeviceCertificate(application.getAppId().toHex(), application.getApiKey(), body)
                 .execute();
 
         // ---- validate device certificate

@@ -133,7 +133,7 @@ public class DemoServiceImpl implements DemoService {
                 .build();
 
         CreateDeviceCertificateContext deviceCertificateRequest = CreateDeviceCertificateContext.builder()
-                .appId(applicationEntity.getAppId())
+                .appId(applicationEntity.getAppId().toHex())
                 .deviceName("DEMO")
                 .devicePublicKeyBase64(publicKey.toBase64())
                 .build();
@@ -145,7 +145,7 @@ public class DemoServiceImpl implements DemoService {
 
         Device demoDevice = deviceCertificate.getDevice();
 
-        DeviceEntity demoDeviceEntity = deviceRepository.findBySerialNumber(demoDevice.getSerialNumber())
+        DeviceEntity demoDeviceEntity = deviceRepository.findBySerialNumber(demoDevice.getSerialNumber().toHex())
                 .orElseThrow(IllegalStateException::new);
 
         log.info("Created device certificate for device {}: {}", demoDevice.getSerialNumber(), deviceCertificate);
@@ -161,8 +161,8 @@ public class DemoServiceImpl implements DemoService {
     public Mono<SignedAccessCertificateResource> createDemoAccessCertificateIfNecessary(DeviceCertificate deviceCertificate) {
         ApplicationEntity demoApplication = this.getOrCreateDemoApplication();
 
-        boolean isDeviceCertificateForDemoApplication = demoApplication.getAppId()
-                .equals(deviceCertificate.getApplication().getAppId());
+        boolean isDeviceCertificateForDemoApplication = demoApplication.getAppId().toHex()
+                .equals(deviceCertificate.getApplication().getAppId().toHex());
 
         if (!isDeviceCertificateForDemoApplication) {
             log.debug("Skip creating demo access certificate for device {}: Device Certificate is not issued for demo application",
@@ -183,9 +183,9 @@ public class DemoServiceImpl implements DemoService {
             IssuerNonceAuthentication issuerNonceAuthentication = createDemoIssuerNonceAuthentication();
 
             CreateAccessCertificateContext createAccessCertificateContext = CreateAccessCertificateContext.builder()
-                    .appId(demoApplication.getAppId())
-                    .deviceSerialNumber(device.getSerialNumber())
-                    .vehicleSerialNumber(demoVehicle.getSerialNumber())
+                    .appId(demoApplication.getAppId().toHex())
+                    .deviceSerialNumber(device.getSerialNumber().toHex())
+                    .vehicleSerialNumber(demoVehicle.getSerialNumber().toHex())
                     .validityStart(LocalDateTime.now().minusDays(2).toInstant(ZoneOffset.UTC))
                     .validityEnd(LocalDateTime.now().plusYears(2).toInstant(ZoneOffset.UTC))
                     .build();

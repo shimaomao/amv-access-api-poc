@@ -79,7 +79,7 @@ public class DeviceCertificateServiceImpl implements DeviceCertificateService {
     }
 
     private ApplicationEntity findApplicationOrThrow(ApplicationAuthentication auth) {
-        ApplicationEntity application = applicationRepository.findOneByAppId(auth.getApplication().getAppId())
+        ApplicationEntity application = applicationRepository.findOneByAppId(auth.getApplication().getAppId().toHex())
                 .orElseThrow(() -> new NotFoundException("ApplicationEntity with given appId not found"));
 
         if (!application.isEnabled()) {

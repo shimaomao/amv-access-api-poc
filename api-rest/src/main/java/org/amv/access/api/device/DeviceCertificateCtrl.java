@@ -67,7 +67,7 @@ public class DeviceCertificateCtrl {
         requireNonNull(requestBody.getDevicePublicKey());
 
         CreateDeviceCertificateContext createDeviceCertificateContext = CreateDeviceCertificateContext.builder()
-                .appId(auth.getApplication().getAppId())
+                .appId(auth.getApplication().getAppId().toHex())
                 .devicePublicKeyBase64(requestBody.getDevicePublicKey())
                 .deviceName(RandomStringUtils.randomAlphabetic(16))
                 .build();

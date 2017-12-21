@@ -72,7 +72,7 @@ public class AccessCertificateCtrlWithAndroidRestClient {
 
         try {
             GetAccessCertificatesResponseDto execute = accessCertClient
-                    .fetchAccessCertificates("", "", device.getSerialNumber())
+                    .fetchAccessCertificates("", "", device.getSerialNumber().toHex())
                     .blockingSingle();
 
             Assert.fail("Should have thrown exception.");
@@ -104,7 +104,7 @@ public class AccessCertificateCtrlWithAndroidRestClient {
         return accessCertClient.fetchAccessCertificates(
                 nonceAuthentication.getNonceBase64(),
                 nonceAuthentication.getNonceSignatureBase64(),
-                deviceWithKeys.getDevice().getSerialNumber()
+                deviceWithKeys.getDevice().getSerialNumber().toHex()
         ).blockingSingle();
     }
 }

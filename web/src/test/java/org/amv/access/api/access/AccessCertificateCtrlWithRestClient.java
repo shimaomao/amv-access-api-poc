@@ -90,7 +90,7 @@ public class AccessCertificateCtrlWithRestClient {
 
         try {
             GetAccessCertificatesResponseDto execute = accessCertClient
-                    .fetchAccessCertificates("", "", device.getSerialNumber())
+                    .fetchAccessCertificates("", "", device.getSerialNumber().toHex())
                     .execute();
 
             Assert.fail("Should have thrown exception.");
@@ -115,9 +115,9 @@ public class AccessCertificateCtrlWithRestClient {
         DeviceEntity device = deviceWithKeys.getDevice();
 
         CreateAccessCertificateRequestDto request = CreateAccessCertificateRequestDto.builder()
-                .appId(application.getAppId())
-                .deviceSerialNumber(device.getSerialNumber())
-                .vehicleSerialNumber(vehicle.getSerialNumber())
+                .appId(application.getAppId().toHex())
+                .deviceSerialNumber(device.getSerialNumber().toHex())
+                .vehicleSerialNumber(vehicle.getSerialNumber().toHex())
                 .build();
 
         CreateAccessCertificateResponseDto response = executeCreateAccessCertificateRequest(demoIssuer, request);
@@ -139,9 +139,9 @@ public class AccessCertificateCtrlWithRestClient {
         DeviceEntity device = deviceWithKeys.getDevice();
 
         CreateAccessCertificateRequestDto createRequest = CreateAccessCertificateRequestDto.builder()
-                .appId(application.getAppId())
-                .deviceSerialNumber(device.getSerialNumber())
-                .vehicleSerialNumber(vehicle.getSerialNumber())
+                .appId(application.getAppId().toHex())
+                .deviceSerialNumber(device.getSerialNumber().toHex())
+                .vehicleSerialNumber(vehicle.getSerialNumber().toHex())
                 .build();
 
         CreateAccessCertificateResponseDto createResponse = executeCreateAccessCertificateRequest(demoIssuer, createRequest);
@@ -213,7 +213,7 @@ public class AccessCertificateCtrlWithRestClient {
         return accessCertClient.fetchAccessCertificates(
                 nonceAuthentication.getNonceBase64(),
                 nonceAuthentication.getNonceSignatureBase64(),
-                deviceWithKeys.getDevice().getSerialNumber()
+                deviceWithKeys.getDevice().getSerialNumber().toHex()
         ).execute();
     }
 
