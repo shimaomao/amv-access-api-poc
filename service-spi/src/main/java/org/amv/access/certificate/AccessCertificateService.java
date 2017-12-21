@@ -5,6 +5,7 @@ import lombok.NonNull;
 import lombok.Value;
 import org.amv.access.auth.DeviceNonceAuthentication;
 import org.amv.access.auth.IssuerNonceAuthentication;
+import org.amv.access.core.Key;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
@@ -20,11 +21,11 @@ public interface AccessCertificateService {
 
     Mono<Boolean> revokeAccessCertificate(IssuerNonceAuthentication nonceAuthentication, RevokeAccessCertificateContext request);
 
-    Mono<SignedAccessCertificateResource> signAccessCertificate(AccessCertificateResource accessCertificateResource, String privateKeyBase64);
+    Mono<SignedAccessCertificateResource> signAccessCertificate(AccessCertificateResource accessCertificateResource, Key privateKey);
 
-    Mono<String> createSignature(String messageBase64, String privateKeyBase64);
+    Mono<String> createSignature(String messageBase64, Key privateKey);
 
-    Mono<Boolean> verifySignature(String messageBase64, String signatureBase64, String publicKeyBase64);
+    Mono<Boolean> verifySignature(String messageBase64, String signatureBase64, Key publicKey);
 
     @Value
     @Builder(builderClassName = "Builder")

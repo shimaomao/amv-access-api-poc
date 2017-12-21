@@ -8,6 +8,8 @@ import lombok.Data;
 import lombok.Setter;
 import lombok.experimental.Tolerate;
 import org.amv.access.core.Issuer;
+import org.amv.access.core.Key;
+import org.amv.access.core.impl.KeyImpl;
 import org.springframework.data.annotation.CreatedDate;
 
 import javax.persistence.*;
@@ -62,19 +64,23 @@ public class IssuerEntity implements Issuer {
 
     }
 
+    public Optional<String> getPrivateKeyBase64() {
+        return Optional.ofNullable(privateKeyBase64);
+    }
+
     @Override
     public String getName() {
         return name;
     }
 
     @Override
-    public String getPublicKeyBase64() {
-        return publicKeyBase64;
+    public Key getPublicKey() {
+        return KeyImpl.fromBase64(publicKeyBase64);
     }
 
     @Override
-    public Optional<String> getPrivateKeyBase64() {
-        return Optional.ofNullable(privateKeyBase64);
+    public Optional<Key> getPrivateKey() {
+        return getPrivateKeyBase64().map(KeyImpl::fromBase64);
     }
 
     @Override

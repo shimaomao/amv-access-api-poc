@@ -8,6 +8,8 @@ import lombok.Data;
 import lombok.Setter;
 import lombok.experimental.Tolerate;
 import org.amv.access.core.Device;
+import org.amv.access.core.Key;
+import org.amv.access.core.impl.KeyImpl;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
@@ -70,8 +72,8 @@ public class DeviceEntity implements Device {
     }
 
     @Override
-    public String getPublicKeyBase64() {
-        return publicKeyBase64;
+    public Key getPublicKey() {
+        return KeyImpl.fromBase64(publicKeyBase64);
     }
 
     @Override

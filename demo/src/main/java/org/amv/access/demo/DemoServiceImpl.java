@@ -14,13 +14,12 @@ import org.amv.access.certificate.DeviceCertificateService.CreateDeviceCertifica
 import org.amv.access.certificate.SignedAccessCertificateResource;
 import org.amv.access.core.Device;
 import org.amv.access.core.DeviceCertificate;
+import org.amv.access.core.Key;
+import org.amv.access.core.impl.KeyImpl;
 import org.amv.access.model.*;
 import org.amv.access.spi.highmobility.NonceAuthenticationService;
 import org.amv.access.spi.highmobility.NonceAuthenticationServiceImpl;
-import org.amv.access.util.MoreBase64;
 import org.amv.highmobility.cryptotool.Cryptotool;
-import org.amv.highmobility.cryptotool.CryptotoolImpl;
-import org.amv.highmobility.cryptotool.CryptotoolUtils;
 import org.amv.highmobility.cryptotool.CryptotoolUtils.SecureRandomUtils;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -126,7 +125,8 @@ public class DemoServiceImpl implements DemoService {
     public DeviceWithKeys createDemoDeviceWithKeys(ApplicationEntity applicationEntity) {
         Cryptotool.Keys keys = cryptotool.generateKeys().block();
 
-        String publicKeyBase64 = encodeHexAsBase64(keys.getPublicKey());
+        Key publicKey = KeyImpl.fromHex(keys.getPublicKey());
+        Key privateKey = KeyImpl.fromHex(keys.getPrivateKey());
 
         ApplicationAuthenticationImpl appAuth = ApplicationAuthenticationImpl.builder()
                 .application(applicationEntity)
@@ -135,7 +135,7 @@ public class DemoServiceImpl implements DemoService {
         CreateDeviceCertificateContext deviceCertificateRequest = CreateDeviceCertificateContext.builder()
                 .appId(applicationEntity.getAppId())
                 .deviceName("DEMO")
-                .devicePublicKeyBase64(publicKeyBase64)
+                .devicePublicKeyBase64(publicKey.toBase64())
                 .build();
 
         DeviceCertificate deviceCertificate = Optional.ofNullable(deviceCertificateService)
@@ -152,7 +152,8 @@ public class DemoServiceImpl implements DemoService {
 
         return DeviceWithKeys.builder()
                 .device(demoDeviceEntity)
-                .keys(keys)
+                .publicKey(publicKey)
+                .privateKey(privateKey)
                 .build();
     }
 
@@ -173,7 +174,7 @@ public class DemoServiceImpl implements DemoService {
             VehicleEntity demoVehicle = this.getOrCreateDemoVehicle();
             Device device = deviceCertificate.getDevice();
 
-            String issuerPrivateKeyBase64 = MoreBase64.encodeHexAsBase64(issuerWithKeys.getKeys().getPrivateKey());
+            //String issuerPrivateKeyBase64 = MoreBase64.encodeHexAsBase64(issuerWithKeys.getPrivateKey());
 
             log.info("Creating demo access certificate for device {} and vehicle {}",
                     device.getSerialNumber(),
@@ -188,10 +189,10 @@ public class DemoServiceImpl implements DemoService {
                     .validityStart(LocalDateTime.now().minusDays(2).toInstant(ZoneOffset.UTC))
                     .validityEnd(LocalDateTime.now().plusYears(2).toInstant(ZoneOffset.UTC))
                     .build();
-            
+
             Optional<SignedAccessCertificateResource> signedAccessCertificateResource = Optional.ofNullable(accessCertificateService
                     .createAccessCertificate(issuerNonceAuthentication, createAccessCertificateContext)
-                    .then(resource -> accessCertificateService.signAccessCertificate(resource, issuerPrivateKeyBase64)))
+                    .then(resource -> accessCertificateService.signAccessCertificate(resource, issuerWithKeys.getPrivateKey())))
                     .map(Mono::block);
 
             if (!signedAccessCertificateResource.isPresent()) {
@@ -219,7 +220,7 @@ public class DemoServiceImpl implements DemoService {
 
     @Override
     public IssuerNonceAuthentication createNonceAuthentication(IssuerWithKeys issuerWithKeys) {
-        NonceAuthentication nonceAuthentication = nonceAuthService.createNonceAuthentication(issuerWithKeys.getKeys());
+        NonceAuthentication nonceAuthentication = nonceAuthService.createNonceAuthentication(issuerWithKeys.getPrivateKey());
         IssuerNonceAuthentication issuerNonceAuthentication = IssuerNonceAuthenticationImpl.builder()
                 .issuerUuid(issuerWithKeys.getIssuer().getUuid())
                 .nonceAuthentication(nonceAuthentication)
@@ -236,15 +237,13 @@ public class DemoServiceImpl implements DemoService {
                 .findFirst()
                 .orElseGet(() -> this.createDemoIssuerWithKeys().getIssuer());
 
-        CryptotoolImpl.KeysImpl demoIssuerKeys = CryptotoolImpl.KeysImpl.builder()
-                .publicKey(CryptotoolUtils.decodeBase64AsHex(demoIssuer.getPublicKeyBase64()))
-                .privateKey(CryptotoolUtils.decodeBase64AsHex(demoIssuer.getPrivateKeyBase64()
-                        .orElseThrow(IllegalArgumentException::new)))
-                .build();
+        String privateKeyBase64 = demoIssuer.getPrivateKeyBase64()
+                .orElseThrow(IllegalArgumentException::new);
 
         return IssuerWithKeys.builder()
                 .issuer(demoIssuer)
-                .keys(demoIssuerKeys)
+                .publicKey(KeyImpl.fromBase64(demoIssuer.getPublicKeyBase64()))
+                .privateKey(KeyImpl.fromBase64(privateKeyBase64))
                 .build();
     }
 
@@ -289,7 +288,9 @@ public class DemoServiceImpl implements DemoService {
 
         return IssuerWithKeys.builder()
                 .issuer(demoIssuer)
-                .keys(keys)
+                .publicKey(demoIssuer.getPublicKey())
+                .privateKey(demoIssuer.getPrivateKey()
+                        .orElseThrow(IllegalStateException::new))
                 .build();
     }
 

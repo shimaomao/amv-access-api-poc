@@ -1,7 +1,5 @@
 package org.amv.access.api.device;
 
-import io.vertx.core.json.Json;
-import io.vertx.rxjava.core.eventbus.EventBus;
 import lombok.extern.slf4j.Slf4j;
 import org.amv.access.auth.ApplicationAuthentication;
 import org.amv.access.certificate.DeviceCertificateService;
@@ -25,20 +23,17 @@ import static java.util.Objects.requireNonNull;
 public class DeviceCertificateServiceImpl implements DeviceCertificateService {
 
     private final AmvAccessModuleSpi amvAccessModule;
-    private final EventBus eventBus;
     private final IssuerService issuerService;
     private final ApplicationRepository applicationRepository;
     private final DeviceRepository deviceRepository;
     private final DeviceCertificateRepository deviceCertificateRepository;
 
     public DeviceCertificateServiceImpl(AmvAccessModuleSpi amvAccessModule,
-                                        EventBus eventBus,
                                         IssuerService issuerService,
                                         ApplicationRepository applicationRepository,
                                         DeviceRepository deviceRepository,
                                         DeviceCertificateRepository deviceCertificateRepository) {
         this.amvAccessModule = requireNonNull(amvAccessModule);
-        this.eventBus = requireNonNull(eventBus);
         this.issuerService = requireNonNull(issuerService);
         this.applicationRepository = requireNonNull(applicationRepository);
         this.deviceRepository = requireNonNull(deviceRepository);
@@ -80,14 +75,7 @@ public class DeviceCertificateServiceImpl implements DeviceCertificateService {
 
         deviceCertificateRepository.save(deviceCertificateEntity);
 
-        return Mono.justOrEmpty(deviceCertificate)
-                .doOnSuccess(entity -> {
-                    // TODO: not working correctly - event is sent asynchronously and does not work in tests atm
-                    String eventName = entity.getClass().getName();
-                    log.debug("Sending event {}", eventName);
-                    this.eventBus.publisher(eventName)
-                            .end(Json.encode(entity));
-                });
+        return Mono.justOrEmpty(deviceCertificate);
     }
 
     private ApplicationEntity findApplicationOrThrow(ApplicationAuthentication auth) {

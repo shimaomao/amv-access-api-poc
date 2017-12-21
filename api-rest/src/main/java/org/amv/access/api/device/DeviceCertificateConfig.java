@@ -1,6 +1,5 @@
 package org.amv.access.api.device;
 
-import io.vertx.rxjava.core.eventbus.EventBus;
 import org.amv.access.certificate.DeviceCertificateService;
 import org.amv.access.issuer.IssuerService;
 import org.amv.access.model.ApplicationRepository;
@@ -15,13 +14,11 @@ public class DeviceCertificateConfig {
 
     @Bean
     public DeviceCertificateService deviceCertificateService(AmvAccessModuleSpi amvAccessModule,
-                                                             EventBus eventBus,
                                                              IssuerService issuerService,
                                                              ApplicationRepository applicationRepository,
                                                              DeviceRepository deviceRepository,
                                                              DeviceCertificateRepository deviceCertificateRepository) {
         return new DeviceCertificateServiceImpl(amvAccessModule,
-                eventBus,
                 issuerService,
                 applicationRepository,
                 deviceRepository,

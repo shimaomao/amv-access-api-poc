@@ -84,7 +84,7 @@ public class DeviceCertificateCtrl {
                 })
                 .map(deviceCertificate -> DeviceCertificateDto.builder()
                         .deviceCertificate(deviceCertificate.getSignedDeviceCertificateBase64())
-                        .issuerPublicKey(deviceCertificate.getIssuer().getPublicKeyBase64())
+                        .issuerPublicKey(deviceCertificate.getIssuer().getPublicKey().toBase64())
                         .build())
                 .map(deviceCertificateDto -> CreateDeviceCertificateResponseDto.builder()
                         .deviceCertificate(deviceCertificateDto)

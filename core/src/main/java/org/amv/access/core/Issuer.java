@@ -8,9 +8,9 @@ import java.util.Optional;
 public interface Issuer {
     String getName();
 
-    String getPublicKeyBase64();
+    Key getPublicKey();
 
-    Optional<String> getPrivateKeyBase64();
+    Optional<Key> getPrivateKey();
 
     default String getNameInHex() {
         return Optional.ofNullable(getName())

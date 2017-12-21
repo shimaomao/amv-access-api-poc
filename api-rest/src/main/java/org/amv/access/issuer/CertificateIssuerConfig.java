@@ -2,10 +2,11 @@ package org.amv.access.issuer;
 
 import lombok.extern.slf4j.Slf4j;
 import org.amv.access.core.Issuer;
+import org.amv.access.core.Key;
 import org.amv.access.core.impl.IssuerImpl;
+import org.amv.access.core.impl.KeyImpl;
 import org.amv.access.model.IssuerEntity;
 import org.amv.access.model.IssuerRepository;
-import org.amv.highmobility.cryptotool.CryptotoolUtils;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
@@ -36,13 +37,11 @@ public class CertificateIssuerConfig {
     @Bean
     public Issuer issuer() {
         String name = certificateIssuerProperties.getName();
-        String publicKeyBase64 = CryptotoolUtils.encodeHexAsBase64(certificateIssuerProperties.getPublicKey());
-        String privateKeyBase64 = CryptotoolUtils.encodeHexAsBase64(certificateIssuerProperties.getPrivateKey());
 
         return IssuerImpl.builder()
                 .name(name)
-                .publicKeyBase64(publicKeyBase64)
-                .privateKeyBase64(privateKeyBase64)
+                .publicKey(KeyImpl.fromHex(certificateIssuerProperties.getPublicKey()))
+                .privateKey(KeyImpl.fromHex(certificateIssuerProperties.getPrivateKey()))
                 .build();
     }
 
@@ -65,10 +64,10 @@ public class CertificateIssuerConfig {
     private void initializeIssuerFromPropertiesIfNecessary(IssuerRepository issuerRepository, Issuer issuer) {
         log.info("Creating issuer from properties file: {}", issuer.getName());
 
-        Optional<IssuerEntity> issuerOptional = issuerRepository
-                .findByNameAndPublicKeyBase64(issuer.getName(), issuer.getPublicKeyBase64());
+        Optional<IssuerEntity> issuerOrEmpty = issuerRepository
+                .findByNameAndPublicKeyBase64(issuer.getName(), issuer.getPublicKey().toBase64());
 
-        if (issuerOptional.isPresent()) {
+        if (issuerOrEmpty.isPresent()) {
             log.info("Issuer '{}' is already present - nothing to do", issuer.getName());
         } else {
             log.info("Issuer '{}' is not present and will be created", issuer.getName());
@@ -77,8 +76,8 @@ public class CertificateIssuerConfig {
                     .name(issuer.getName())
                     .uuid(UUID.randomUUID().toString())
                     .createdAt(Date.from(Instant.now()))
-                    .publicKeyBase64(issuer.getPublicKeyBase64())
-                    .privateKeyBase64(issuer.getPrivateKeyBase64().orElse(null))
+                    .publicKeyBase64(issuer.getPublicKey().toBase64())
+                    .privateKeyBase64(issuer.getPrivateKey().map(Key::toBase64).orElse(null))
                     .build());
 
             log.info("Issuer '{}' created successfully", issuer.getName());

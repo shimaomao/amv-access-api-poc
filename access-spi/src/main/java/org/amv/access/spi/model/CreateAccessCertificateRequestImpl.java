@@ -12,12 +12,6 @@ import java.time.Instant;
 @Builder(builderClassName = "Builder")
 public class CreateAccessCertificateRequestImpl implements CreateAccessCertificateRequest {
 
-    //@NonNull
-    //private Issuer issuer;
-
-    //@NonNull
-    //private Application application;
-
     @NonNull
     private Device device;
 

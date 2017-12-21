@@ -11,6 +11,7 @@ import org.amv.access.certificate.SignedAccessCertificateResource;
 import org.amv.access.certificate.impl.AccessCertificateResourceImpl;
 import org.amv.access.certificate.impl.SignedAccessCertificateResourceImpl;
 import org.amv.access.core.AccessCertificate;
+import org.amv.access.core.Key;
 import org.amv.access.core.SignedAccessCertificate;
 import org.amv.access.core.impl.SignedAccessCertificateImpl;
 import org.amv.access.exception.BadRequestException;
@@ -86,7 +87,7 @@ public class AccessCertificateServiceImpl implements AccessCertificateService {
         DeviceEntity device = deviceRepository.findBySerialNumber(nonceAuthentication.getDeviceSerialNumber())
                 .orElseThrow(() -> new NotFoundException("DeviceEntity not found"));
 
-        verifyNonceAuthOrThrow(nonceAuthentication, device.getPublicKeyBase64());
+        verifyNonceAuthOrThrow(nonceAuthentication, device.getPublicKey());
 
         List<AccessCertificateEntity> accessCertificates = findValidAndRemoveExpired(device);
 
@@ -141,7 +142,7 @@ public class AccessCertificateServiceImpl implements AccessCertificateService {
 
         IssuerEntity issuerEntity = findIssuerOrThrow(nonceAuthentication);
 
-        verifyNonceAuthOrThrow(nonceAuthentication, issuerEntity.getPublicKeyBase64());
+        verifyNonceAuthOrThrow(nonceAuthentication, issuerEntity.getPublicKey());
 
         VehicleEntity vehicleEntity = vehicleRepository.findOneBySerialNumber(context.getVehicleSerialNumber())
                 .orElseThrow(() -> new NotFoundException("VehicleEntity not found"));
@@ -211,7 +212,7 @@ public class AccessCertificateServiceImpl implements AccessCertificateService {
         requireNonNull(context, "`context` must not be null");
 
         IssuerEntity issuerEntity = findIssuerOrThrow(nonceAuthentication);
-        verifyNonceAuthOrThrow(nonceAuthentication, issuerEntity.getPublicKeyBase64());
+        verifyNonceAuthOrThrow(nonceAuthentication, issuerEntity.getPublicKey());
 
         AccessCertificateEntity accessCertificate = accessCertificateRepository
                 .findByUuid(context.getAccessCertificateId().toString())
@@ -258,7 +259,7 @@ public class AccessCertificateServiceImpl implements AccessCertificateService {
         requireNonNull(context, "`context` must not be null");
 
         IssuerEntity issuerEntity = findIssuerOrThrow(nonceAuthentication);
-        verifyNonceAuthOrThrow(nonceAuthentication, issuerEntity.getPublicKeyBase64());
+        verifyNonceAuthOrThrow(nonceAuthentication, issuerEntity.getPublicKey());
 
         AccessCertificateEntity accessCertificate = accessCertificateRepository
                 .findByUuid(context.getAccessCertificateId().toString())
@@ -279,13 +280,13 @@ public class AccessCertificateServiceImpl implements AccessCertificateService {
     @Override
     @Transactional
     public Mono<SignedAccessCertificateResource> signAccessCertificate(AccessCertificateResource accessCertificateResource,
-                                                                       String privateKeyBase64) {
+                                                                       Key privateKey) {
         AccessCertificateEntity accessCertificateEntity = accessCertificateRepository
                 .findByUuid(accessCertificateResource.getUuid().toString())
                 .orElseThrow(() -> new NotFoundException("AccessCertificateEntity not found"));
 
         SignCertificateRequest signCertificateRequest = SignCertificateRequestImpl.builder()
-                .privateKeyBase64(privateKeyBase64)
+                .privateKey(privateKey)
                 .accessCertificate(accessCertificateResource.getAccessCertificate())
                 .build();
 
@@ -315,13 +316,13 @@ public class AccessCertificateServiceImpl implements AccessCertificateService {
     }
 
     @Override
-    public Mono<String> createSignature(String messageBase64, String privateKeyBase64) {
-        return amvAccessModule.generateSignature(messageBase64, privateKeyBase64);
+    public Mono<String> createSignature(String messageBase64, Key privateKey) {
+        return amvAccessModule.generateSignature(messageBase64, privateKey);
     }
 
     @Override
-    public Mono<Boolean> verifySignature(String messageBase64, String signatureBase64, String publicKeyBase64) {
-        return amvAccessModule.verifySignature(messageBase64, signatureBase64, publicKeyBase64);
+    public Mono<Boolean> verifySignature(String messageBase64, String signatureBase64, Key publicKey) {
+        return amvAccessModule.verifySignature(messageBase64, signatureBase64, publicKey);
     }
 
     private IssuerEntity findIssuerOrThrow(IssuerNonceAuthentication nonceAuthentication) {
@@ -345,7 +346,7 @@ public class AccessCertificateServiceImpl implements AccessCertificateService {
         boolean isValidSignature = Optional.ofNullable(this.verifySignature(
                 messageBase64,
                 signatureBase64,
-                issuerEntity.getPublicKeyBase64()))
+                issuerEntity.getPublicKey()))
                 .map(Mono::block)
                 .orElse(false);
 
@@ -375,8 +376,8 @@ public class AccessCertificateServiceImpl implements AccessCertificateService {
         }
     }
 
-    private void verifyNonceAuthOrThrow(NonceAuthentication nonceAuthentication, String publicKeyBase64) {
-        boolean isValidNonce = Optional.of(amvAccessModule.isValidNonceAuth(nonceAuthentication, publicKeyBase64))
+    private void verifyNonceAuthOrThrow(NonceAuthentication nonceAuthentication, Key publicKey) {
+        boolean isValidNonce = Optional.of(amvAccessModule.isValidNonceAuth(nonceAuthentication, publicKey))
                 .map(Mono::block)
                 .orElse(false);
 

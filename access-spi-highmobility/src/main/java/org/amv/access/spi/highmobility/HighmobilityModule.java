@@ -35,11 +35,11 @@ public class HighmobilityModule implements AmvAccessModuleSpi {
     }
 
     @Override
-    public Mono<Boolean> isValidNonceAuth(NonceAuthentication auth, String publicKeyBase64) {
+    public Mono<Boolean> isValidNonceAuth(NonceAuthentication auth, Key publicKey) {
         requireNonNull(auth);
-        requireNonNull(publicKeyBase64);
+        requireNonNull(publicKey);
 
-        String devicePublicKey = decodeBase64AsHex(publicKeyBase64);
+        String devicePublicKey = publicKey.toHex();
         String nonce = decodeBase64AsHex(auth.getNonceBase64());
         String signature = decodeBase64AsHex(auth.getNonceSignatureBase64());
 
@@ -55,24 +55,24 @@ public class HighmobilityModule implements AmvAccessModuleSpi {
         Application application = requireNonNull(deviceCertificateRequest.getApplication());
         Device device = requireNonNull(deviceCertificateRequest.getDevice());
 
-        String issuerPublicKeyBase64 = issuer.getPublicKeyBase64();
-        String issuerPrivateKeyBase64 = issuer.getPrivateKeyBase64()
+        Key issuerPublicKey = issuer.getPublicKey();
+        Key issuerPrivateKey = issuer.getPrivateKey()
                 .orElseThrow(() -> new IllegalArgumentException("Issuer private key is not present"));
 
         Cryptotool.DeviceCertificate hmDeviceCertificate = cryptotool
                 .createDeviceCertificate(issuer.getNameInHex(),
                         application.getAppId(),
                         device.getSerialNumber(),
-                        decodeBase64AsHex(device.getPublicKeyBase64()))
+                        device.getPublicKey().toHex())
                 .block();
 
         String deviceCertificateBase64 = encodeHexAsBase64(hmDeviceCertificate.getDeviceCertificate());
 
-        String signatureBase64OrNull = signatureService.generateSignature(deviceCertificateBase64, issuerPrivateKeyBase64)
+        String signatureBase64OrNull = signatureService.generateSignature(deviceCertificateBase64, issuerPrivateKey)
                 .block();
 
         Optional.ofNullable(signatureBase64OrNull)
-                .map(signatureBase64 -> signatureService.verifySignature(deviceCertificateBase64, signatureBase64, issuerPublicKeyBase64))
+                .map(signatureBase64 -> signatureService.verifySignature(deviceCertificateBase64, signatureBase64, issuerPublicKey))
                 .map(Mono::block)
                 .orElseThrow(() -> new IllegalArgumentException("Could not verify device cert signature"));
 
@@ -100,12 +100,9 @@ public class HighmobilityModule implements AmvAccessModuleSpi {
         Instant validFrom = requireNonNull(accessCertificateRequest.getValidFrom());
         Instant validUntil = requireNonNull(accessCertificateRequest.getValidUntil());
 
-        String vehiclePublicKey = decodeBase64AsHex(vehicle.getPublicKeyBase64());
-        String devicePublicKey = decodeBase64AsHex(device.getPublicKeyBase64());
-
         Cryptotool.AccessCertificate deviceAccessCertificate = cryptotool.createAccessCertificate(
                 vehicle.getSerialNumber(),
-                vehiclePublicKey,
+                vehicle.getPublicKey().toHex(),
                 device.getSerialNumber(),
                 LocalDateTime.ofInstant(validFrom, ZoneOffset.UTC),
                 LocalDateTime.ofInstant(validUntil, ZoneOffset.UTC),
@@ -113,7 +110,7 @@ public class HighmobilityModule implements AmvAccessModuleSpi {
 
         Cryptotool.AccessCertificate vehicleAccessCertificate = cryptotool.createAccessCertificate(
                 device.getSerialNumber(),
-                devicePublicKey,
+                device.getPublicKey().toHex(),
                 vehicle.getSerialNumber(),
                 LocalDateTime.ofInstant(validFrom, ZoneOffset.UTC),
                 LocalDateTime.ofInstant(validUntil, ZoneOffset.UTC),
@@ -132,11 +129,11 @@ public class HighmobilityModule implements AmvAccessModuleSpi {
         requireNonNull(signCertificateRequest);
 
         AccessCertificate accessCertificate = signCertificateRequest.getAccessCertificate();
-        String privateKeyBase64 = signCertificateRequest.getPrivateKeyBase64();
+        Key privateKey = signCertificateRequest.getPrivateKey();
 
         String deviceAccessCertificateBase64 = accessCertificate.getDeviceAccessCertificateBase64();
         String deviceAccessCertSignatureBase64 = Optional.ofNullable(signatureService
-                .generateSignature(deviceAccessCertificateBase64, privateKeyBase64))
+                .generateSignature(deviceAccessCertificateBase64, privateKey))
                 .map(Mono::block)
                 .orElseThrow(() -> new IllegalStateException("Could not create device access cert signature"));
 
@@ -146,7 +143,7 @@ public class HighmobilityModule implements AmvAccessModuleSpi {
 
         String vehicleAccessCertificateBase64 = accessCertificate.getVehicleAccessCertificateBase64();
         String vehicleAccessCertSignatureBase64 = Optional.ofNullable(signatureService
-                .generateSignature(vehicleAccessCertificateBase64, privateKeyBase64))
+                .generateSignature(vehicleAccessCertificateBase64, privateKey))
                 .map(Mono::block)
                 .orElseThrow(() -> new IllegalStateException("Could not create vehicle access cert signature"));
 
@@ -154,17 +151,17 @@ public class HighmobilityModule implements AmvAccessModuleSpi {
                 MoreBase64.decodeBase64AsHex(accessCertificate.getVehicleAccessCertificateBase64()) +
                         MoreBase64.decodeBase64AsHex(vehicleAccessCertSignatureBase64));
 
-        if (signCertificateRequest.getPublicKeyBase64().isPresent()) {
-            String publicKeyBase64 = signCertificateRequest.getPublicKeyBase64().get();
+        if (signCertificateRequest.getPublicKey().isPresent()) {
+            Key publicKey = signCertificateRequest.getPublicKey().get();
 
             verifySignatureOrThrow(deviceAccessCertificateBase64,
                     deviceAccessCertSignatureBase64,
-                    publicKeyBase64,
+                    publicKey,
                     "device access certificate signature is invalid");
 
             verifySignatureOrThrow(vehicleAccessCertificateBase64,
                     vehicleAccessCertSignatureBase64,
-                    publicKeyBase64,
+                    publicKey,
                     "vehicle access certificate signature is invalid");
         }
 
@@ -179,22 +176,22 @@ public class HighmobilityModule implements AmvAccessModuleSpi {
     }
 
     @Override
-    public Mono<String> generateSignature(String messageBase64, String privateKeyBase64) {
-        return signatureService.generateSignature(messageBase64, privateKeyBase64);
+    public Mono<String> generateSignature(String messageBase64, Key privateKey) {
+        return signatureService.generateSignature(messageBase64, privateKey);
     }
 
     @Override
-    public Mono<Boolean> verifySignature(String messageBase64, String signatureBase64, String publicKeyBase64) {
-        return signatureService.verifySignature(messageBase64, signatureBase64, publicKeyBase64);
+    public Mono<Boolean> verifySignature(String messageBase64, String signatureBase64, Key publicKey) {
+        return signatureService.verifySignature(messageBase64, signatureBase64, publicKey);
     }
 
 
     private void verifySignatureOrThrow(String messageBase64,
                                         String signatureBase64,
-                                        String publicKeyBase64,
+                                        Key publicKey,
                                         String errorMessage) {
         boolean isValidSignature = Optional.ofNullable(signatureService
-                .verifySignature(messageBase64, signatureBase64, publicKeyBase64))
+                .verifySignature(messageBase64, signatureBase64, publicKey))
                 .map(Mono::block)
                 .orElse(false);
 

@@ -5,5 +5,5 @@ public interface Vehicle {
 
     String getSerialNumber();
 
-    String getPublicKeyBase64();
+    Key getPublicKey();
 }

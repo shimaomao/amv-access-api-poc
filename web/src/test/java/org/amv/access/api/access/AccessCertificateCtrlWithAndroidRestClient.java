@@ -99,7 +99,7 @@ public class AccessCertificateCtrlWithAndroidRestClient {
 
     private GetAccessCertificatesResponseDto executeFetchAccessCertificateRequest(DeviceWithKeys deviceWithKeys) {
         NonceAuthentication nonceAuthentication = nonceAuthService
-                .createNonceAuthentication(deviceWithKeys.getKeys());
+                .createNonceAuthentication(deviceWithKeys.getPrivateKey());
 
         return accessCertClient.fetchAccessCertificates(
                 nonceAuthentication.getNonceBase64(),

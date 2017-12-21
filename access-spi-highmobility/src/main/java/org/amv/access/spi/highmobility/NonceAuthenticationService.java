@@ -1,8 +1,10 @@
 package org.amv.access.spi.highmobility;
 
 import org.amv.access.auth.NonceAuthentication;
-import org.amv.highmobility.cryptotool.Cryptotool;
+import org.amv.access.core.Key;
 
 public interface NonceAuthenticationService {
-    NonceAuthentication createNonceAuthentication(Cryptotool.Keys keys);
+    NonceAuthentication createNonceAuthentication(Key privateKey);
+
+    NonceAuthentication createAndVerifyNonceAuthentication(Key privateKey, Key publicKey);
 }

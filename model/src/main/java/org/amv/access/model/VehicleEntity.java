@@ -7,7 +7,9 @@ import lombok.Builder.Default;
 import lombok.Data;
 import lombok.Setter;
 import lombok.experimental.Tolerate;
+import org.amv.access.core.Key;
 import org.amv.access.core.Vehicle;
+import org.amv.access.core.impl.KeyImpl;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
@@ -63,6 +65,11 @@ public class VehicleEntity implements Vehicle {
     @Tolerate
     protected VehicleEntity() {
 
+    }
+
+    @Override
+    public Key getPublicKey() {
+        return KeyImpl.fromBase64(publicKeyBase64);
     }
 
     @Override

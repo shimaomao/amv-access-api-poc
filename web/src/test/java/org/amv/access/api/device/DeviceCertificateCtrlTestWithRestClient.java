@@ -110,8 +110,7 @@ public class DeviceCertificateCtrlTestWithRestClient {
         DeviceCertificateDto responseDeviceCertificate = response.getDeviceCertificate();
         assertThat(responseDeviceCertificate, is(notNullValue()));
 
-        String expectedIssuerPublicKey = issuer.getPublicKeyBase64();
-        assertThat(responseDeviceCertificate.getIssuerPublicKey(), is(expectedIssuerPublicKey));
+        assertThat(responseDeviceCertificate.getIssuerPublicKey(), is(issuer.getPublicKey().toBase64()));
 
         String signedDeviceCertificate = responseDeviceCertificate.getDeviceCertificate();
         assertThat(signedDeviceCertificate, is(notNullValue()));
@@ -122,7 +121,7 @@ public class DeviceCertificateCtrlTestWithRestClient {
         String deviceCertificate = signedDeviceCertificateInHex.substring(0, 178);
         String signatureInHex = signedDeviceCertificateInHex.substring(178, signedDeviceCertificateInHex.length());
 
-        String issuerPublicKeyInHex = CryptotoolUtils.decodeBase64AsHex(issuer.getPublicKeyBase64());
+        String issuerPublicKeyInHex = issuer.getPublicKey().toHex();
         Cryptotool.Validity validity = Optional.of(cryptotool.verifySignature(deviceCertificate, signatureInHex, issuerPublicKeyInHex))
                 .map(Mono::block)
                 .filter(val -> val == Cryptotool.Validity.VALID)

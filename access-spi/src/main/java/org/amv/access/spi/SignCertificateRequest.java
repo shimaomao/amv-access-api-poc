@@ -1,13 +1,14 @@
 package org.amv.access.spi;
 
 import org.amv.access.core.AccessCertificate;
+import org.amv.access.core.Key;
 
 import java.util.Optional;
 
 public interface SignCertificateRequest {
     AccessCertificate getAccessCertificate();
 
-    String getPrivateKeyBase64();
+    Key getPrivateKey();
 
     /**
      * If a public key is given, the consumer
@@ -15,7 +16,7 @@ public interface SignCertificateRequest {
      *
      * @return an optional public key
      */
-    default Optional<String> getPublicKeyBase64() {
+    default Optional<Key> getPublicKey() {
         return Optional.empty();
     }
 }

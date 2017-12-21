@@ -16,7 +16,9 @@ import org.amv.access.client.MoreHttpHeaders;
 import org.amv.access.client.model.*;
 import org.amv.access.client.model.CreateAccessCertificateResponseDto.AccessCertificateSigningRequestDto;
 import org.amv.access.core.AccessCertificate;
+import org.amv.access.core.Key;
 import org.amv.access.core.SignedAccessCertificate;
+import org.amv.access.core.impl.KeyImpl;
 import org.amv.access.demo.DemoService;
 import org.amv.access.demo.IssuerWithKeys;
 import org.amv.access.exception.AmvAccessRuntimeException;
@@ -342,11 +344,10 @@ public class AccessCertificateCtrl {
         IssuerEntity issuerEntity = issuerService.findIssuerByUuid(UUID.fromString(request.getIssuerId()))
                 .orElseThrow(() -> new NotFoundException("IssuerEntity not found"));
 
+        Key issuerPrivateKey = KeyImpl.fromBase64(request.getIssuerPrivateKeyBase64());
         IssuerNonceAuthentication issuerNonceAuthentication = demoService.createNonceAuthentication(IssuerWithKeys.builder()
-                .keys(CryptotoolImpl.KeysImpl.builder()
-                        .privateKey(MoreBase64.decodeBase64AsHex(request.getIssuerPrivateKeyBase64()))
-                        .publicKey(MoreBase64.decodeBase64AsHex(issuerEntity.getPublicKeyBase64()))
-                        .build())
+                .privateKey(issuerPrivateKey)
+                .publicKey(KeyImpl.fromBase64(issuerEntity.getPublicKeyBase64()))
                 .issuer(issuerEntity)
                 .build());
 
@@ -360,7 +361,7 @@ public class AccessCertificateCtrl {
 
         SignedAccessCertificateResource signedAccessCertificateResource = Optional.ofNullable(accessCertificateService
                 .createAccessCertificate(issuerNonceAuthentication, createAccessCertificateContext)
-                .then(resource -> accessCertificateService.signAccessCertificate(resource, request.getIssuerPrivateKeyBase64())))
+                .then(resource -> accessCertificateService.signAccessCertificate(resource, issuerPrivateKey)))
                 .map(Mono::block)
                 .orElseThrow(() -> new AmvAccessRuntimeException("Could not create access certificate",
                         new IllegalStateException("Access certificate is not present")));

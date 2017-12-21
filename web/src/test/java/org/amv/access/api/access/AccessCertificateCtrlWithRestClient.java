@@ -154,8 +154,8 @@ public class AccessCertificateCtrlWithRestClient {
                                 .deviceAccessCertificateBase64(signingRequest.getDeviceAccessCertificate())
                                 .vehicleAccessCertificateBase64(signingRequest.getVehicleAccessCertificate())
                                 .build())
-                        .privateKeyBase64(encodeHexAsBase64(demoIssuer.getKeys().getPrivateKey()))
-                        .publicKeyBase64(encodeHexAsBase64(demoIssuer.getKeys().getPublicKey()))
+                        .privateKey(demoIssuer.getPrivateKey())
+                        .publicKey(demoIssuer.getPublicKey())
                         .build()))
                 .map(Mono::block)
                 .orElseThrow(IllegalStateException::new);
@@ -208,7 +208,7 @@ public class AccessCertificateCtrlWithRestClient {
 
     private GetAccessCertificatesResponseDto executeFetchAccessCertificateRequest(DeviceWithKeys deviceWithKeys) {
         NonceAuthentication nonceAuthentication = nonceAuthService
-                .createNonceAuthentication(deviceWithKeys.getKeys());
+                .createNonceAuthentication(deviceWithKeys.getPrivateKey());
 
         return accessCertClient.fetchAccessCertificates(
                 nonceAuthentication.getNonceBase64(),
@@ -220,7 +220,7 @@ public class AccessCertificateCtrlWithRestClient {
     private CreateAccessCertificateResponseDto executeCreateAccessCertificateRequest(IssuerWithKeys issuerWithKeys,
                                                                                      CreateAccessCertificateRequestDto request) {
         NonceAuthentication nonceAuthentication = nonceAuthService
-                .createNonceAuthentication(issuerWithKeys.getKeys());
+                .createNonceAuthentication(issuerWithKeys.getPrivateKey());
 
         return accessCertClient.createAccessCertificate(nonceAuthentication.getNonceBase64(),
                 nonceAuthentication.getNonceSignatureBase64(),
@@ -234,7 +234,7 @@ public class AccessCertificateCtrlWithRestClient {
                                                                  String accessCertificateId,
                                                                  UpdateAccessCertificateRequestDto request) {
         NonceAuthentication issuerNonceAuthentication = nonceAuthService
-                .createNonceAuthentication(issuerWithKeys.getKeys());
+                .createNonceAuthentication(issuerWithKeys.getPrivateKey());
 
         return accessCertClient.addAccessCertificateSignature(issuerNonceAuthentication.getNonceBase64(),
                 issuerNonceAuthentication.getNonceSignatureBase64(),
@@ -247,7 +247,7 @@ public class AccessCertificateCtrlWithRestClient {
     private Void executeRevokeAccessCertificateRequest(IssuerWithKeys issuerWithKeys,
                                                        String accessCertificateId) {
         NonceAuthentication nonceAuthentication = nonceAuthService
-                .createNonceAuthentication(issuerWithKeys.getKeys());
+                .createNonceAuthentication(issuerWithKeys.getPrivateKey());
 
         return accessCertClient.revokeAccessCertificate(nonceAuthentication.getNonceBase64(),
                 nonceAuthentication.getNonceSignatureBase64(),

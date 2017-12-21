@@ -4,6 +4,7 @@ import lombok.Builder;
 import lombok.NonNull;
 import lombok.Value;
 import org.amv.access.core.AccessCertificate;
+import org.amv.access.core.Key;
 import org.amv.access.spi.SignCertificateRequest;
 
 import java.util.Optional;
@@ -13,15 +14,15 @@ import java.util.Optional;
 public class SignCertificateRequestImpl implements SignCertificateRequest {
 
     @NonNull
-    private String privateKeyBase64;
+    private Key privateKey;
 
     @NonNull
     private AccessCertificate accessCertificate;
 
-    private String publicKeyBase64;
+    private Key publicKey;
 
     @Override
-    public Optional<String> getPublicKeyBase64() {
-        return Optional.ofNullable(publicKeyBase64);
+    public Optional<Key> getPublicKey() {
+        return Optional.ofNullable(publicKey);
     }
 }

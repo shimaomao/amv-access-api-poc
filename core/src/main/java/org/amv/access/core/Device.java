@@ -5,5 +5,5 @@ public interface Device {
 
     String getSerialNumber();
 
-    String getPublicKeyBase64();
+    Key getPublicKey();
 }

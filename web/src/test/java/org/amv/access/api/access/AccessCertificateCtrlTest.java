@@ -35,7 +35,6 @@ import java.util.List;
 import java.util.Optional;
 
 import static org.amv.highmobility.cryptotool.CryptotoolUtils.decodeBase64AsHex;
-import static org.amv.highmobility.cryptotool.CryptotoolUtils.encodeHexAsBase64;
 import static org.apache.commons.codec.binary.Base64.isBase64;
 import static org.hamcrest.Matchers.*;
 import static org.junit.Assert.assertThat;
@@ -134,14 +133,14 @@ public class AccessCertificateCtrlTest {
         DeviceEntity device = deviceWithKeys.getDevice();
 
         String nonceBase64 = nonceAuthService
-                .createNonceAuthentication(deviceWithKeys.getKeys())
+                .createNonceAuthentication(deviceWithKeys.getPrivateKey())
                 .getNonceBase64();
         String mismatchingNonceSignatureBase64 = nonceAuthService
-                .createNonceAuthentication(deviceWithKeys.getKeys())
+                .createNonceAuthentication(deviceWithKeys.getPrivateKey())
                 .getNonceSignatureBase64();
 
         Boolean isSignedNonceValid = Optional.of(accessModule)
-                .map(module -> module.verifySignature(nonceBase64, mismatchingNonceSignatureBase64, device.getPublicKeyBase64()))
+                .map(module -> module.verifySignature(nonceBase64, mismatchingNonceSignatureBase64, device.getPublicKey()))
                 .map(Mono::block)
                 .orElse(false);
 
@@ -256,8 +255,8 @@ public class AccessCertificateCtrlTest {
                                 .deviceAccessCertificateBase64(signingRequest.getDeviceAccessCertificate())
                                 .vehicleAccessCertificateBase64(signingRequest.getVehicleAccessCertificate())
                                 .build())
-                        .privateKeyBase64(encodeHexAsBase64(demoIssuer.getKeys().getPrivateKey()))
-                        .publicKeyBase64(encodeHexAsBase64(demoIssuer.getKeys().getPublicKey()))
+                        .privateKey(demoIssuer.getPrivateKey())
+                        .publicKey(demoIssuer.getPublicKey())
                         .build()))
                 .map(Mono::block)
                 .orElseThrow(IllegalStateException::new);
@@ -362,7 +361,7 @@ public class AccessCertificateCtrlTest {
             IssuerWithKeys issuerWithKeys, CreateAccessCertificateRequestDto request) {
 
         NonceAuthentication issuerNonceAuthentication = nonceAuthService
-                .createNonceAuthentication(issuerWithKeys.getKeys());
+                .createAndVerifyNonceAuthentication(issuerWithKeys.getPrivateKey(), issuerWithKeys.getPublicKey());
 
         HttpHeaders headers = new HttpHeaders();
         headers.add(MoreHttpHeaders.AMV_NONCE, issuerNonceAuthentication.getNonceBase64());
@@ -384,7 +383,7 @@ public class AccessCertificateCtrlTest {
             UpdateAccessCertificateRequestDto request) {
 
         NonceAuthentication issuerNonceAuthentication = nonceAuthService
-                .createNonceAuthentication(issuerWithKeys.getKeys());
+                .createAndVerifyNonceAuthentication(issuerWithKeys.getPrivateKey(), issuerWithKeys.getPublicKey());
 
         HttpHeaders headers = new HttpHeaders();
         headers.add(MoreHttpHeaders.AMV_NONCE, issuerNonceAuthentication.getNonceBase64());
@@ -407,7 +406,7 @@ public class AccessCertificateCtrlTest {
     private ResponseEntity<GetAccessCertificatesResponseDto> executeFetchAccessCertificatesRequest(
             DeviceWithKeys deviceWithKeys) {
         NonceAuthentication deviceNonceAuthentication = nonceAuthService
-                .createNonceAuthentication(deviceWithKeys.getKeys());
+                .createAndVerifyNonceAuthentication(deviceWithKeys.getPrivateKey(), deviceWithKeys.getPublicKey());
 
         HttpHeaders fetchRequestHeaders = new HttpHeaders();
         fetchRequestHeaders.add(MoreHttpHeaders.AMV_NONCE, deviceNonceAuthentication.getNonceBase64());
@@ -426,7 +425,7 @@ public class AccessCertificateCtrlTest {
     private ResponseEntity<Boolean> executeRevokeAccessCertificateRequest(IssuerWithKeys issuerWithKeys,
                                                                           String accessCertificateId) {
         NonceAuthentication issuerNonceAuthentication = nonceAuthService
-                .createNonceAuthentication(issuerWithKeys.getKeys());
+                .createAndVerifyNonceAuthentication(issuerWithKeys.getPrivateKey(), issuerWithKeys.getPublicKey());
 
         HttpHeaders headers = new HttpHeaders();
         headers.add(MoreHttpHeaders.AMV_NONCE, issuerNonceAuthentication.getNonceBase64());
