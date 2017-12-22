@@ -47,7 +47,7 @@ import static org.junit.Assert.assertThat;
         webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT,
         classes = {AmvAccessApplication.class, SqliteTestDatabaseConfig.class}
 )
-public class AccessCertificateCtrlWithRestClient {
+public class AccessCertificateCtrlWithRestClientTest {
 
     @Value("${local.server.port}")
     private int port;
@@ -244,7 +244,7 @@ public class AccessCertificateCtrlWithRestClient {
         ).execute();
     }
 
-    private Void executeRevokeAccessCertificateRequest(IssuerWithKeys issuerWithKeys,
+    private Boolean executeRevokeAccessCertificateRequest(IssuerWithKeys issuerWithKeys,
                                                        String accessCertificateId) {
         NonceAuthentication nonceAuthentication = nonceAuthService
                 .createNonceAuthentication(issuerWithKeys.getPrivateKey());

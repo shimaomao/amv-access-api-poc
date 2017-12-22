@@ -35,7 +35,7 @@ import static org.junit.Assert.assertThat;
         webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT,
         classes = {AmvAccessApplication.class, SqliteTestDatabaseConfig.class}
 )
-public class AccessCertificateCtrlWithAndroidRestClient {
+public class AccessCertificateCtrlWithAndroidRestClientTest {
 
     @Value("${local.server.port}")
     private int port;
