@@ -12,6 +12,7 @@ buildscript {
         guavaVersion = '23.4-jre'
         commonsCodecVersion = '1.11'
         commonsLangVersion = '3.7'
+        reactorVersion = '3.1.0.RELEASE'
     }
     repositories {
         jcenter()

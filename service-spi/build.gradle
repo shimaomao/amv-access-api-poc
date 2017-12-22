@@ -2,6 +2,4 @@ description = 'module containing core service abstraction interfaces'
 
 dependencies {
     compile project(':core')
-
-    compile group: 'io.projectreactor', name: 'reactor-core', version: '3.0.7.RELEASE'
 }

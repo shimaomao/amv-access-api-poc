@@ -190,9 +190,9 @@ public class DemoServiceImpl implements DemoService {
                     .validityEnd(LocalDateTime.now().plusYears(2).toInstant(ZoneOffset.UTC))
                     .build();
 
-            Optional<SignedAccessCertificateResource> signedAccessCertificateResource = Optional.ofNullable(accessCertificateService
+            Optional<SignedAccessCertificateResource> signedAccessCertificateResource = Optional.of(accessCertificateService
                     .createAccessCertificate(issuerNonceAuthentication, createAccessCertificateContext)
-                    .then(resource -> accessCertificateService.signAccessCertificate(resource, issuerWithKeys.getPrivateKey())))
+                    .flatMap(resource -> accessCertificateService.signAccessCertificate(resource, issuerWithKeys.getPrivateKey())))
                     .map(Mono::block);
 
             if (!signedAccessCertificateResource.isPresent()) {

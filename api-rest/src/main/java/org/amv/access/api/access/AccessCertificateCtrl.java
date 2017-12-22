@@ -359,9 +359,9 @@ public class AccessCertificateCtrl {
                 .validityEnd(createAccessCertificateRequestDto.getValidityEnd())
                 .build();
 
-        SignedAccessCertificateResource signedAccessCertificateResource = Optional.ofNullable(accessCertificateService
+        SignedAccessCertificateResource signedAccessCertificateResource = Optional.of(accessCertificateService
                 .createAccessCertificate(issuerNonceAuthentication, createAccessCertificateContext)
-                .then(resource -> accessCertificateService.signAccessCertificate(resource, issuerPrivateKey)))
+                .flatMap(resource -> accessCertificateService.signAccessCertificate(resource, issuerPrivateKey)))
                 .map(Mono::block)
                 .orElseThrow(() -> new AmvAccessRuntimeException("Could not create access certificate",
                         new IllegalStateException("Access certificate is not present")));
